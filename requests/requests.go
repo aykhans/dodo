@@ -179,7 +179,6 @@ func sendRequest(
 				params,
 				getBodyReader(body),
 			)
-			// req.Header.Set("User-Agent", config)
 			req.Header = headers
 			setCookies(req, cookies)
 			client := getClient()
@@ -256,10 +255,8 @@ func printProgress(wg *sync.WaitGroup, total int, message string, countSlice *[]
 	for {
 		totalCount := 0
 		for _, count := range *countSlice {
-			// println(count)
 			totalCount += count
 		}
-		// println(totalCount)
 		dodosTracker.SetValue(int64(totalCount))
 		if totalCount == total {
 			break
