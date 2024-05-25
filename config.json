@@ -1,0 +1,21 @@
+{
+    "method": "GET",
+    "url": "https://example.com",
+    "timeout": 10000,
+    "dodos_count": 1,
+    "request_count": 1000,
+    "params": {},
+    "headers": {},
+    "cookies": {},
+    "body": "",
+    "proxies": [
+        {
+            "url": "http://example:8080",
+            "username": "username",
+            "password": "password"
+        },
+        {
+            "url": "http://example.com:8080"
+        }
+    ]
+}

@@ -1,0 +1,33 @@
+package readers
+
+import (
+	"encoding/json"
+	"os"
+
+	"github.com/aykhans/dodo/config"
+	"github.com/aykhans/dodo/custom_errors"
+)
+
+func JSONConfigReader(filePath string) (*config.JSONConfig, error) {
+	data, err := os.ReadFile(filePath)
+	if err != nil {
+		return nil, customerrors.OSErrorFormater(err)
+	}
+	jsonConf := &config.JSONConfig{}
+	err = json.Unmarshal(data, &jsonConf)
+
+	if err != nil {
+		switch err := err.(type) {
+		case *json.UnmarshalTypeError:
+			return nil,
+				customerrors.NewTypeError(
+					err.Type.String(),
+					err.Value,
+					err.Field,
+					err,
+				)
+		}
+		return nil, customerrors.NewInvalidFileError(filePath, err)
+	}
+	return jsonConf, nil
+}
