@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/aykhans/dodo/config"
-	customerrors "github.com/aykhans/dodo/custom_errors"
+	"github.com/aykhans/dodo/custom_errors"
 	"github.com/aykhans/dodo/utils"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"

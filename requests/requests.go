@@ -12,7 +12,7 @@ import (
 	"time"
 
 	"github.com/aykhans/dodo/config"
-	customerrors "github.com/aykhans/dodo/custom_errors"
+	"github.com/aykhans/dodo/custom_errors"
 	"github.com/aykhans/dodo/readers"
 	"github.com/aykhans/dodo/utils"
 	"github.com/jedib0t/go-pretty/v6/progress"
