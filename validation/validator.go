@@ -4,7 +4,6 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/aykhans/dodo/config"
 	"github.com/go-playground/validator/v10"
 	"golang.org/x/net/http/httpguts"
 )
@@ -39,16 +38,19 @@ func NewValidator() *validator.Validate {
 		},
 	)
 	validation.RegisterValidation(
-		"url_map_slice",
+		"proxy_url",
 		func(fl validator.FieldLevel) bool {
-			proxies := fl.Field().Interface().(config.ProxySlice)
-			for _, proxy := range proxies {
-				if _, ok := proxy["url"]; !ok {
-					return false
-				}
-				if err := validation.Var(proxy["url"], "url"); err != nil {
-					return false
-				}
+			url := fl.Field().String()
+			if url == "" {
+				return false
+			}
+			if err := validation.Var(url, "url"); err != nil {
+				return false
+			}
+			if !(url[:7] == "http://" ||
+				url[:9] == "socks5://" ||
+				url[:10] == "socks5h://") {
+				return false
 			}
 			return true
 		},

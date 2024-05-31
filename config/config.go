@@ -11,7 +11,7 @@ import (
 const (
 	VERSION                 = "0.0.1"
 	DefaultUserAgent        = "Dodo/" + VERSION
-	ProxyCheckURL           = "https://google.com"
+	ProxyCheckURL           = "https://www.google.com"
 	DefaultMethod           = "GET"
 	DefaultTimeout          = 10000 // Milliseconds (10 seconds)
 	DefaultDodosCount       = 1
@@ -23,8 +23,6 @@ type IConfig interface {
 	MergeConfigs(newConfig IConfig) IConfig
 }
 
-type ProxySlice []map[string]string
-
 type DodoConfig struct {
 	Method       string
 	URL          string
@@ -34,7 +32,7 @@ type DodoConfig struct {
 	Params       map[string]string
 	Headers      map[string]string
 	Cookies      map[string]string
-	Proxies      ProxySlice
+	Proxies      []Proxy
 	Body         string
 }
 
@@ -98,12 +96,18 @@ func (config *Config) SetDefaults() {
 	}
 }
 
+type Proxy struct {
+	URL      string `json:"url" validate:"required,proxy_url"`
+	Username string `json:"username"`
+	Password string `json:"password"`
+}
+
 type JSONConfig struct {
 	Config
 	Params  map[string]string `json:"params"`
 	Headers map[string]string `json:"headers"`
 	Cookies map[string]string `json:"cookies"`
-	Proxies ProxySlice        `json:"proxies" validate:"url_map_slice"`
+	Proxies []Proxy           `json:"proxies" validate:"dive"`
 	Body    string            `json:"body"`
 }
 
