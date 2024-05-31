@@ -2,6 +2,7 @@ package main
 
 import (
 	"os"
+	"strings"
 	"time"
 
 	"github.com/aykhans/dodo/config"
@@ -35,7 +36,11 @@ func main() {
 		if err != nil {
 			utils.PrintErrAndExit(err)
 		}
-		if err := validator.StructPartial(jsonConfNew, "Proxies"); err != nil {
+		if err := validator.StructFiltered(
+			jsonConfNew,
+			func(ns []byte) bool {
+				return strings.LastIndex(string(ns), "Proxies") == -1
+			}); err != nil {
 			utils.PrintErrAndExit(
 				customerrors.ValidationErrorsFormater(
 					err.(goValidator.ValidationErrors),
