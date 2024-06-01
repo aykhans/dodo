@@ -268,13 +268,13 @@ func printProgress(wg *sync.WaitGroup, total int, message string, countSlice *[]
 	pw.Stop()
 }
 
-func getClientFunc(proxies config.ProxySlice, timeout time.Duration, dodosCount int) func() http.Client {
+func getClientFunc(proxies []config.Proxy, timeout time.Duration, dodosCount int) func() http.Client {
 	if len(proxies) > 0 {
 		activeProxyClientsArray := make([][]http.Client, dodosCount)
 		proxiesCount := len(proxies)
 		var wg sync.WaitGroup
 		wg.Add(dodosCount + 1)
-		var proxiesSlice config.ProxySlice
+		var proxiesSlice []config.Proxy
 
 		countSlice := make([]int, dodosCount)
 		go printProgress(&wg, proxiesCount, "Searching for active proxies🌐", &countSlice)
@@ -330,7 +330,7 @@ func getClientFunc(proxies config.ProxySlice, timeout time.Duration, dodosCount 
 }
 
 func findActiveProxyClients(
-	proxies config.ProxySlice,
+	proxies []config.Proxy,
 	timeout time.Duration,
 	activeProxyClients *[]http.Client,
 	counter *int,
@@ -365,12 +365,12 @@ func findActiveProxyClients(
 	}
 }
 
-func getTransport(proxy map[string]string) (*http.Transport, error) {
-	proxyURL, err := url.Parse(proxy["url"])
+func getTransport(proxy config.Proxy) (*http.Transport, error) {
+	proxyURL, err := url.Parse(proxy.URL)
 	if err != nil {
 		return nil, err
 	}
-	if _, ok := proxy["username"]; !ok {
+	if proxy.Username != "" {
 		transport := &http.Transport{
 			Proxy: http.ProxyURL(proxyURL),
 		}
@@ -382,7 +382,7 @@ func getTransport(proxy map[string]string) (*http.Transport, error) {
 			&url.URL{
 				Scheme: proxyURL.Scheme,
 				Host:   proxyURL.Host,
-				User:   url.UserPassword(proxy["username"], proxy["password"]),
+				User:   url.UserPassword(proxy.Username, proxy.Password),
 			},
 		),
 	}

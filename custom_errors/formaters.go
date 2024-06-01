@@ -6,7 +6,6 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/aykhans/dodo/config"
 	"github.com/go-playground/validator/v10"
 )
 
@@ -24,36 +23,34 @@ func CobraErrorFormater(err error) error {
 	return err
 }
 
+func shortenNamespace(namespace string) string {
+	return namespace[strings.Index(namespace, ".")+1:]
+}
+
 func ValidationErrorsFormater(errs validator.ValidationErrors) error {
 	errsStr := make(map[string]string)
 	for _, err := range errs {
 		switch err.Tag() {
 		case "required":
-			errsStr[err.Field()] = fmt.Sprintf("Field \"%s\" is required", err.Field())
+			errsStr[shortenNamespace(err.Namespace())] = fmt.Sprintf("Field \"%s\" is required", err.Field())
 		case "gte":
-			errsStr[err.Field()] = fmt.Sprintf("Value of \"%s\" must be greater than or equal to \"%s\"", err.Field(), err.Param())
+			errsStr[shortenNamespace(err.Namespace())] = fmt.Sprintf("Value of \"%s\" must be greater than or equal to \"%s\"", err.Field(), err.Param())
 		case "lte":
-			errsStr[err.Field()] = fmt.Sprintf("Value of \"%s\" must be less than or equal to \"%s\"", err.Field(), err.Param())
+			errsStr[shortenNamespace(err.Namespace())] = fmt.Sprintf("Value of \"%s\" must be less than or equal to \"%s\"", err.Field(), err.Param())
 		case "filepath":
-			errsStr[err.Field()] = fmt.Sprintf("Invalid file path for \"%s\" field: \"%s\"", err.Field(), err.Value())
+			errsStr[shortenNamespace(err.Namespace())] = fmt.Sprintf("Invalid file path for \"%s\" field: \"%s\"", err.Field(), err.Value())
 		case "http_url":
-			errsStr[err.Field()] = fmt.Sprintf("Invalid URL for \"%s\" field: \"%s\"", err.Field(), err.Value())
+			errsStr[shortenNamespace(err.Namespace())] =
+				fmt.Sprintf("Invalid url for \"%s\" field: \"%s\"", err.Field(), err.Value())
 		// --------------------------------------| Custom validations |--------------------------------------
 		case "http_method":
-			errsStr[err.Field()] = fmt.Sprintf("Invalid HTTP method for \"%s\" field: \"%s\"", err.Field(), err.Value())
-		case "url_map_slice":
-			values := err.Value().(config.ProxySlice)
-			for i, value := range values {
-				if _, ok := value["url"]; !ok {
-					errsStr[fmt.Sprintf("%s[%d]", err.Field(), i)] = fmt.Sprintf("Field \"url\" is required for \"%s\" field", err.Field())
-				} else {
-					errsStr[fmt.Sprintf("%s[%d]", err.Field(), i)] = fmt.Sprintf("Invalid url for \"%s\" field: \"%s\"", err.Field(), value["url"])
-				}
-			}
+			errsStr[shortenNamespace(err.Namespace())] = fmt.Sprintf("Invalid HTTP method for \"%s\" field: \"%s\"", err.Field(), err.Value())
+		case "proxy_url":
+			errsStr[shortenNamespace(err.Namespace())] = fmt.Sprintf("Invalid proxy url for \"%s\" field: \"%s\" (it must be http, socks5 or socks5h)", err.Field(), err.Value())
 		case "string_bool":
-			errsStr[err.Field()] = fmt.Sprintf("Invalid value for \"%s\" field: \"%s\"", err.Field(), err.Value())
+			errsStr[shortenNamespace(err.Namespace())] = fmt.Sprintf("Invalid value for \"%s\" field: \"%s\"", err.Field(), err.Value())
 		default:
-			errsStr[err.Field()] = fmt.Sprintf("Invalid value for \"%s\" field: \"%s\"", err.Field(), err.Value())
+			errsStr[shortenNamespace(err.Namespace())] = fmt.Sprintf("Invalid value for \"%s\" field: \"%s\"", err.Field(), err.Value())
 		}
 	}
 	return NewValidationErrors(errsStr, errs)
