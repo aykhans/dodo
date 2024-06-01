@@ -5,7 +5,7 @@ import (
 	"os"
 )
 
-type colors struct {
+var Colors = struct {
 	reset   string
 	Red     string
 	Green   string
@@ -16,9 +16,7 @@ type colors struct {
 	Cyan    string
 	Gray    string
 	White   string
-}
-
-var Colors = colors{
+}{
 	reset:   "\033[0m",
 	Red:     "\033[31m",
 	Green:   "\033[32m",
