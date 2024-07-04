@@ -6,7 +6,6 @@
 ## Installation
 You can grab binaries in the [releases](https://github.com/aykhans/dodo/releases) section.
 
-
 ## Usage
 
 You can use Dodo with CLI arguments, a JSON config file, or both. If you use both, CLI arguments will always override JSON config arguments if there is a conflict.
@@ -73,5 +72,5 @@ dodo -c /path/config.json -u https://example.com -m GET -d 10 -r 1000 -t 2000
 
 ## Examples
 
-![dodo_example](https://github.com/aykhans/dodo/assets/88669260/0f6b216d-7ec2-4a49-a8cc-e2ba778a95dd)
+![dodo_example](https://raw.githubusercontent.com/aykhans/dodo/main/assets/dodo-example.gif)
 
