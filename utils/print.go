@@ -48,7 +48,7 @@ func PrintErr(err error) {
 func PrintErrAndExit(err error) {
 	if err != nil {
 		PrintErr(err)
-		os.Exit(0)
+		os.Exit(1)
 	}
 }
 
