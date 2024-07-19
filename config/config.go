@@ -55,6 +55,14 @@ func (config *DodoConfig) Print() {
 	t.Render()
 }
 
+func (config *RequestConfig) GetValidDodosCountForRequests() int {
+	return min(config.DodosCount, config.RequestCount)
+}
+
+func (config *RequestConfig) GetValidDodosCountForProxies() int {
+	return min(config.DodosCount, len(config.Proxies), MaxDodosCountForProxies)
+}
+
 type Config struct {
 	Method       string `json:"method" validate:"http_method"` // custom validations: http_method
 	URL          string `json:"url" validate:"http_url,required"`
