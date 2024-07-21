@@ -6,8 +6,30 @@
 ## Installation
 You can grab binaries in the [releases](https://github.com/aykhans/dodo/releases) section.
 
-## Usage
+### Build from Source
+To build Dodo from source, you need to have [Go1.22+](https://golang.org/dl/) installed. Follow the steps below:
 
+1. **Clone the repository:**
+
+    ```sh
+    git clone https://github.com/aykhans/dodo.git
+    ```
+
+2. **Navigate to the project directory:**
+
+    ```sh
+    cd dodo
+    ```
+
+3. **Build the project:**
+
+    ```sh
+    go build -o dodo
+    ```
+
+This will generate an executable named `dodo` in the project directory.
+
+## Usage
 You can use Dodo with CLI arguments, a JSON config file, or both. If you use both, CLI arguments will always override JSON config arguments if there is a conflict.
 
 ### 1. CLI
@@ -24,7 +46,7 @@ You can find an example config structure in the [config.json](https://github.com
     "method": "GET",
     "url": "https://example.com",
     "timeout": 10000,
-    "dodos_count": 5,
+    "dodos_count": 50,
     "request_count": 1000,
     "params": {},
     "headers": {},
@@ -32,7 +54,7 @@ You can find an example config structure in the [config.json](https://github.com
     "body": "",
     "proxies": [
         {
-            "url": "http://example:8080",
+            "url": "http://example.com:8080",
             "username": "username",
             "password": "password"
         },
@@ -71,6 +93,5 @@ dodo -c /path/config.json -u https://example.com -m GET -d 10 -r 1000 -t 2000
 | Proxy | proxies | - | - | List[Key-Value {string: string}] | List of proxies (will check active proxies before sending requests) | - |
 
 ## Examples
-
 ![dodo_example](https://raw.githubusercontent.com/aykhans/dodo/main/assets/dodo-example.gif)
 
