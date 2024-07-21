@@ -2,247 +2,528 @@ package requests
 
 import (
 	"fmt"
-	"io"
 	"math/rand"
-	"net/http"
 	"net/url"
-	"strings"
-
+	"os"
 	"sync"
 	"time"
 
 	"github.com/aykhans/dodo/config"
-	"github.com/aykhans/dodo/custom_errors"
 	"github.com/aykhans/dodo/readers"
 	"github.com/aykhans/dodo/utils"
 	"github.com/jedib0t/go-pretty/v6/progress"
+	"github.com/jedib0t/go-pretty/v6/table"
+	"github.com/valyala/fasthttp"
+	"github.com/valyala/fasthttp/fasthttpproxy"
 )
 
-type DodoResponse struct {
-	Response string
-	Time     time.Duration
+type Response struct {
+	StatusCode int
+	Error      error
+	Time       time.Duration
 }
 
-type DodoResponses []DodoResponse
+type Responses []Response
 
-type MergedDodoResponse struct {
-	Response string
-	Count    int
-	AvgTime  time.Duration
-	MinTime  time.Duration
-	MaxTime  time.Duration
-}
+type ClientFunc func() *fasthttp.HostClient
 
-func (d DodoResponses) Len() int {
-	return len(d)
-}
+// Print prints the responses in a tabular format, including information such as
+// response count, minimum time, maximum time, and average time.
+func (respones *Responses) Print() {
+	var (
+		totalMinDuration time.Duration = (*respones)[0].Time
+		totalMaxDuration time.Duration = (*respones)[0].Time
+		totalDuration    time.Duration
+		totalCount       int = len(*respones)
+	)
+	mergedResponses := make(map[string][]time.Duration)
 
-func (d DodoResponses) MinTime() time.Duration {
-	minTime := d[0].Time
-	for _, response := range d {
-		if response.Time < minTime {
-			minTime = response.Time
+	for _, response := range *respones {
+		if response.Time < totalMinDuration {
+			totalMinDuration = response.Time
+		}
+		if response.Time > totalMaxDuration {
+			totalMaxDuration = response.Time
+		}
+		totalDuration += response.Time
+
+		if response.Error != nil {
+			mergedResponses[response.Error.Error()] = append(
+				mergedResponses[response.Error.Error()],
+				response.Time,
+			)
+		} else {
+			mergedResponses[fmt.Sprintf("%d", response.StatusCode)] = append(
+				mergedResponses[fmt.Sprintf("%d", response.StatusCode)],
+				response.Time,
+			)
 		}
 	}
-	return minTime
-}
 
-func (d DodoResponses) MaxTime() time.Duration {
-	maxTime := d[0].Time
-	for _, response := range d {
-		if response.Time > maxTime {
-			maxTime = response.Time
-		}
-	}
-	return maxTime
-}
-
-func (d DodoResponses) AvgTime() time.Duration {
-	var sum time.Duration
-	for _, response := range d {
-		sum += response.Time
-	}
-	return sum / time.Duration(len(d))
-}
-
-func (d DodoResponses) MergeDodoResponses() []MergedDodoResponse {
-	mergedResponses := make(map[string]*struct {
-		count     int
-		minTime   time.Duration
-		maxTime   time.Duration
-		totalTime time.Duration
+	t := table.NewWriter()
+	t.SetOutputMirror(os.Stdout)
+	t.SetStyle(table.StyleLight)
+	t.AppendHeader(table.Row{
+		"Response",
+		"Count",
+		"Min Time",
+		"Max Time",
+		"Average Time",
 	})
-	for _, response := range d {
-		if _, ok := mergedResponses[response.Response]; !ok {
-			mergedResponses[response.Response] = &struct {
-				count     int
-				minTime   time.Duration
-				maxTime   time.Duration
-				totalTime time.Duration
-			}{
-				count:     1,
-				minTime:   response.Time,
-				maxTime:   response.Time,
-				totalTime: response.Time,
-			}
-		} else {
-			mergedResponses[response.Response].count++
-			mergedResponses[response.Response].totalTime += response.Time
-			if response.Time < mergedResponses[response.Response].minTime {
-				mergedResponses[response.Response].minTime = response.Time
-			}
-			if response.Time > mergedResponses[response.Response].maxTime {
-				mergedResponses[response.Response].maxTime = response.Time
-			}
-
-		}
-	}
-	var result []MergedDodoResponse
-	for response, data := range mergedResponses {
-		result = append(result, MergedDodoResponse{
-			Response: response,
-			Count:    data.count,
-			AvgTime:  data.totalTime / time.Duration(data.count),
-			MinTime:  data.minTime,
-			MaxTime:  data.maxTime,
+	for key, durations := range mergedResponses {
+		t.AppendRow(table.Row{
+			key,
+			len(durations),
+			utils.MinDuration(durations...),
+			utils.MaxDuration(durations...),
+			utils.AvgDuration(durations...),
 		})
+		t.AppendSeparator()
 	}
-	return result
+	t.AppendRow(table.Row{
+		"Total",
+		totalCount,
+		totalMinDuration,
+		totalMaxDuration,
+		totalDuration / time.Duration(totalCount),
+	})
+	t.Render()
 }
 
-func Run(conf *config.DodoConfig) (DodoResponses, error) {
-	params := setParams(conf.URL, conf.Params)
-	headers := getHeaders(conf.Headers)
-
-	dodosCountForRequest, dodosCountForProxies := conf.DodosCount, conf.DodosCount
-	if dodosCountForRequest > conf.RequestCount {
-		dodosCountForRequest = conf.RequestCount
+// Run executes the HTTP requests based on the provided request configuration.
+// It returns the Responses type, which contains the responses received from all the requests.
+func Run(requestConfig *config.RequestConfig) Responses {
+	if !checkConnection() {
+		utils.PrintAndExit("No internet connection")
 	}
-	proxiesCount := len(conf.Proxies)
-	if dodosCountForProxies > proxiesCount {
-		dodosCountForProxies = proxiesCount
-	}
-	dodosCountForProxies = min(dodosCountForProxies, config.MaxDodosCountForProxies)
+	clientFunc := getClientFunc(
+		requestConfig.Timeout,
+		requestConfig.Proxies,
+		requestConfig.GetValidDodosCountForRequests(),
+		requestConfig.URL,
+	)
 
-	var wg sync.WaitGroup
-	wg.Add(dodosCountForRequest + 1)
-	var requestCountPerDodo int
-	responses := make([][]DodoResponse, dodosCountForRequest)
-	getClient := getClientFunc(conf.Proxies, conf.Timeout, dodosCountForProxies)
+	request := newRequest(
+		requestConfig.URL,
+		requestConfig.Headers,
+		requestConfig.Cookies,
+		requestConfig.Params,
+		requestConfig.Method,
+		requestConfig.Body,
+	)
+	defer fasthttp.ReleaseRequest(request)
+	responses := releaseDodos(
+		request,
+		requestConfig.Timeout,
+		clientFunc,
+		requestConfig.GetValidDodosCountForRequests(),
+		requestConfig.RequestCount,
+	)
 
-	countSlice := make([]int, dodosCountForRequest)
-	go printProgress(&wg, conf.RequestCount, "Dodos Working🔥", &countSlice)
+	return responses
+}
 
-	for i := 0; i < dodosCountForRequest; i++ {
-		if i+1 == dodosCountForRequest {
-			requestCountPerDodo = conf.RequestCount -
-				(i * conf.RequestCount / dodosCountForRequest)
+// releaseDodos sends multiple HTTP requests concurrently using multiple "dodos" (goroutines).
+// It takes a mainRequest as the base request, timeout duration for each request, clientFunc for customizing the client behavior,
+// dodosCount as the number of goroutines to be used, and requestCount as the total number of requests to be sent.
+// It returns the responses received from all the requests.
+func releaseDodos(
+	mainRequest *fasthttp.Request,
+	timeout time.Duration,
+	clientFunc ClientFunc,
+	dodosCount int,
+	requestCount int,
+) Responses {
+	var (
+		wg                  sync.WaitGroup
+		requestCountPerDodo int
+	)
+
+	wg.Add(dodosCount + 1) // +1 for progress tracker
+	responses := make([][]Response, dodosCount)
+	countSlice := make([]int, dodosCount)
+
+	go streamProgress(&wg, requestCount, "Dodos Working🔥", &countSlice)
+
+	for i := 0; i < dodosCount; i++ {
+		if i+1 == dodosCount {
+			requestCountPerDodo = requestCount -
+				(i * requestCount / dodosCount)
 		} else {
-			requestCountPerDodo = ((i + 1) * conf.RequestCount / dodosCountForRequest) -
-				(i * conf.RequestCount / dodosCountForRequest)
+			requestCountPerDodo = ((i + 1) * requestCount / dodosCount) -
+				(i * requestCount / dodosCount)
 		}
+		dodoSpecificRequest := &fasthttp.Request{}
+		mainRequest.CopyTo(dodoSpecificRequest)
+
 		go sendRequest(
+			dodoSpecificRequest,
+			timeout,
 			&responses[i],
 			&countSlice[i],
 			requestCountPerDodo,
-			conf.Method,
-			params,
-			conf.Body,
-			headers,
-			conf.Cookies,
-			getClient,
+			clientFunc,
 			&wg,
 		)
 	}
 	wg.Wait()
-	return utils.Flatten(responses), nil
+	return utils.Flatten(responses)
 }
 
+// sendRequest sends multiple requests concurrently using the provided parameters.
+// It releases the request and response object and marks the completion of the wait group after each request.
+// For each request, it acquires a response object, gets a client, and measures the time taken to complete the request.
+// If an error occurs during the request, the error is recorded in the responseData slice.
 func sendRequest(
-	responseData *[]DodoResponse,
+	request *fasthttp.Request,
+	timeout time.Duration,
+	responseData *[]Response,
 	counter *int,
-	requestCout int,
-	method string,
-	params string,
-	body string,
-	headers http.Header,
-	cookies map[string]string,
-	getClient func() http.Client,
+	requestCount int,
+	getClient ClientFunc,
 	wg *sync.WaitGroup,
 ) {
+	defer fasthttp.ReleaseRequest(request)
 	defer wg.Done()
-	for j := 0; j < requestCout; j++ {
+
+	for range requestCount {
 		func() {
 			defer func() { *counter++ }()
-			req, _ := http.NewRequest(
-				method,
-				params,
-				getBodyReader(body),
-			)
-			req.Header = headers
-			setCookies(req, cookies)
+
+			response := fasthttp.AcquireResponse()
+			defer fasthttp.ReleaseResponse(response)
 			client := getClient()
 			startTime := time.Now()
-			resp, err := client.Do(req)
+			err := client.DoTimeout(request, response, timeout)
 			completedTime := time.Since(startTime)
+
 			if err != nil {
-				*responseData = append(
-					*responseData,
-					DodoResponse{
-						Response: customerrors.RequestErrorsFormater(err),
-						Time:     completedTime,
-					},
-				)
+				*responseData = append(*responseData, Response{
+					StatusCode: 0,
+					Error:      err,
+					Time:       completedTime,
+				})
 				return
 			}
-			defer resp.Body.Close()
-			*responseData = append(
-				*responseData,
-				DodoResponse{
-					Response: resp.Status,
-					Time:     completedTime,
-				},
-			)
+
+			*responseData = append(*responseData, Response{
+				StatusCode: response.StatusCode(),
+				Error:      nil,
+				Time:       completedTime,
+			})
 		}()
 	}
 }
 
-func setCookies(req *http.Request, cookies map[string]string) {
-	for key, value := range cookies {
-		req.AddCookie(&http.Cookie{Name: key, Value: value})
+// getClientFunc returns a ClientFunc based on the provided parameters.
+// If there are proxies available, it checks for active proxies and prompts the user to continue.
+// If there are no active proxies, it asks the user if they want to continue.
+// If the user chooses to continue, it returns a ClientFunc with a shared client or a randomized client.
+// If there are no proxies available, it returns a ClientFunc with a shared client.
+func getClientFunc(
+	timeout time.Duration,
+	proxies []config.Proxy,
+	dodosCount int,
+	URL *url.URL,
+) ClientFunc {
+	isTLS := URL.Scheme == "https"
+	if len(proxies) > 0 {
+		activeProxyClients := getActiveProxyClients(
+			proxies, timeout, dodosCount, URL,
+		)
+		activeProxyClientsCount := len(activeProxyClients)
+		var yesOrNoMessage string
+		if activeProxyClientsCount == 0 {
+			yesOrNoMessage = utils.Colored(
+				utils.Colors.Red,
+				"No active proxies found. Do you want to continue?",
+			)
+		} else {
+			yesOrNoMessage = utils.Colored(
+				utils.Colors.Yellow,
+				fmt.Sprintf(
+					"Found %d active proxies. Do you want to continue?",
+					activeProxyClientsCount,
+				),
+			)
+		}
+		fmt.Println()
+		proceed := readers.CLIYesOrNoReader(yesOrNoMessage)
+		if !proceed {
+			utils.PrintAndExit("Exiting...")
+		}
+		fmt.Println()
+		if activeProxyClientsCount == 0 {
+			client := &fasthttp.HostClient{
+				IsTLS:               isTLS,
+				Addr:                URL.Host,
+				MaxIdleConnDuration: timeout,
+				MaxConnDuration:     timeout,
+				WriteTimeout:        timeout,
+				ReadTimeout:         timeout,
+			}
+			return getSharedClientFunc(client)
+		} else if activeProxyClientsCount == 1 {
+			client := &activeProxyClients[0]
+			return getSharedClientFunc(client)
+		}
+		return getRandomizedClientFunc(activeProxyClients, activeProxyClientsCount)
+	}
+
+	client := &fasthttp.HostClient{
+		IsTLS:               isTLS,
+		Addr:                URL.Host,
+		MaxIdleConnDuration: timeout,
+		MaxConnDuration:     timeout,
+		WriteTimeout:        timeout,
+		ReadTimeout:         timeout,
+	}
+	return getSharedClientFunc(client)
+}
+
+// getActiveProxyClients divides the proxies into slices based on the number of dodos and
+// launches goroutines to find active proxy clients for each slice.
+// It uses a progress tracker to monitor the progress of the search.
+// Once all goroutines have completed, the function waits for them to finish and
+// returns a flattened slice of active proxy clients.
+func getActiveProxyClients(
+	proxies []config.Proxy,
+	timeout time.Duration,
+	dodosCount int,
+	URL *url.URL,
+) []fasthttp.HostClient {
+	activeProxyClientsArray := make([][]fasthttp.HostClient, dodosCount)
+	proxiesCount := len(proxies)
+
+	var wg sync.WaitGroup
+	wg.Add(dodosCount + 1) // +1 for progress tracker
+	var proxiesSlice []config.Proxy
+
+	countSlice := make([]int, dodosCount)
+	go streamProgress(&wg, proxiesCount, "Searching for active proxies🌐", &countSlice)
+
+	for i := 0; i < dodosCount; i++ {
+		if i+1 == dodosCount {
+			proxiesSlice = proxies[i*proxiesCount/dodosCount:]
+		} else {
+			proxiesSlice = proxies[i*proxiesCount/dodosCount : (i+1)*proxiesCount/dodosCount]
+		}
+		go findActiveProxyClients(
+			proxiesSlice,
+			timeout,
+			&activeProxyClientsArray[i],
+			&countSlice[i],
+			URL,
+			&wg,
+		)
+	}
+	wg.Wait()
+	return utils.Flatten(activeProxyClientsArray)
+}
+
+// findActiveProxyClients finds the active proxy clients by sending a GET request to each proxy in the given slice.
+// The function runs each request in a separate goroutine and updates the activeProxyClients slice with the active proxy clients.
+// It also increments the count for each successful request.
+// The function is designed to be used as a concurrent operation, and it uses the WaitGroup to wait for all goroutines to finish.
+func findActiveProxyClients(
+	proxies []config.Proxy,
+	timeout time.Duration,
+	activeProxyClients *[]fasthttp.HostClient,
+	count *int,
+	URL *url.URL,
+	wg *sync.WaitGroup,
+) {
+	defer wg.Done()
+
+	request := fasthttp.AcquireRequest()
+	defer fasthttp.ReleaseRequest(request)
+	request.SetRequestURI(config.ProxyCheckURL)
+	request.Header.SetMethod("GET")
+
+	for _, proxy := range proxies {
+		func() {
+			defer func() { *count++ }()
+
+			response := fasthttp.AcquireResponse()
+			defer fasthttp.ReleaseResponse(response)
+
+			dialFunc, err := getDialFunc(&proxy, timeout)
+			if err != nil {
+				return
+			}
+			client := &fasthttp.Client{
+				Dial: dialFunc,
+			}
+			err = client.DoTimeout(request, response, timeout)
+			if err != nil {
+				return
+			}
+
+			if response.StatusCode() == 200 {
+				*activeProxyClients = append(
+					*activeProxyClients,
+					fasthttp.HostClient{
+						IsTLS:               URL.Scheme == "https",
+						Addr:                URL.Host + ":443",
+						Dial:                dialFunc,
+						MaxIdleConnDuration: timeout,
+						MaxConnDuration:     timeout,
+						WriteTimeout:        timeout,
+						ReadTimeout:         timeout,
+					},
+				)
+			}
+		}()
 	}
 }
 
-func getHeaders(headers map[string]string) http.Header {
-	httpHeaders := make(http.Header, len(headers))
-	httpHeaders.Set("User-Agent", config.DefaultUserAgent)
+// getDialFunc returns a fasthttp.DialFunc based on the provided proxy configuration.
+// It takes a pointer to a config.Proxy struct as input and returns a fasthttp.DialFunc and an error.
+// The function parses the proxy URL, determines the scheme (socks5, socks5h, http, or https),
+// and creates a dialer accordingly. If the proxy URL is invalid or the scheme is not supported,
+// it returns an error.
+func getDialFunc(proxy *config.Proxy, timeout time.Duration) (fasthttp.DialFunc, error) {
+	parsedProxyURL, err := url.Parse(proxy.URL)
+	if err != nil {
+		return nil, err
+	}
+
+	var dialer fasthttp.DialFunc
+	if parsedProxyURL.Scheme == "socks5" || parsedProxyURL.Scheme == "socks5h" {
+		if proxy.Username != "" {
+			dialer = fasthttpproxy.FasthttpSocksDialer(
+				fmt.Sprintf(
+					"%s://%s:%s@%s",
+					parsedProxyURL.Scheme,
+					proxy.Username,
+					proxy.Password,
+					parsedProxyURL.Host,
+				),
+			)
+		} else {
+			dialer = fasthttpproxy.FasthttpSocksDialer(
+				fmt.Sprintf(
+					"%s://%s",
+					parsedProxyURL.Scheme,
+					parsedProxyURL.Host,
+				),
+			)
+		}
+	} else if parsedProxyURL.Scheme == "http" {
+		if proxy.Username != "" {
+			dialer = fasthttpproxy.FasthttpHTTPDialerTimeout(
+				fmt.Sprintf(
+					"%s:%s@%s",
+					proxy.Username, proxy.Password, parsedProxyURL.Host,
+				),
+				timeout,
+			)
+		} else {
+			dialer = fasthttpproxy.FasthttpHTTPDialerTimeout(
+				parsedProxyURL.Host,
+				timeout,
+			)
+		}
+	} else {
+		return nil, err
+	}
+	return dialer, nil
+}
+
+// getRandomizedClientFunc returns a ClientFunc that randomly selects a HostClient from the given list of clients.
+// The clientsCount parameter specifies the number of clients in the slice.
+// The returned ClientFunc can be used to share the same client instance across multiple goroutines.
+func getRandomizedClientFunc(
+	clients []fasthttp.HostClient,
+	clientsCount int,
+) ClientFunc {
+	return func() *fasthttp.HostClient {
+		return &clients[rand.Intn(clientsCount)]
+	}
+}
+
+// getSharedClientFunc returns a ClientFunc that returns the provided client.
+// The returned ClientFunc can be used to share the same client instance across multiple goroutines.
+func getSharedClientFunc(client *fasthttp.HostClient) ClientFunc {
+	return func() *fasthttp.HostClient {
+		return client
+	}
+}
+
+// newRequest creates a new fasthttp.Request object with the provided parameters.
+// It sets the request URI, host header, headers, cookies, params, method, and body.
+func newRequest(
+	URL *url.URL,
+	Headers map[string]string,
+	Cookies map[string]string,
+	Params map[string]string,
+	Method string,
+	Body string,
+) *fasthttp.Request {
+	request := fasthttp.AcquireRequest()
+	request.SetRequestURI(URL.Path)
+
+	// Set the host of the request to the host header
+	// If the host header is not set, the request will fail
+	// If there is host header in the headers, it will be overwritten
+	request.Header.Set("Host", URL.Host)
+	setRequestHeaders(request, Headers)
+	setRequestCookies(request, Cookies)
+	setRequestParams(request, Params)
+	setRequestMethod(request, Method)
+	setRequestBody(request, Body)
+	if URL.Scheme == "https" {
+		request.URI().SetScheme("https")
+	}
+
+	return request
+}
+
+// setRequestHeaders sets the headers of the given request with the provided key-value pairs.
+func setRequestHeaders(req *fasthttp.Request, headers map[string]string) {
 	for key, value := range headers {
-		httpHeaders.Add(key, value)
+		req.Header.Set(key, value)
 	}
-	return httpHeaders
 }
 
-func getBodyReader(bodyString string) io.Reader {
-	if bodyString == "" {
-		return http.NoBody
+// setRequestCookies sets the cookies in the given request.
+func setRequestCookies(req *fasthttp.Request, cookies map[string]string) {
+	for key, value := range cookies {
+		req.Header.SetCookie(key, value)
 	}
-	return strings.NewReader(bodyString)
-
 }
 
-func setParams(baseURL string, params map[string]string) string {
-	if len(params) == 0 {
-		return baseURL
-	}
+// setRequestParams sets the query parameters of the given request based on the provided map of key-value pairs.
+func setRequestParams(req *fasthttp.Request, params map[string]string) {
 	urlParams := url.Values{}
 	for key, value := range params {
 		urlParams.Add(key, value)
 	}
-	baseURLWithParams := fmt.Sprintf("%s?%s", baseURL, urlParams.Encode())
-	return baseURLWithParams
+	req.URI().SetQueryString(urlParams.Encode())
 }
 
-func printProgress(wg *sync.WaitGroup, total int, message string, countSlice *[]int) {
+// setRequestMethod sets the HTTP request method for the given request.
+func setRequestMethod(req *fasthttp.Request, method string) {
+	req.Header.SetMethod(method)
+}
+
+// setRequestBody sets the request body of the given fasthttp.Request object.
+// The body parameter is a string that will be converted to a byte slice and set as the request body.
+func setRequestBody(req *fasthttp.Request, body string) {
+	req.SetBody([]byte(body))
+}
+
+// streamProgress displays the progress of a stream operation.
+// It takes a wait group, the total number of items to process, a message to display,
+// and a pointer to a slice of counts for each item processed.
+// The function runs in a separate goroutine and updates the progress bar until all items are processed.
+// Once all items are processed, it marks the progress bar as done and stops rendering.
+func streamProgress(
+	wg *sync.WaitGroup,
+	total int,
+	message string,
+	countSlice *[]int,
+) {
 	defer wg.Done()
 	pw := progress.NewWriter()
 	pw.SetTrackerPosition(progress.PositionRight)
@@ -250,7 +531,10 @@ func printProgress(wg *sync.WaitGroup, total int, message string, countSlice *[]
 	pw.SetTrackerLength(40)
 	pw.SetUpdateFrequency(time.Millisecond * 250)
 	go pw.Render()
-	dodosTracker := progress.Tracker{Message: message, Total: int64(total)}
+	dodosTracker := progress.Tracker{
+		Message: message,
+		Total:   int64(total),
+	}
 	pw.AppendTracker(&dodosTracker)
 	for {
 		totalCount := 0
@@ -268,132 +552,16 @@ func printProgress(wg *sync.WaitGroup, total int, message string, countSlice *[]
 	pw.Stop()
 }
 
-func getClientFunc(proxies []config.Proxy, timeout time.Duration, dodosCount int) func() http.Client {
-	if len(proxies) > 0 {
-		activeProxyClientsArray := make([][]http.Client, dodosCount)
-		proxiesCount := len(proxies)
-		var wg sync.WaitGroup
-		wg.Add(dodosCount + 1)
-		var proxiesSlice []config.Proxy
-
-		countSlice := make([]int, dodosCount)
-		go printProgress(&wg, proxiesCount, "Searching for active proxies🌐", &countSlice)
-
-		for i := 0; i < dodosCount; i++ {
-			if i+1 == dodosCount {
-				proxiesSlice = proxies[i*proxiesCount/dodosCount:]
-			} else {
-				proxiesSlice = proxies[i*proxiesCount/dodosCount : (i+1)*proxiesCount/dodosCount]
-			}
-			go findActiveProxyClients(
-				proxiesSlice,
-				timeout,
-				&activeProxyClientsArray[i],
-				&countSlice[i],
-				&wg,
-			)
-		}
-		wg.Wait()
-
-		activeProxyClients := utils.Flatten(activeProxyClientsArray)
-		activeProxyClientsCount := len(activeProxyClients)
-		var yesOrNoMessage string
-		if activeProxyClientsCount == 0 {
-			yesOrNoMessage = utils.Colored(
-				utils.Colors.Red,
-				"No active proxies found. Do you want to continue?",
-			)
-		} else {
-			yesOrNoMessage = utils.Colored(
-				utils.Colors.Yellow,
-				fmt.Sprintf("Found %d active proxies. Do you want to continue?", activeProxyClientsCount),
-			)
-		}
-		fmt.Println()
-		proceed := readers.CLIYesOrNoReader(yesOrNoMessage)
-		if !proceed {
-			utils.PrintAndExit("Exiting...")
-		}
-		fmt.Println()
-		if activeProxyClientsCount == 0 {
-			return func() http.Client {
-				return getNewClient(timeout)
-			}
-		}
-		return func() http.Client {
-			return getRandomClient(activeProxyClients, activeProxyClientsCount)
-		}
-	}
-	return func() http.Client {
-		return getNewClient(timeout)
-	}
-}
-
-func findActiveProxyClients(
-	proxies []config.Proxy,
-	timeout time.Duration,
-	activeProxyClients *[]http.Client,
-	counter *int,
-	wg *sync.WaitGroup) {
-	defer wg.Done()
-	for _, proxy := range proxies {
-		func() {
-			defer func() { *counter++ }()
-			transport, err := getTransport(proxy)
-			if err != nil {
-				return
-			}
-			client := &http.Client{
-				Transport: transport,
-				Timeout:   timeout,
-			}
-			resp, err := client.Get(config.ProxyCheckURL)
-			if err != nil {
-				return
-			}
-			defer resp.Body.Close()
-			if resp.StatusCode == 200 {
-				*activeProxyClients = append(
-					*activeProxyClients,
-					http.Client{
-						Transport: transport,
-						Timeout:   timeout,
-					},
-				)
-			}
-		}()
-	}
-}
-
-func getTransport(proxy config.Proxy) (*http.Transport, error) {
-	proxyURL, err := url.Parse(proxy.URL)
+// checkConnection checks the internet connection by making requests to different websites.
+// It returns true if the connection is successful, otherwise false.
+func checkConnection() bool {
+	_, _, err := fasthttp.Get(nil, "https://www.google.com")
 	if err != nil {
-		return nil, err
-	}
-	if proxy.Username != "" {
-		transport := &http.Transport{
-			Proxy: http.ProxyURL(proxyURL),
+		_, _, err = fasthttp.Get(nil, "https://www.bing.com")
+		if err != nil {
+			_, _, err = fasthttp.Get(nil, "https://www.yahoo.com")
+			return err == nil
 		}
-		return transport, nil
 	}
-
-	transport := &http.Transport{
-		Proxy: http.ProxyURL(
-			&url.URL{
-				Scheme: proxyURL.Scheme,
-				Host:   proxyURL.Host,
-				User:   url.UserPassword(proxy.Username, proxy.Password),
-			},
-		),
-	}
-	return transport, nil
-}
-
-func getRandomClient(clients []http.Client, clientsCount int) http.Client {
-	randomIndex := rand.Intn(clientsCount)
-	return clients[randomIndex]
-}
-
-func getNewClient(timeout time.Duration) http.Client {
-	return http.Client{Timeout: timeout}
+	return true
 }

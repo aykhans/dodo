@@ -2,7 +2,7 @@
     "method": "GET",
     "url": "https://example.com",
     "timeout": 10000,
-    "dodos_count": 1,
+    "dodos_count": 50,
     "request_count": 1000,
     "params": {},
     "headers": {},
@@ -10,7 +10,7 @@
     "body": "",
     "proxies": [
         {
-            "url": "http://example:8080",
+            "url": "http://example.com:8080",
             "username": "username",
             "password": "password"
         },
