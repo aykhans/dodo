@@ -481,6 +481,7 @@ func newRequest(
 
 // setRequestHeaders sets the headers of the given request with the provided key-value pairs.
 func setRequestHeaders(req *fasthttp.Request, headers map[string]string) {
+	req.Header.Set("User-Agent", config.DefaultUserAgent)
 	for key, value := range headers {
 		req.Header.Set(key, value)
 	}
