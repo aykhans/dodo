@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"net/url"
 	"os"
 	"time"
 
@@ -23,9 +24,9 @@ type IConfig interface {
 	MergeConfigs(newConfig IConfig) IConfig
 }
 
-type DodoConfig struct {
+type RequestConfig struct {
 	Method       string
-	URL          string
+	URL          *url.URL
 	Timeout      time.Duration
 	DodosCount   int
 	RequestCount int
@@ -36,7 +37,7 @@ type DodoConfig struct {
 	Body         string
 }
 
-func (config *DodoConfig) Print() {
+func (config *RequestConfig) Print() {
 	t := table.NewWriter()
 	t.SetOutputMirror(os.Stdout)
 	t.SetStyle(table.StyleLight)
@@ -53,6 +54,14 @@ func (config *DodoConfig) Print() {
 		len(config.Params), len(config.Headers),
 		len(config.Cookies), len(config.Proxies), config.Body})
 	t.Render()
+}
+
+func (config *RequestConfig) GetValidDodosCountForRequests() int {
+	return min(config.DodosCount, config.RequestCount)
+}
+
+func (config *RequestConfig) GetValidDodosCountForProxies() int {
+	return min(config.DodosCount, len(config.Proxies), MaxDodosCountForProxies)
 }
 
 type Config struct {
