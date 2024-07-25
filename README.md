@@ -4,10 +4,19 @@
 </p>
 
 ## Installation
+### With Docker (Recommended)
+Pull the Dodo image from Docker Hub:
+```sh
+docker pull aykhans/dodo:latest
+```
+If you use Dodo with Docker and a config file, you must provide the config.json file as a volume to the Docker run command (not as the "-c config.json" argument), as shown in the examples in the [usage](#usage) section.
+
+### With Binary File
 You can grab binaries in the [releases](https://github.com/aykhans/dodo/releases) section.
 
 ### Build from Source
-To build Dodo from source, you need to have [Go1.22+](https://golang.org/dl/) installed. Follow the steps below:
+To build Dodo from source, you need to have [Go1.22+](https://golang.org/dl/) installed. <br>
+Follow the steps below to build dodo:
 
 1. **Clone the repository:**
 
@@ -37,6 +46,10 @@ Send 1000 GET requests to https://example.com with 10 parallel dodos (threads) a
 
 ```sh
 dodo -u https://example.com -m GET -d 10 -r 1000 -t 2000
+```
+With Docker:
+```sh
+docker run --rm aykhans/dodo -u https://example.com -m GET -d 10 -r 1000 -t 2000
 ```
 
 ### 2. JSON config file
@@ -69,12 +82,20 @@ Send 1000 GET requests to https://example.com with 5 parallel dodos (threads) an
 ```sh
 dodo -c /path/config.json
 ```
+With Docker:
+```sh
+docker run --rm -v ./path/config.json:/dodo/config.json -i aykhans/dodo
+```
 
 ### 3. Both (CLI & JSON)
 Override the config file arguments with CLI arguments:
 
 ```sh
 dodo -c /path/config.json -u https://example.com -m GET -d 10 -r 1000 -t 2000
+```
+With Docker:
+```sh
+docker run --rm -v ./path/config.json:/dodo/config.json -i aykhans/dodo -u https://example.com -m GET -d 10 -r 1000 -t 2000
 ```
 
 ## CLI and JSON Config Parameters
@@ -94,4 +115,3 @@ dodo -c /path/config.json -u https://example.com -m GET -d 10 -r 1000 -t 2000
 
 ## Examples
 ![dodo_example](https://raw.githubusercontent.com/aykhans/dodo/main/assets/dodo-example.gif)
-

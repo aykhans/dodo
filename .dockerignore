@@ -1,0 +1,10 @@
+.github
+assets
+binaries
+dodo
+.git
+.gitignore
+README.md
+LICENSE
+config.json
+build.sh
