@@ -1,9 +1,12 @@
 package main
 
 import (
+	"context"
 	"net/url"
 	"os"
+	"os/signal"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/aykhans/dodo/config"
@@ -79,6 +82,24 @@ func main() {
 	}
 	dodoConf.Print()
 
-	responses := requests.Run(dodoConf)
+	ctx, cancel := context.WithCancel(context.Background())
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
+	go func() {
+		<-sigChan
+		cancel()
+	}()
+
+	responses, err := requests.Run(ctx, dodoConf)
+	if err != nil {
+		if customerrors.Is(err, customerrors.ErrInterrupt) {
+			utils.PrintlnC(utils.Colors.Yellow, err.Error())
+			return
+		} else if customerrors.Is(err, customerrors.ErrNoInternet) {
+			utils.PrintAndExit("No internet connection")
+		}
+		panic(err)
+	}
+
 	responses.Print()
 }
