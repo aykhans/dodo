@@ -10,6 +10,8 @@ import (
 var (
 	ErrInvalidJSON = errors.New("invalid JSON file")
 	ErrInvalidFile = errors.New("invalid file")
+	ErrInterrupt   = errors.New("interrupted")
+	ErrNoInternet  = errors.New("no internet connection")
 )
 
 func As(err error, target any) bool {
