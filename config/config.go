@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	VERSION                 = "0.3.0"
+	VERSION                 = "0.3.1"
 	DefaultUserAgent        = "Dodo/" + VERSION
 	ProxyCheckURL           = "https://www.google.com"
 	DefaultMethod           = "GET"
@@ -41,18 +41,29 @@ func (config *RequestConfig) Print() {
 	t := table.NewWriter()
 	t.SetOutputMirror(os.Stdout)
 	t.SetStyle(table.StyleLight)
-	t.AppendRow(table.Row{
-		"Method", "URL", "Timeout", "Dodos",
-		"Request Count", "Params Count",
-		"Headers Count", "Cookies Count",
-		"Proxies Count", "Body"})
+	t.SetAllowedRowLength(125)
+
+	t.AppendHeader(table.Row{"Request Configuration"})
+	t.AppendRow(table.Row{"Method", config.Method})
 	t.AppendSeparator()
-	t.AppendRow(table.Row{
-		config.Method, config.URL,
-		fmt.Sprintf("%dms", config.Timeout/time.Millisecond),
-		config.DodosCount, config.RequestCount,
-		len(config.Params), len(config.Headers),
-		len(config.Cookies), len(config.Proxies), config.Body})
+	t.AppendRow(table.Row{"URL", config.URL})
+	t.AppendSeparator()
+	t.AppendRow(table.Row{"Timeout", fmt.Sprintf("%dms", config.Timeout/time.Millisecond)})
+	t.AppendSeparator()
+	t.AppendRow(table.Row{"Dodos", config.DodosCount})
+	t.AppendSeparator()
+	t.AppendRow(table.Row{"Request Count", config.RequestCount})
+	t.AppendSeparator()
+	t.AppendRow(table.Row{"Params Count", len(config.Params)})
+	t.AppendSeparator()
+	t.AppendRow(table.Row{"Headers Count", len(config.Headers)})
+	t.AppendSeparator()
+	t.AppendRow(table.Row{"Cookies Count", len(config.Cookies)})
+	t.AppendSeparator()
+	t.AppendRow(table.Row{"Proxies Count", len(config.Proxies)})
+	t.AppendSeparator()
+	t.AppendRow(table.Row{"Body", config.Body})
+
 	t.Render()
 }
 

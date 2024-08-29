@@ -65,6 +65,7 @@ func (respones *Responses) Print() {
 	t := table.NewWriter()
 	t.SetOutputMirror(os.Stdout)
 	t.SetStyle(table.StyleLight)
+	t.SetAllowedRowLength(125)
 	t.AppendHeader(table.Row{
 		"Response",
 		"Count",
