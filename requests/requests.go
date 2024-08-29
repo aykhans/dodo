@@ -109,7 +109,7 @@ func Run(ctx context.Context, requestConfig *config.RequestConfig) (Responses, e
 		ctx,
 		requestConfig.Timeout,
 		requestConfig.Proxies,
-		requestConfig.GetValidDodosCountForRequests(),
+		requestConfig.GetValidDodosCountForProxies(),
 		requestConfig.URL,
 	)
 	if clientFunc == nil {
