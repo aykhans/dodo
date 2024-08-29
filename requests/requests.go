@@ -405,12 +405,17 @@ func findActiveProxyClients(
 				return
 			}
 
+			isTLS := URL.Scheme == "https"
+			addr := URL.Host
+			if isTLS && URL.Port() == "" {
+				addr += ":443"
+			}
 			if response.StatusCode() == 200 {
 				*activeProxyClients = append(
 					*activeProxyClients,
 					fasthttp.HostClient{
-						IsTLS:               URL.Scheme == "https",
-						Addr:                URL.Host + ":443",
+						IsTLS:               isTLS,
+						Addr:                addr,
 						Dial:                dialFunc,
 						MaxIdleConnDuration: timeout,
 						MaxConnDuration:     timeout,
