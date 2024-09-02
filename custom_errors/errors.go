@@ -12,6 +12,7 @@ var (
 	ErrInvalidFile = errors.New("invalid file")
 	ErrInterrupt   = errors.New("interrupted")
 	ErrNoInternet  = errors.New("no internet connection")
+	ErrTimeout     = errors.New("timeout")
 )
 
 func As(err error, target any) bool {
