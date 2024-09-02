@@ -233,7 +233,7 @@ func sendRequest(
 				return
 			}
 			defer fasthttp.ReleaseResponse(response)
-			fmt.Println(string(response.Body()))
+
 			*responseData = append(*responseData, Response{
 				StatusCode: response.StatusCode(),
 				Error:      nil,
@@ -417,7 +417,6 @@ func findActiveProxyClients(
 			}
 			defer client.CloseIdleConnections()
 
-			startTime := time.Now()
 			ch := make(chan error)
 			go func() {
 				err := client.DoTimeout(request, response, timeout)
@@ -426,18 +425,14 @@ func findActiveProxyClients(
 			select {
 			case err := <-ch:
 				if err != nil {
-					fmt.Println(time.Since(startTime))
 					return
 				}
 				break
 			case <-time.After(timeout):
-				fmt.Println(time.Since(startTime))
 				return
 			case <-ctx.Done():
-				fmt.Println(time.Since(startTime))
 				return
 			}
-			fmt.Println(time.Since(startTime))
 
 			isTLS := URL.Scheme == "https"
 			addr := URL.Host
