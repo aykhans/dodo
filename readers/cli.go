@@ -14,7 +14,6 @@ func CLIConfigReader() (*config.CLIConfig, error) {
 	var (
 		returnNil    = false
 		cliConfig    = &config.CLIConfig{}
-		// y            bool
 		dodosCount   int
 		requestCount int
 		timeout      int

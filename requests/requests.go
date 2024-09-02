@@ -291,7 +291,7 @@ func getClientDoFunc(
 			)
 		}
 		if !yes {
-			response := readers.CLIYesOrNoReader("\n" + yesOrNoMessage, yesOrNoDefault)
+			response := readers.CLIYesOrNoReader("\n"+yesOrNoMessage, yesOrNoDefault)
 			if !response {
 				utils.PrintAndExit("Exiting...")
 			}
