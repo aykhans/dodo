@@ -102,6 +102,7 @@ docker run --rm -v ./path/config.json:/dodo/config.json -i aykhans/dodo -u https
 | Parameter | JSON config file | CLI Flag | CLI Short Flag | Type | Description | Default |
 | ----------- | ----------- | ----------- | ----------- | ----------- | ----------- | ----------- |
 | Config file | - | --config-file | -c | String | Path to the JSON config file | - |
+| Yes | - | --yes | -y | Boolean | Answer yes to all questions | false |
 | URL | url | --url | -u | String | URL to send the request to | - |
 | Method | method | --method | -m | String | HTTP method | GET |
 | Request count | request_count | --request-count | -r | Integer | Total number of requests to send | 1000 |
