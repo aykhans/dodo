@@ -110,6 +110,7 @@ func Run(ctx context.Context, requestConfig *config.RequestConfig) (Responses, e
 		requestConfig.Timeout,
 		requestConfig.Proxies,
 		requestConfig.GetValidDodosCountForProxies(),
+		requestConfig.Yes,
 		requestConfig.URL,
 	)
 	if clientDoFunc == nil {
@@ -260,6 +261,7 @@ func getClientDoFunc(
 	timeout time.Duration,
 	proxies []config.Proxy,
 	dodosCount int,
+	yes bool,
 	URL *url.URL,
 ) ClientDoFunc {
 	isTLS := URL.Scheme == "https"
@@ -276,7 +278,7 @@ func getClientDoFunc(
 		if activeProxyClientsCount == 0 {
 			yesOrNoDefault = false
 			yesOrNoMessage = utils.Colored(
-				utils.Colors.Red,
+				utils.Colors.Yellow,
 				"No active proxies found. Do you want to continue?",
 			)
 		} else {
@@ -288,10 +290,11 @@ func getClientDoFunc(
 				),
 			)
 		}
-		fmt.Println()
-		proceed := readers.CLIYesOrNoReader(yesOrNoMessage, yesOrNoDefault)
-		if !proceed {
-			utils.PrintAndExit("Exiting...")
+		if !yes {
+			response := readers.CLIYesOrNoReader("\n" + yesOrNoMessage, yesOrNoDefault)
+			if !response {
+				utils.PrintAndExit("Exiting...")
+			}
 		}
 		fmt.Println()
 		if activeProxyClientsCount == 0 {

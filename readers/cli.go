@@ -14,6 +14,7 @@ func CLIConfigReader() (*config.CLIConfig, error) {
 	var (
 		returnNil    = false
 		cliConfig    = &config.CLIConfig{}
+		// y            bool
 		dodosCount   int
 		requestCount int
 		timeout      int
@@ -45,6 +46,7 @@ func CLIConfigReader() (*config.CLIConfig, error) {
 	)
 
 	rootCmd.Flags().StringVarP(&cliConfig.ConfigFile, "config-file", "c", "", "Path to the config file")
+	rootCmd.Flags().BoolVarP(&cliConfig.Yes, "yes", "y", false, "Answer yes to all questions")
 	rootCmd.Flags().StringVarP(&cliConfig.Method, "method", "m", "", fmt.Sprintf("HTTP Method (default %s)", config.DefaultMethod))
 	rootCmd.Flags().StringVarP(&cliConfig.URL, "url", "u", "", "URL for stress testing")
 	rootCmd.Flags().IntVarP(&dodosCount, "dodos-count", "d", config.DefaultDodosCount, "Number of dodos(threads)")

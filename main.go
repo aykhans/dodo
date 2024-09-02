@@ -68,7 +68,7 @@ func main() {
 	if err != nil {
 		utils.PrintErrAndExit(err)
 	}
-	dodoConf := &config.RequestConfig{
+	requestConf := &config.RequestConfig{
 		Method:       conf.Method,
 		URL:          parsedURL,
 		Timeout:      time.Duration(conf.Timeout) * time.Millisecond,
@@ -79,13 +79,16 @@ func main() {
 		Cookies:      jsonConf.Cookies,
 		Proxies:      jsonConf.Proxies,
 		Body:         jsonConf.Body,
+		Yes:          cliConf.Yes,
 	}
-	dodoConf.Print()
-	response := readers.CLIYesOrNoReader("Do you want to continue?", true)
-	if response {
-		utils.PrintlnC(utils.Colors.Green, "Starting Dodo\n")
-	} else {
-		utils.PrintAndExit("Exiting...")
+	requestConf.Print()
+	if !cliConf.Yes {
+		response := readers.CLIYesOrNoReader("Do you want to continue?", true)
+		if response {
+			utils.PrintlnC(utils.Colors.Green, "Starting Dodo\n")
+		} else {
+			utils.PrintAndExit("Exiting...")
+		}
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -96,7 +99,7 @@ func main() {
 		cancel()
 	}()
 
-	responses, err := requests.Run(ctx, dodoConf)
+	responses, err := requests.Run(ctx, requestConf)
 	if err != nil {
 		if customerrors.Is(err, customerrors.ErrInterrupt) {
 			utils.PrintlnC(utils.Colors.Yellow, err.Error())
