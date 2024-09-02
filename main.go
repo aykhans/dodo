@@ -81,6 +81,12 @@ func main() {
 		Body:         jsonConf.Body,
 	}
 	dodoConf.Print()
+	response := readers.CLIYesOrNoReader("Do you want to continue?", true)
+	if response {
+		utils.PrintlnC(utils.Colors.Green, "Starting Dodo\n")
+	} else {
+		utils.PrintAndExit("Exiting...")
+	}
 
 	ctx, cancel := context.WithCancel(context.Background())
 	sigChan := make(chan os.Signal, 1)
