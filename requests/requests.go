@@ -272,7 +272,9 @@ func getClientDoFunc(
 		}
 		activeProxyClientsCount := len(activeProxyClients)
 		var yesOrNoMessage string
+		var yesOrNoDefault bool
 		if activeProxyClientsCount == 0 {
+			yesOrNoDefault = false
 			yesOrNoMessage = utils.Colored(
 				utils.Colors.Red,
 				"No active proxies found. Do you want to continue?",
@@ -287,7 +289,7 @@ func getClientDoFunc(
 			)
 		}
 		fmt.Println()
-		proceed := readers.CLIYesOrNoReader(yesOrNoMessage)
+		proceed := readers.CLIYesOrNoReader(yesOrNoMessage, yesOrNoDefault)
 		if !proceed {
 			utils.PrintAndExit("Exiting...")
 		}

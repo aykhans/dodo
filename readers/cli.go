@@ -75,11 +75,27 @@ func CLIConfigReader() (*config.CLIConfig, error) {
 	return cliConfig, nil
 }
 
-func CLIYesOrNoReader(message string) bool {
+// CLIYesOrNoReader reads a yes or no answer from the command line.
+// It prompts the user with the given message and default value,
+// and returns true if the user answers "y" or "Y", and false otherwise.
+// If there is an error while reading the input, it returns false.
+// If the user simply presses enter without providing any input,
+// it returns the default value specified by the `dft` parameter.
+func CLIYesOrNoReader(message string, dft bool) bool {
 	var answer string
-	fmt.Printf("%s [y/N]: ", message)
+	defaultMessage := "Y/n"
+	if !dft {
+		defaultMessage = "y/N"
+	}
+	fmt.Printf("%s [%s]: ", message, defaultMessage)
 	if _, err := fmt.Scanln(&answer); err != nil {
+		if err.Error() == "unexpected newline" {
+			return dft
+		}
 		return false
+	}
+	if answer == "" {
+		return dft
 	}
 	return answer == "y" || answer == "Y"
 }
