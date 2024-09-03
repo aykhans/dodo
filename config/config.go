@@ -35,6 +35,7 @@ type RequestConfig struct {
 	Cookies      map[string]string
 	Proxies      []Proxy
 	Body         string
+	Yes          bool
 }
 
 func (config *RequestConfig) Print() {
@@ -152,6 +153,7 @@ func (config *JSONConfig) MergeConfigs(newConfig *JSONConfig) {
 
 type CLIConfig struct {
 	Config
+	Yes        bool   `json:"yes" validate:"omitempty"`
 	ConfigFile string `validation_name:"config-file" validate:"omitempty,filepath"`
 }
 

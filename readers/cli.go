@@ -45,6 +45,7 @@ func CLIConfigReader() (*config.CLIConfig, error) {
 	)
 
 	rootCmd.Flags().StringVarP(&cliConfig.ConfigFile, "config-file", "c", "", "Path to the config file")
+	rootCmd.Flags().BoolVarP(&cliConfig.Yes, "yes", "y", false, "Answer yes to all questions")
 	rootCmd.Flags().StringVarP(&cliConfig.Method, "method", "m", "", fmt.Sprintf("HTTP Method (default %s)", config.DefaultMethod))
 	rootCmd.Flags().StringVarP(&cliConfig.URL, "url", "u", "", "URL for stress testing")
 	rootCmd.Flags().IntVarP(&dodosCount, "dodos-count", "d", config.DefaultDodosCount, "Number of dodos(threads)")
@@ -75,11 +76,27 @@ func CLIConfigReader() (*config.CLIConfig, error) {
 	return cliConfig, nil
 }
 
-func CLIYesOrNoReader(message string) bool {
+// CLIYesOrNoReader reads a yes or no answer from the command line.
+// It prompts the user with the given message and default value,
+// and returns true if the user answers "y" or "Y", and false otherwise.
+// If there is an error while reading the input, it returns false.
+// If the user simply presses enter without providing any input,
+// it returns the default value specified by the `dft` parameter.
+func CLIYesOrNoReader(message string, dft bool) bool {
 	var answer string
-	fmt.Printf("%s [y/N]: ", message)
+	defaultMessage := "Y/n"
+	if !dft {
+		defaultMessage = "y/N"
+	}
+	fmt.Printf("%s [%s]: ", message, defaultMessage)
 	if _, err := fmt.Scanln(&answer); err != nil {
+		if err.Error() == "unexpected newline" {
+			return dft
+		}
 		return false
+	}
+	if answer == "" {
+		return dft
 	}
 	return answer == "y" || answer == "Y"
 }

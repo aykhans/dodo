@@ -110,6 +110,7 @@ func Run(ctx context.Context, requestConfig *config.RequestConfig) (Responses, e
 		requestConfig.Timeout,
 		requestConfig.Proxies,
 		requestConfig.GetValidDodosCountForProxies(),
+		requestConfig.Yes,
 		requestConfig.URL,
 	)
 	if clientDoFunc == nil {
@@ -260,6 +261,7 @@ func getClientDoFunc(
 	timeout time.Duration,
 	proxies []config.Proxy,
 	dodosCount int,
+	yes bool,
 	URL *url.URL,
 ) ClientDoFunc {
 	isTLS := URL.Scheme == "https"
@@ -272,9 +274,11 @@ func getClientDoFunc(
 		}
 		activeProxyClientsCount := len(activeProxyClients)
 		var yesOrNoMessage string
+		var yesOrNoDefault bool
 		if activeProxyClientsCount == 0 {
+			yesOrNoDefault = false
 			yesOrNoMessage = utils.Colored(
-				utils.Colors.Red,
+				utils.Colors.Yellow,
 				"No active proxies found. Do you want to continue?",
 			)
 		} else {
@@ -286,10 +290,11 @@ func getClientDoFunc(
 				),
 			)
 		}
-		fmt.Println()
-		proceed := readers.CLIYesOrNoReader(yesOrNoMessage)
-		if !proceed {
-			utils.PrintAndExit("Exiting...")
+		if !yes {
+			response := readers.CLIYesOrNoReader("\n"+yesOrNoMessage, yesOrNoDefault)
+			if !response {
+				utils.PrintAndExit("Exiting...")
+			}
 		}
 		fmt.Println()
 		if activeProxyClientsCount == 0 {
@@ -516,7 +521,7 @@ func getSharedRandomClientDoFunc(
 	clientsCount int,
 	timeout time.Duration,
 ) ClientDoFunc {
-	return func (ctx context.Context, request *fasthttp.Request) (*fasthttp.Response, error) {
+	return func(ctx context.Context, request *fasthttp.Request) (*fasthttp.Response, error) {
 		client := &clients[rand.Intn(clientsCount)]
 		defer client.CloseIdleConnections()
 		response := fasthttp.AcquireResponse()
@@ -548,16 +553,17 @@ func getSharedRandomClientDoFunc(
 // The function internally creates a new response using fasthttp.AcquireResponse() and a channel to handle errors.
 // It then spawns a goroutine to execute the client.DoTimeout() method with the given request, response, and timeout.
 // The function uses a select statement to handle three cases:
-// - If an error is received from the channel, it checks if the error is not nil. If it's not nil, it releases the response and returns nil and the error.
-//   Otherwise, it returns the response and nil.
-// - If the timeout duration is reached, it releases the response and returns nil and a custom timeout error.
-// - If the context is canceled, it returns nil and a custom interrupt error.
+//   - If an error is received from the channel, it checks if the error is not nil. If it's not nil, it releases the response and returns nil and the error.
+//     Otherwise, it returns the response and nil.
+//   - If the timeout duration is reached, it releases the response and returns nil and a custom timeout error.
+//   - If the context is canceled, it returns nil and a custom interrupt error.
+//
 // The function ensures that idle connections are closed by calling client.CloseIdleConnections() using a defer statement.
 func getSharedClientDoFunc(
 	client *fasthttp.HostClient,
 	timeout time.Duration,
 ) ClientDoFunc {
-	return func (ctx context.Context, request *fasthttp.Request) (*fasthttp.Response, error) {
+	return func(ctx context.Context, request *fasthttp.Request) (*fasthttp.Response, error) {
 		defer client.CloseIdleConnections()
 		response := fasthttp.AcquireResponse()
 		ch := make(chan error)
