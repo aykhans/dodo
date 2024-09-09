@@ -210,18 +210,20 @@ func sendRequest(
 		}
 
 		func() {
-			defer func() { increase <- 1 }()
-
 			startTime := time.Now()
 			response, err := clientDo(ctx, request)
 			completedTime := time.Since(startTime)
 
 			if err != nil {
+				if err == customerrors.ErrInterrupt {
+					return
+				}
 				*responseData = append(*responseData, Response{
 					StatusCode: 0,
 					Error:      err,
 					Time:       completedTime,
 				})
+				increase <- 1
 				return
 			}
 			defer fasthttp.ReleaseResponse(response)
@@ -231,6 +233,7 @@ func sendRequest(
 				Error:      nil,
 				Time:       completedTime,
 			})
+			increase <- 1
 		}()
 	}
 }
