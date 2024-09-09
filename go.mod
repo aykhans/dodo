@@ -3,7 +3,7 @@ module github.com/aykhans/dodo
 go 1.22.3
 
 require (
-	github.com/go-playground/validator/v10 v10.22.0
+	github.com/go-playground/validator/v10 v10.22.1
 	github.com/jedib0t/go-pretty/v6 v6.5.9
 	github.com/spf13/cobra v1.8.1
 	github.com/spf13/pflag v1.0.5
