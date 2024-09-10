@@ -23,16 +23,16 @@ type ClientDoFunc func(ctx context.Context, request *fasthttp.Request) (*fasthtt
 
 // Print prints the responses in a tabular format, including information such as
 // response count, minimum time, maximum time, and average time.
-func (respones *Responses) Print() {
+func (respones Responses) Print() {
 	var (
-		totalMinDuration time.Duration = (*respones)[0].Time
-		totalMaxDuration time.Duration = (*respones)[0].Time
+		totalMinDuration time.Duration = respones[0].Time
+		totalMaxDuration time.Duration = respones[0].Time
 		totalDuration    time.Duration
-		totalCount       int = len(*respones)
+		totalCount       int = len(respones)
 	)
 	mergedResponses := make(map[string][]time.Duration)
 
-	for _, response := range *respones {
+	for _, response := range respones {
 		if response.Time < totalMinDuration {
 			totalMinDuration = response.Time
 		}

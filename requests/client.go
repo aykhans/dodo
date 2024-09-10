@@ -80,7 +80,7 @@ func getClientDoFunc(
 			}
 			return getSharedClientDoFunc(client, timeout)
 		} else if activeProxyClientsCount == 1 {
-			client := &activeProxyClients[0]
+			client := activeProxyClients[0]
 			return getSharedClientDoFunc(client, timeout)
 		}
 		return getSharedRandomClientDoFunc(
@@ -112,8 +112,8 @@ func getActiveProxyClients(
 	timeout time.Duration,
 	dodosCount int,
 	URL *url.URL,
-) []fasthttp.HostClient {
-	activeProxyClientsArray := make([][]fasthttp.HostClient, dodosCount)
+) []*fasthttp.HostClient {
+	activeProxyClientsArray := make([][]*fasthttp.HostClient, dodosCount)
 	proxiesCount := len(proxies)
 
 	var (
@@ -169,7 +169,7 @@ func findActiveProxyClients(
 	ctx context.Context,
 	proxies []config.Proxy,
 	timeout time.Duration,
-	activeProxyClients *[]fasthttp.HostClient,
+	activeProxyClients *[]*fasthttp.HostClient,
 	increase chan<- int64,
 	URL *url.URL,
 	wg *sync.WaitGroup,
@@ -226,7 +226,7 @@ func findActiveProxyClients(
 			if response.StatusCode() == 200 {
 				*activeProxyClients = append(
 					*activeProxyClients,
-					fasthttp.HostClient{
+					&fasthttp.HostClient{
 						IsTLS:               isTLS,
 						Addr:                addr,
 						Dial:                dialFunc,
@@ -296,12 +296,12 @@ func getDialFunc(proxy *config.Proxy, timeout time.Duration) (fasthttp.DialFunc,
 
 // getSharedRandomClientDoFunc is equivalent to getSharedClientDoFunc but uses a random client from the provided slice.
 func getSharedRandomClientDoFunc(
-	clients []fasthttp.HostClient,
+	clients []*fasthttp.HostClient,
 	clientsCount int,
 	timeout time.Duration,
 ) ClientDoFunc {
 	return func(ctx context.Context, request *fasthttp.Request) (*fasthttp.Response, error) {
-		client := &clients[rand.Intn(clientsCount)]
+		client := clients[rand.Intn(clientsCount)]
 		defer client.CloseIdleConnections()
 		response := fasthttp.AcquireResponse()
 		ch := make(chan error)
