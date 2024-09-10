@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	VERSION                 string = "0.4.1"
+	VERSION                 string = "0.4.2"
 	DefaultUserAgent        string = "Dodo/" + VERSION
 	ProxyCheckURL           string = "https://www.google.com"
 	DefaultMethod           string = "GET"
