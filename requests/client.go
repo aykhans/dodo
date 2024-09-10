@@ -32,7 +32,7 @@ func getClientDoFunc(
 	ctx context.Context,
 	timeout time.Duration,
 	proxies []config.Proxy,
-	dodosCount int,
+	dodosCount uint,
 	maxConns uint,
 	yes bool,
 	URL *url.URL,
@@ -46,7 +46,7 @@ func getClientDoFunc(
 		if ctx.Err() != nil {
 			return nil
 		}
-		activeProxyClientsCount := len(activeProxyClients)
+		activeProxyClientsCount := uint(len(activeProxyClients))
 		var yesOrNoMessage string
 		var yesOrNoDefault bool
 		if activeProxyClientsCount == 0 {
@@ -114,18 +114,19 @@ func getActiveProxyClients(
 	ctx context.Context,
 	proxies []config.Proxy,
 	timeout time.Duration,
-	dodosCount int,
+	dodosCount uint,
 	maxConns uint,
 	URL *url.URL,
 ) []*fasthttp.HostClient {
 	activeProxyClientsArray := make([][]*fasthttp.HostClient, dodosCount)
 	proxiesCount := len(proxies)
+	dodosCountInt := int(dodosCount)
 
 	var (
 		wg       sync.WaitGroup
 		streamWG sync.WaitGroup
 	)
-	wg.Add(dodosCount)
+	wg.Add(dodosCountInt)
 	streamWG.Add(1)
 	var proxiesSlice []config.Proxy
 	increase := make(chan int64, proxiesCount)
@@ -133,11 +134,11 @@ func getActiveProxyClients(
 	streamCtx, streamCtxCancel := context.WithCancel(context.Background())
 	go streamProgress(streamCtx, &streamWG, int64(proxiesCount), "Searching for active proxies🌐", increase)
 
-	for i := 0; i < dodosCount; i++ {
-		if i+1 == dodosCount {
-			proxiesSlice = proxies[i*proxiesCount/dodosCount:]
+	for i := range dodosCountInt {
+		if i+1 == dodosCountInt {
+			proxiesSlice = proxies[i*proxiesCount/dodosCountInt:]
 		} else {
-			proxiesSlice = proxies[i*proxiesCount/dodosCount : (i+1)*proxiesCount/dodosCount]
+			proxiesSlice = proxies[i*proxiesCount/dodosCountInt : (i+1)*proxiesCount/dodosCountInt]
 		}
 		go findActiveProxyClients(
 			ctx,
@@ -305,11 +306,12 @@ func getDialFunc(proxy *config.Proxy, timeout time.Duration) (fasthttp.DialFunc,
 // getSharedRandomClientDoFunc is equivalent to getSharedClientDoFunc but uses a random client from the provided slice.
 func getSharedRandomClientDoFunc(
 	clients []*fasthttp.HostClient,
-	clientsCount int,
+	clientsCount uint,
 	timeout time.Duration,
 ) ClientDoFunc {
+	clientsCountInt := int(clientsCount)
 	return func(ctx context.Context, request *fasthttp.Request) (*fasthttp.Response, error) {
-		client := clients[rand.Intn(clientsCount)]
+		client := clients[rand.Intn(clientsCountInt)]
 		defer client.CloseIdleConnections()
 		response := fasthttp.AcquireResponse()
 		ch := make(chan error)

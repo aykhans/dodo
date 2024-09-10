@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"net/url"
 	"os"
 	"os/signal"
@@ -84,11 +85,10 @@ func main() {
 	requestConf.Print()
 	if !cliConf.Yes {
 		response := readers.CLIYesOrNoReader("Do you want to continue?", true)
-		if response {
-			utils.PrintlnC(utils.Colors.Green, "Starting Dodo\n")
-		} else {
+		if !response {
 			utils.PrintAndExit("Exiting...")
 		}
+		fmt.Println()
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
