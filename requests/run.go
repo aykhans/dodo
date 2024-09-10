@@ -67,16 +67,17 @@ func releaseDodos(
 	ctx context.Context,
 	mainRequest *fasthttp.Request,
 	clientDoFunc ClientDoFunc,
-	dodosCount int,
-	requestCount int,
+	dodosCount uint,
+	requestCount uint,
 ) Responses {
 	var (
 		wg                  sync.WaitGroup
 		streamWG            sync.WaitGroup
-		requestCountPerDodo int
+		requestCountPerDodo uint
+		dodosCountInt       = int(dodosCount)
 	)
 
-	wg.Add(dodosCount)
+	wg.Add(dodosCountInt)
 	streamWG.Add(1)
 	responses := make([][]Response, dodosCount)
 	increase := make(chan int64, requestCount)
@@ -84,10 +85,9 @@ func releaseDodos(
 	streamCtx, streamCtxCancel := context.WithCancel(context.Background())
 	go streamProgress(streamCtx, &streamWG, int64(requestCount), "Dodos Working🔥", increase)
 
-	for i := 0; i < dodosCount; i++ {
+	for i := range dodosCount {
 		if i+1 == dodosCount {
-			requestCountPerDodo = requestCount -
-				(i * requestCount / dodosCount)
+			requestCountPerDodo = requestCount - (i * requestCount / dodosCount)
 		} else {
 			requestCountPerDodo = ((i + 1) * requestCount / dodosCount) -
 				(i * requestCount / dodosCount)
@@ -129,7 +129,7 @@ func sendRequest(
 	request *fasthttp.Request,
 	responseData *[]Response,
 	increase chan<- int64,
-	requestCount int,
+	requestCount uint,
 	clientDo ClientDoFunc,
 	wg *sync.WaitGroup,
 ) {

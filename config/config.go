@@ -10,14 +10,14 @@ import (
 )
 
 const (
-	VERSION                 = "0.4.1"
-	DefaultUserAgent        = "Dodo/" + VERSION
-	ProxyCheckURL           = "https://www.google.com"
-	DefaultMethod           = "GET"
-	DefaultTimeout          = 10000 // Milliseconds (10 seconds)
-	DefaultDodosCount       = 1
-	DefaultRequestCount     = 1000
-	MaxDodosCountForProxies = 20 // Max dodos count for proxy check
+	VERSION                 string = "0.4.1"
+	DefaultUserAgent        string = "Dodo/" + VERSION
+	ProxyCheckURL           string = "https://www.google.com"
+	DefaultMethod           string = "GET"
+	DefaultTimeout          uint32 = 10000 // Milliseconds (10 seconds)
+	DefaultDodosCount       uint   = 1
+	DefaultRequestCount     uint   = 1000
+	MaxDodosCountForProxies uint   = 20 // Max dodos count for proxy check
 )
 
 type IConfig interface {
@@ -28,8 +28,8 @@ type RequestConfig struct {
 	Method       string
 	URL          *url.URL
 	Timeout      time.Duration
-	DodosCount   int
-	RequestCount int
+	DodosCount   uint
+	RequestCount uint
 	Params       map[string]string
 	Headers      map[string]string
 	Cookies      map[string]string
@@ -68,12 +68,12 @@ func (config *RequestConfig) Print() {
 	t.Render()
 }
 
-func (config *RequestConfig) GetValidDodosCountForRequests() int {
+func (config *RequestConfig) GetValidDodosCountForRequests() uint {
 	return min(config.DodosCount, config.RequestCount)
 }
 
-func (config *RequestConfig) GetValidDodosCountForProxies() int {
-	return min(config.DodosCount, len(config.Proxies), MaxDodosCountForProxies)
+func (config *RequestConfig) GetValidDodosCountForProxies() uint {
+	return min(config.DodosCount, uint(len(config.Proxies)), MaxDodosCountForProxies)
 }
 
 func (config *RequestConfig) GetMaxConns(minConns uint) uint {
@@ -86,9 +86,9 @@ func (config *RequestConfig) GetMaxConns(minConns uint) uint {
 type Config struct {
 	Method       string `json:"method" validate:"http_method"` // custom validations: http_method
 	URL          string `json:"url" validate:"http_url,required"`
-	Timeout      int    `json:"timeout" validate:"gte=1,lte=100000"`
-	DodosCount   int    `json:"dodos_count" validate:"gte=1"`
-	RequestCount int    `json:"request_count" validation_name:"request-count" validate:"gte=1"`
+	Timeout      uint32 `json:"timeout" validate:"gte=1,lte=100000"`
+	DodosCount   uint   `json:"dodos_count" validate:"gte=1"`
+	RequestCount uint   `json:"request_count" validation_name:"request-count" validate:"gte=1"`
 }
 
 func (config *Config) MergeConfigs(newConfig *Config) {

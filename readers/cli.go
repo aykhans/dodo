@@ -14,9 +14,9 @@ func CLIConfigReader() (*config.CLIConfig, error) {
 	var (
 		returnNil    = false
 		cliConfig    = &config.CLIConfig{}
-		dodosCount   int
-		requestCount int
-		timeout      int
+		dodosCount   uint
+		requestCount uint
+		timeout      uint32
 		rootCmd      = &cobra.Command{
 			Use: "dodo [flags]",
 			Example: `  Simple usage only with URL:
@@ -48,9 +48,9 @@ func CLIConfigReader() (*config.CLIConfig, error) {
 	rootCmd.Flags().BoolVarP(&cliConfig.Yes, "yes", "y", false, "Answer yes to all questions")
 	rootCmd.Flags().StringVarP(&cliConfig.Method, "method", "m", "", fmt.Sprintf("HTTP Method (default %s)", config.DefaultMethod))
 	rootCmd.Flags().StringVarP(&cliConfig.URL, "url", "u", "", "URL for stress testing")
-	rootCmd.Flags().IntVarP(&dodosCount, "dodos-count", "d", config.DefaultDodosCount, "Number of dodos(threads)")
-	rootCmd.Flags().IntVarP(&requestCount, "request-count", "r", config.DefaultRequestCount, "Number of total requests")
-	rootCmd.Flags().IntVarP(&timeout, "timeout", "t", config.DefaultTimeout, "Timeout for each request in milliseconds")
+	rootCmd.Flags().UintVarP(&dodosCount, "dodos-count", "d", config.DefaultDodosCount, "Number of dodos(threads)")
+	rootCmd.Flags().UintVarP(&requestCount, "request-count", "r", config.DefaultRequestCount, "Number of total requests")
+	rootCmd.Flags().Uint32VarP(&timeout, "timeout", "t", config.DefaultTimeout, "Timeout for each request in milliseconds")
 	if err := rootCmd.Execute(); err != nil {
 		utils.PrintErr(err)
 		rootCmd.Println(rootCmd.UsageString())
