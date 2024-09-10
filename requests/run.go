@@ -28,6 +28,7 @@ func Run(ctx context.Context, requestConfig *config.RequestConfig) (Responses, e
 		requestConfig.Timeout,
 		requestConfig.Proxies,
 		requestConfig.GetValidDodosCountForProxies(),
+		requestConfig.GetMaxConns(fasthttp.DefaultMaxConnsPerHost),
 		requestConfig.Yes,
 		requestConfig.URL,
 	)

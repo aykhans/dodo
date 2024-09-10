@@ -76,6 +76,13 @@ func (config *RequestConfig) GetValidDodosCountForProxies() int {
 	return min(config.DodosCount, len(config.Proxies), MaxDodosCountForProxies)
 }
 
+func (config *RequestConfig) GetMaxConns(minConns uint) uint {
+	maxConns := max(
+		minConns, uint(config.GetValidDodosCountForRequests()),
+	)
+	return ((maxConns * 50 / 100) + maxConns)
+}
+
 type Config struct {
 	Method       string `json:"method" validate:"http_method"` // custom validations: http_method
 	URL          string `json:"url" validate:"http_url,required"`

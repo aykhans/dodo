@@ -33,13 +33,15 @@ func getClientDoFunc(
 	timeout time.Duration,
 	proxies []config.Proxy,
 	dodosCount int,
+	maxConns uint,
 	yes bool,
 	URL *url.URL,
 ) ClientDoFunc {
 	isTLS := URL.Scheme == "https"
+
 	if len(proxies) > 0 {
 		activeProxyClients := getActiveProxyClients(
-			ctx, proxies, timeout, dodosCount, URL,
+			ctx, proxies, timeout, dodosCount, maxConns, URL,
 		)
 		if ctx.Err() != nil {
 			return nil
@@ -71,6 +73,7 @@ func getClientDoFunc(
 		fmt.Println()
 		if activeProxyClientsCount == 0 {
 			client := &fasthttp.HostClient{
+				MaxConns:            int(maxConns),
 				IsTLS:               isTLS,
 				Addr:                URL.Host,
 				MaxIdleConnDuration: timeout,
@@ -91,6 +94,7 @@ func getClientDoFunc(
 	}
 
 	client := &fasthttp.HostClient{
+		MaxConns:            int(maxConns),
 		IsTLS:               isTLS,
 		Addr:                URL.Host,
 		MaxIdleConnDuration: timeout,
@@ -111,6 +115,7 @@ func getActiveProxyClients(
 	proxies []config.Proxy,
 	timeout time.Duration,
 	dodosCount int,
+	maxConns uint,
 	URL *url.URL,
 ) []*fasthttp.HostClient {
 	activeProxyClientsArray := make([][]*fasthttp.HostClient, dodosCount)
@@ -140,6 +145,7 @@ func getActiveProxyClients(
 			timeout,
 			&activeProxyClientsArray[i],
 			increase,
+			maxConns,
 			URL,
 			&wg,
 		)
@@ -171,6 +177,7 @@ func findActiveProxyClients(
 	timeout time.Duration,
 	activeProxyClients *[]*fasthttp.HostClient,
 	increase chan<- int64,
+	maxConns uint,
 	URL *url.URL,
 	wg *sync.WaitGroup,
 ) {
@@ -227,6 +234,7 @@ func findActiveProxyClients(
 				*activeProxyClients = append(
 					*activeProxyClients,
 					&fasthttp.HostClient{
+						MaxConns:            int(maxConns),
 						IsTLS:               isTLS,
 						Addr:                addr,
 						Dial:                dialFunc,
