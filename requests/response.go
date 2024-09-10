@@ -57,7 +57,10 @@ func (respones Responses) Print() {
 	t := table.NewWriter()
 	t.SetOutputMirror(os.Stdout)
 	t.SetStyle(table.StyleLight)
-	t.SetAllowedRowLength(125)
+	t.SetColumnConfigs([]table.ColumnConfig{
+		{Number: 1, WidthMax: 80},
+	})
+
 	t.AppendHeader(table.Row{
 		"Response",
 		"Count",

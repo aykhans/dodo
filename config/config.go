@@ -42,7 +42,9 @@ func (config *RequestConfig) Print() {
 	t := table.NewWriter()
 	t.SetOutputMirror(os.Stdout)
 	t.SetStyle(table.StyleLight)
-	t.SetAllowedRowLength(125)
+	t.SetColumnConfigs([]table.ColumnConfig{
+		{Number: 2, WidthMax: 50},
+	})
 
 	t.AppendHeader(table.Row{"Request Configuration"})
 	t.AppendRow(table.Row{"Method", config.Method})
