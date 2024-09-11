@@ -36,21 +36,25 @@ func Run(ctx context.Context, requestConfig *config.RequestConfig) (Responses, e
 		return nil, customerrors.ErrInterrupt
 	}
 
-	request := newRequest(
+	requests, err := getRequests(
+		ctx,
 		requestConfig.URL,
 		requestConfig.Headers,
 		requestConfig.Cookies,
 		requestConfig.Params,
 		requestConfig.Method,
 		requestConfig.Body,
+		requestConfig.RequestCount,
 	)
-	defer fasthttp.ReleaseRequest(request)
+	if err != nil {
+		return nil, err
+	}
+
 	responses := releaseDodos(
 		ctx,
-		request,
+		requests,
 		clientDoFunc,
 		requestConfig.GetValidDodosCountForRequests(),
-		requestConfig.RequestCount,
 	)
 	if ctx.Err() != nil && len(responses) == 0 {
 		return nil, customerrors.ErrInterrupt
@@ -59,51 +63,59 @@ func Run(ctx context.Context, requestConfig *config.RequestConfig) (Responses, e
 	return responses, nil
 }
 
-// releaseDodos sends multiple HTTP requests concurrently using multiple "dodos" (goroutines).
-// It takes a mainRequest as the base request, timeout duration for each request, clientDoFunc for customizing the client behavior,
-// dodosCount as the number of goroutines to be used, and requestCount as the total number of requests to be sent.
-// It returns the responses received from all the requests.
+// releaseDodos sends HTTP requests concurrently using multiple "dodos" (goroutines).
+//
+// Parameters:
+//   - ctx: The context to control the lifecycle of the requests.
+//   - requests: A slice of HTTP requests to be sent.
+//   - clientDoFunc: A function to execute the HTTP requests.
+//   - dodosCount: The number of dodos (goroutines) to use for sending the requests.
+//
+// Returns:
+//   - A slice of Response objects containing the results of the requests.
+//
+// The function divides the requests into equal parts based on the number of dodos.
+// It then sends each part concurrently using a separate goroutine.
 func releaseDodos(
 	ctx context.Context,
-	mainRequest *fasthttp.Request,
+	requests []*fasthttp.Request,
 	clientDoFunc ClientDoFunc,
 	dodosCount uint,
-	requestCount uint,
 ) Responses {
 	var (
 		wg                  sync.WaitGroup
 		streamWG            sync.WaitGroup
 		requestCountPerDodo uint
-		dodosCountInt       = int(dodosCount)
+		dodosCountInt       int  = int(dodosCount)
+		totalRequestCount   uint = uint(len(requests))
+		requestCount        uint = 0
+		responses                = make([][]*Response, dodosCount)
+		increase                 = make(chan int64, totalRequestCount)
 	)
 
 	wg.Add(dodosCountInt)
 	streamWG.Add(1)
-	responses := make([][]Response, dodosCount)
-	increase := make(chan int64, requestCount)
-
 	streamCtx, streamCtxCancel := context.WithCancel(context.Background())
-	go streamProgress(streamCtx, &streamWG, int64(requestCount), "Dodos Working🔥", increase)
+
+	go streamProgress(streamCtx, &streamWG, int64(totalRequestCount), "Dodos Working🔥", increase)
 
 	for i := range dodosCount {
 		if i+1 == dodosCount {
-			requestCountPerDodo = requestCount - (i * requestCount / dodosCount)
+			requestCountPerDodo = totalRequestCount - (i * totalRequestCount / dodosCount)
 		} else {
-			requestCountPerDodo = ((i + 1) * requestCount / dodosCount) -
-				(i * requestCount / dodosCount)
+			requestCountPerDodo = ((i + 1) * totalRequestCount / dodosCount) -
+				(i * totalRequestCount / dodosCount)
 		}
-		dodoSpecificRequest := &fasthttp.Request{}
-		mainRequest.CopyTo(dodoSpecificRequest)
 
 		go sendRequest(
 			ctx,
-			dodoSpecificRequest,
+			requests[requestCount:requestCount+requestCountPerDodo],
 			&responses[i],
 			increase,
-			requestCountPerDodo,
 			clientDoFunc,
 			&wg,
 		)
+		requestCount += requestCountPerDodo
 	}
 	wg.Wait()
 	streamCtxCancel()
@@ -111,37 +123,37 @@ func releaseDodos(
 	return utils.Flatten(responses)
 }
 
-// sendRequest sends an HTTP request using the provided clientDo function and handles the response.
+// sendRequest sends multiple HTTP requests concurrently and collects their responses.
 //
 // Parameters:
 //   - ctx: The context to control cancellation and timeout.
-//   - request: The HTTP request to be sent.
-//   - responseData: A slice to store the response data.
-//   - increase: A channel to signal the completion of a request.
-//   - requestCount: The number of requests to be sent.
+//   - requests: A slice of pointers to fasthttp.Request objects to be sent.
+//   - responseData: A pointer to a slice of *Response objects to store the results.
+//   - increase: A channel to signal the completion of each request.
 //   - clientDo: A function to execute the HTTP request.
-//   - wg: A wait group to signal the completion of the function.
+//   - wg: A wait group to synchronize the completion of the requests.
 //
-// The function sends the specified number of requests, handles errors, and appends the response data
-// to the responseData slice.
+// The function iterates over the provided requests, sending each one using the clientDo function.
+// It measures the time taken for each request and appends the response data to responseData.
+// If an error occurs, it appends an error response. The function signals completion through the increase channel
+// and ensures proper resource cleanup by releasing requests and responses.
 func sendRequest(
 	ctx context.Context,
-	request *fasthttp.Request,
-	responseData *[]Response,
+	requests []*fasthttp.Request,
+	responseData *[]*Response,
 	increase chan<- int64,
-	requestCount uint,
 	clientDo ClientDoFunc,
 	wg *sync.WaitGroup,
 ) {
-	defer fasthttp.ReleaseRequest(request)
 	defer wg.Done()
 
-	for range requestCount {
+	for _, request := range requests {
 		if ctx.Err() != nil {
 			return
 		}
 
 		func() {
+			defer fasthttp.ReleaseRequest(request)
 			startTime := time.Now()
 			response, err := clientDo(ctx, request)
 			completedTime := time.Since(startTime)
@@ -150,7 +162,7 @@ func sendRequest(
 				if err == customerrors.ErrInterrupt {
 					return
 				}
-				*responseData = append(*responseData, Response{
+				*responseData = append(*responseData, &Response{
 					StatusCode: 0,
 					Error:      err,
 					Time:       completedTime,
@@ -160,7 +172,7 @@ func sendRequest(
 			}
 			defer fasthttp.ReleaseResponse(response)
 
-			*responseData = append(*responseData, Response{
+			*responseData = append(*responseData, &Response{
 				StatusCode: response.StatusCode(),
 				Error:      nil,
 				Time:       completedTime,

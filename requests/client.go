@@ -16,6 +16,8 @@ import (
 	"github.com/valyala/fasthttp/fasthttpproxy"
 )
 
+type ClientDoFunc func(ctx context.Context, request *fasthttp.Request) (*fasthttp.Response, error)
+
 // getClientDoFunc returns a ClientDoFunc function that can be used to make HTTP requests.
 //
 // The function first checks if there are any proxies available. If there are, it retrieves the active proxy clients

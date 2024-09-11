@@ -1,14 +1,12 @@
 package requests
 
 import (
-	"context"
 	"fmt"
 	"os"
 	"time"
 
 	"github.com/aykhans/dodo/utils"
 	"github.com/jedib0t/go-pretty/v6/table"
-	"github.com/valyala/fasthttp"
 )
 
 type Response struct {
@@ -17,9 +15,7 @@ type Response struct {
 	Time       time.Duration
 }
 
-type Responses []Response
-
-type ClientDoFunc func(ctx context.Context, request *fasthttp.Request) (*fasthttp.Response, error)
+type Responses []*Response
 
 // Print prints the responses in a tabular format, including information such as
 // response count, minimum time, maximum time, and average time.

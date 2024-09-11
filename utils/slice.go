@@ -1,7 +1,7 @@
 package utils
 
-func Flatten[T any](nested [][]T) []T {
-	flattened := make([]T, 0)
+func Flatten[T any](nested [][]*T) []*T {
+	flattened := make([]*T, 0)
 	for _, n := range nested {
 		flattened = append(flattened, n...)
 	}
