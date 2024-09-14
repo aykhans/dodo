@@ -4,51 +4,117 @@ import (
 	"context"
 	"math/rand"
 	"net/url"
+	"time"
 
 	"github.com/aykhans/dodo/config"
 	customerrors "github.com/aykhans/dodo/custom_errors"
 	"github.com/valyala/fasthttp"
 )
 
-// getRequests generates a list of HTTP requests based on the provided parameters.
-//
-// Parameters:
-//   - ctx: The context to control cancellation and deadlines.
-//   - URL: The base URL for the requests.
-//   - Headers: A map of headers to include in each request.
-//   - Cookies: A map of cookies to include in each request.
-//   - Params: A map of query parameters to include in each request.
-//   - Method: The HTTP method to use for the requests (e.g., GET, POST).
-//   - Bodies: A list of request bodies to cycle through for each request.
-//   - RequestCount: The number of requests to generate.
-//
-// Returns:
-//   - A list of fasthttp.Request objects based on the provided parameters.
-//   - An error if the context is canceled.
-func getRequests(
-	ctx context.Context,
+type RequestGeneratorFunc func() *fasthttp.Request
+
+// Request represents an HTTP request to be sent using the fasthttp client.
+// It isn't thread-safe and should be used by a single goroutine.
+type Request struct {
+	getClient  ClientGeneratorFunc
+	getRequest RequestGeneratorFunc
+}
+
+// Send sends the HTTP request using the fasthttp client with a specified timeout.
+// It returns the HTTP response or an error if the request fails or times out.
+func (r *Request) Send(ctx context.Context, timeout time.Duration) (*fasthttp.Response, error) {
+	client := r.getClient()
+	request := r.getRequest()
+	defer client.CloseIdleConnections()
+	defer fasthttp.ReleaseRequest(request)
+
+	response := fasthttp.AcquireResponse()
+	ch := make(chan error)
+	go func() {
+		err := client.DoTimeout(request, response, timeout)
+		ch <- err
+	}()
+	select {
+	case err := <-ch:
+		if err != nil {
+			fasthttp.ReleaseResponse(response)
+			return nil, err
+		}
+		return response, nil
+	case <-time.After(timeout):
+		fasthttp.ReleaseResponse(response)
+		return nil, customerrors.ErrTimeout
+	case <-ctx.Done():
+		return nil, customerrors.ErrInterrupt
+	}
+}
+
+// newRequest creates a new Request instance based on the provided configuration and clients.
+// It initializes a random number generator using the current time and a unique identifier (uid).
+// Depending on the number of clients provided, it sets up a function to select the appropriate client.
+// It also sets up a function to generate the request based on the provided configuration.
+func newRequest(
+	requestConfig config.RequestConfig,
+	clients []*fasthttp.HostClient,
+	uid int64,
+) *Request {
+	localRand := rand.New(rand.NewSource(time.Now().UnixNano() + uid))
+
+	clientsCount := len(clients)
+	if clientsCount < 1 {
+		panic("no clients")
+	}
+
+	getClient := ClientGeneratorFunc(nil)
+	if clientsCount == 1 {
+		getClient = getSharedClientFuncSingle(clients[0])
+	} else {
+		getClient = getSharedClientFuncMultiple(clients)
+	}
+
+	getRequest := getRequestGeneratorFunc(
+		requestConfig.URL,
+		requestConfig.Headers,
+		requestConfig.Cookies,
+		requestConfig.Params,
+		requestConfig.Method,
+		requestConfig.Body,
+		localRand,
+	)
+
+	requests := &Request{
+		getClient:  getClient,
+		getRequest: getRequest,
+	}
+
+	return requests
+}
+
+// getRequestGeneratorFunc returns a RequestGeneratorFunc which generates HTTP requests
+// with the specified parameters.
+// The function uses a local random number generator to select bodies, headers, cookies, and parameters
+// if multiple options are provided.
+func getRequestGeneratorFunc(
 	URL *url.URL,
 	Headers map[string][]string,
 	Cookies map[string][]string,
 	Params map[string][]string,
 	Method string,
 	Bodies []string,
-	RequestCount uint,
-) ([]*fasthttp.Request, error) {
-	requests := make([]*fasthttp.Request, 0, RequestCount)
-
+	localRand *rand.Rand,
+) RequestGeneratorFunc {
 	bodiesLen := len(Bodies)
 	getBody := func() string { return "" }
 	if bodiesLen == 1 {
 		getBody = func() string { return Bodies[0] }
 	} else if bodiesLen > 1 {
-		currentIndex := 0
+		currentIndex := localRand.Intn(bodiesLen)
 		stopIndex := bodiesLen - 1
 
 		getBody = func() string {
 			body := Bodies[currentIndex%bodiesLen]
 			if currentIndex == stopIndex {
-				currentIndex = rand.Intn(bodiesLen)
+				currentIndex = localRand.Intn(bodiesLen)
 				stopIndex = currentIndex - 1
 			} else {
 				currentIndex = (currentIndex + 1) % bodiesLen
@@ -56,15 +122,12 @@ func getRequests(
 			return body
 		}
 	}
-	getHeaders := getKeyValueSetFunc(Headers)
-	getCookies := getKeyValueSetFunc(Cookies)
-	getParams := getKeyValueSetFunc(Params)
+	getHeaders := getKeyValueSetFunc(Headers, localRand)
+	getCookies := getKeyValueSetFunc(Cookies, localRand)
+	getParams := getKeyValueSetFunc(Params, localRand)
 
-	for range RequestCount {
-		if ctx.Err() != nil {
-			return nil, customerrors.ErrInterrupt
-		}
-		request := newRequest(
+	return func() *fasthttp.Request {
+		return newFasthttpRequest(
 			URL,
 			getHeaders(),
 			getCookies(),
@@ -72,15 +135,12 @@ func getRequests(
 			Method,
 			getBody(),
 		)
-		requests = append(requests, request)
 	}
-
-	return requests, nil
 }
 
-// newRequest creates a new fasthttp.Request object with the provided parameters.
+// newFasthttpRequest creates a new fasthttp.Request object with the provided parameters.
 // It sets the request URI, host header, headers, cookies, params, method, and body.
-func newRequest(
+func newFasthttpRequest(
 	URL *url.URL,
 	Headers map[string]string,
 	Cookies map[string]string,
@@ -153,7 +213,7 @@ func setRequestBody(req *fasthttp.Request, body string) {
 func getKeyValueSetFunc[
 	KeyValueSet map[string][]string,
 	KeyValue map[string]string,
-](keyValueSet KeyValueSet) func() KeyValue {
+](keyValueSet KeyValueSet, localRand *rand.Rand) func() KeyValue {
 	getKeyValueSlice := []map[string]func() string{}
 	isRandom := false
 	for key, values := range keyValueSet {
@@ -166,13 +226,13 @@ func getKeyValueSetFunc[
 		if valuesLen == 1 {
 			getKeyValue = func() string { return values[0] }
 		} else if valuesLen > 1 {
-			currentIndex := 0
+			currentIndex := localRand.Intn(valuesLen)
 			stopIndex := valuesLen - 1
 
 			getKeyValue = func() string {
 				value := values[currentIndex%valuesLen]
 				if currentIndex == stopIndex {
-					currentIndex = rand.Intn(valuesLen)
+					currentIndex = localRand.Intn(valuesLen)
 					stopIndex = currentIndex - 1
 				} else {
 					currentIndex = (currentIndex + 1) % valuesLen

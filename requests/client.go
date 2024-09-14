@@ -3,34 +3,22 @@ package requests
 import (
 	"context"
 	"fmt"
-	"math/rand"
 	"net/url"
 	"sync"
 	"time"
 
 	"github.com/aykhans/dodo/config"
-	customerrors "github.com/aykhans/dodo/custom_errors"
 	"github.com/aykhans/dodo/readers"
 	"github.com/aykhans/dodo/utils"
 	"github.com/valyala/fasthttp"
 	"github.com/valyala/fasthttp/fasthttpproxy"
 )
 
-type ClientDoFunc func(ctx context.Context, request *fasthttp.Request) (*fasthttp.Response, error)
+type ClientGeneratorFunc func() *fasthttp.HostClient
 
-// getClientDoFunc returns a ClientDoFunc function that can be used to make HTTP requests.
-//
-// The function first checks if there are any proxies available. If there are, it retrieves the active proxy clients
-// using the getActiveProxyClients function. If the context is canceled during this process, it returns nil.
-// It then checks the number of active proxy clients and prompts the user to continue if there are none.
-// If the user chooses to continue, it creates a fasthttp.HostClient with the appropriate settings and returns
-// a ClientDoFunc function using the getSharedClientDoFunc function.
-// If there is only one active proxy client, it uses that client to create the ClientDoFunc function.
-// If there are multiple active proxy clients, it uses the getSharedRandomClientDoFunc function to create the ClientDoFunc function.
-//
-// If there are no proxies available, it creates a fasthttp.HostClient with the appropriate settings and returns
-// a ClientDoFunc function using the getSharedClientDoFunc function.
-func getClientDoFunc(
+// getClients initializes and returns a slice of fasthttp.HostClient based on the provided parameters.
+// It can either return clients with proxies or a single client without proxies.
+func getClients(
 	ctx context.Context,
 	timeout time.Duration,
 	proxies []config.Proxy,
@@ -38,7 +26,7 @@ func getClientDoFunc(
 	maxConns uint,
 	yes bool,
 	URL *url.URL,
-) ClientDoFunc {
+) []*fasthttp.HostClient {
 	isTLS := URL.Scheme == "https"
 
 	if len(proxies) > 0 {
@@ -73,26 +61,9 @@ func getClientDoFunc(
 			}
 		}
 		fmt.Println()
-		if activeProxyClientsCount == 0 {
-			client := &fasthttp.HostClient{
-				MaxConns:            int(maxConns),
-				IsTLS:               isTLS,
-				Addr:                URL.Host,
-				MaxIdleConnDuration: timeout,
-				MaxConnDuration:     timeout,
-				WriteTimeout:        timeout,
-				ReadTimeout:         timeout,
-			}
-			return getSharedClientDoFunc(client, timeout)
-		} else if activeProxyClientsCount == 1 {
-			client := activeProxyClients[0]
-			return getSharedClientDoFunc(client, timeout)
+		if activeProxyClientsCount > 0 {
+			return activeProxyClients
 		}
-		return getSharedRandomClientDoFunc(
-			activeProxyClients,
-			activeProxyClientsCount,
-			timeout,
-		)
 	}
 
 	client := &fasthttp.HostClient{
@@ -104,7 +75,7 @@ func getClientDoFunc(
 		WriteTimeout:        timeout,
 		ReadTimeout:         timeout,
 	}
-	return getSharedClientDoFunc(client, timeout)
+	return []*fasthttp.HostClient{client}
 }
 
 // getActiveProxyClients divides the proxies into slices based on the number of dodos and
@@ -305,75 +276,34 @@ func getDialFunc(proxy *config.Proxy, timeout time.Duration) (fasthttp.DialFunc,
 	return dialer, nil
 }
 
-// getSharedRandomClientDoFunc is equivalent to getSharedClientDoFunc but uses a random client from the provided slice.
-func getSharedRandomClientDoFunc(
-	clients []*fasthttp.HostClient,
-	clientsCount uint,
-	timeout time.Duration,
-) ClientDoFunc {
-	clientsCountInt := int(clientsCount)
-	return func(ctx context.Context, request *fasthttp.Request) (*fasthttp.Response, error) {
-		client := clients[rand.Intn(clientsCountInt)]
-		defer client.CloseIdleConnections()
-		response := fasthttp.AcquireResponse()
-		ch := make(chan error)
-		go func() {
-			err := client.DoTimeout(request, response, timeout)
-			ch <- err
-		}()
-		select {
-		case err := <-ch:
-			if err != nil {
-				fasthttp.ReleaseResponse(response)
-				return nil, err
-			}
-			return response, nil
-		case <-time.After(timeout):
-			fasthttp.ReleaseResponse(response)
-			return nil, customerrors.ErrTimeout
-		case <-ctx.Done():
-			return nil, customerrors.ErrInterrupt
+// getSharedClientFuncMultiple returns a ClientGeneratorFunc that cycles through
+// a provided list of fasthttp.HostClient instances. Each call to the returned
+// function will return the next client in the list, cycling back to the first
+// client after reaching the end of the slice.
+//
+// The returned function isn't thread-safe and should be used in a single-threaded context.
+func getSharedClientFuncMultiple(clients []*fasthttp.HostClient) ClientGeneratorFunc {
+	var (
+		currentIndex int = 0
+		clientsCount int = len(clients)
+	)
+
+	return func() *fasthttp.HostClient {
+		client := clients[currentIndex]
+		if currentIndex == clientsCount-1 {
+			currentIndex = 0
+		} else {
+			currentIndex++
 		}
+
+		return client
 	}
 }
 
-// getSharedClientDoFunc is a function that returns a ClientDoFunc, which is a function type used for making HTTP requests using a shared client.
-// It takes a client of type *fasthttp.HostClient and a timeout of type time.Duration as input parameters.
-// The returned ClientDoFunc function can be used to make an HTTP request with the given client and timeout.
-// It takes a context.Context and a *fasthttp.Request as input parameters and returns a *fasthttp.Response and an error.
-// The function internally creates a new response using fasthttp.AcquireResponse() and a channel to handle errors.
-// It then spawns a goroutine to execute the client.DoTimeout() method with the given request, response, and timeout.
-// The function uses a select statement to handle three cases:
-//   - If an error is received from the channel, it checks if the error is not nil. If it's not nil, it releases the response and returns nil and the error.
-//     Otherwise, it returns the response and nil.
-//   - If the timeout duration is reached, it releases the response and returns nil and a custom timeout error.
-//   - If the context is canceled, it returns nil and a custom interrupt error.
-//
-// The function ensures that idle connections are closed by calling client.CloseIdleConnections() using a defer statement.
-func getSharedClientDoFunc(
-	client *fasthttp.HostClient,
-	timeout time.Duration,
-) ClientDoFunc {
-	return func(ctx context.Context, request *fasthttp.Request) (*fasthttp.Response, error) {
-		defer client.CloseIdleConnections()
-		response := fasthttp.AcquireResponse()
-		ch := make(chan error)
-		go func() {
-			err := client.DoTimeout(request, response, timeout)
-			ch <- err
-		}()
-		select {
-		case err := <-ch:
-			if err != nil {
-				fasthttp.ReleaseResponse(response)
-				return nil, err
-			}
-			return response, nil
-		case <-time.After(timeout):
-			fasthttp.ReleaseResponse(response)
-			return nil, customerrors.ErrTimeout
-		case <-ctx.Done():
-			return nil, customerrors.ErrInterrupt
-		}
+// getSharedClientFuncSingle returns a ClientGeneratorFunc that always returns the provided fasthttp.HostClient instance.
+// This can be useful for sharing a single client instance across multiple requests.
+func getSharedClientFuncSingle(client *fasthttp.HostClient) ClientGeneratorFunc {
+	return func() *fasthttp.HostClient {
+		return client
 	}
 }
