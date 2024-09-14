@@ -69,7 +69,7 @@ func newRequest(
 	if clientsCount == 1 {
 		getClient = getSharedClientFuncSingle(clients[0])
 	} else {
-		getClient = getSharedClientFuncMultiple(clients)
+		getClient = getSharedClientFuncMultiple(clients, localRand)
 	}
 
 	getRequest := getRequestGeneratorFunc(

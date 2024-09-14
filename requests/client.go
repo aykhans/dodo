@@ -3,6 +3,7 @@ package requests
 import (
 	"context"
 	"fmt"
+	"math/rand"
 	"net/url"
 	"sync"
 	"time"
@@ -276,24 +277,22 @@ func getDialFunc(proxy *config.Proxy, timeout time.Duration) (fasthttp.DialFunc,
 	return dialer, nil
 }
 
-// getSharedClientFuncMultiple returns a ClientGeneratorFunc that cycles through
-// a provided list of fasthttp.HostClient instances. Each call to the returned
-// function will return the next client in the list, cycling back to the first
-// client after reaching the end of the slice.
-//
-// The returned function isn't thread-safe and should be used in a single-threaded context.
-func getSharedClientFuncMultiple(clients []*fasthttp.HostClient) ClientGeneratorFunc {
+// getSharedClientFuncMultiple returns a ClientGeneratorFunc that cycles through a list of fasthttp.HostClient instances.
+// The function uses a local random number generator to determine the starting index and stop index for cycling through the clients.
+func getSharedClientFuncMultiple(clients []*fasthttp.HostClient, localRand *rand.Rand) ClientGeneratorFunc {
 	var (
-		currentIndex int = 0
 		clientsCount int = len(clients)
+		currentIndex int = localRand.Intn(clientsCount)
+		stopIndex    int = clientsCount
 	)
 
 	return func() *fasthttp.HostClient {
-		client := clients[currentIndex]
-		if currentIndex == clientsCount-1 {
-			currentIndex = 0
+		client := clients[currentIndex%clientsCount]
+		if currentIndex == stopIndex {
+			currentIndex = localRand.Intn(clientsCount)
+			stopIndex = currentIndex - 1
 		} else {
-			currentIndex++
+			currentIndex = (currentIndex + 1) % clientsCount
 		}
 
 		return client
