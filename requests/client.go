@@ -279,6 +279,7 @@ func getDialFunc(proxy *config.Proxy, timeout time.Duration) (fasthttp.DialFunc,
 
 // getSharedClientFuncMultiple returns a ClientGeneratorFunc that cycles through a list of fasthttp.HostClient instances.
 // The function uses a local random number generator to determine the starting index and stop index for cycling through the clients.
+// The returned function isn't thread-safe and should be used in a single-threaded context.
 func getSharedClientFuncMultiple(clients []*fasthttp.HostClient, localRand *rand.Rand) ClientGeneratorFunc {
 	return utils.RandomValueCycle(clients, localRand)
 }
