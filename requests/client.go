@@ -280,23 +280,7 @@ func getDialFunc(proxy *config.Proxy, timeout time.Duration) (fasthttp.DialFunc,
 // getSharedClientFuncMultiple returns a ClientGeneratorFunc that cycles through a list of fasthttp.HostClient instances.
 // The function uses a local random number generator to determine the starting index and stop index for cycling through the clients.
 func getSharedClientFuncMultiple(clients []*fasthttp.HostClient, localRand *rand.Rand) ClientGeneratorFunc {
-	var (
-		clientsCount int = len(clients)
-		currentIndex int = localRand.Intn(clientsCount)
-		stopIndex    int = clientsCount
-	)
-
-	return func() *fasthttp.HostClient {
-		client := clients[currentIndex%clientsCount]
-		if currentIndex == stopIndex {
-			currentIndex = localRand.Intn(clientsCount)
-			stopIndex = currentIndex - 1
-		} else {
-			currentIndex = (currentIndex + 1) % clientsCount
-		}
-
-		return client
-	}
+	return utils.RandomValueCycle(clients, localRand)
 }
 
 // getSharedClientFuncSingle returns a ClientGeneratorFunc that always returns the provided fasthttp.HostClient instance.

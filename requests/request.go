@@ -8,6 +8,7 @@ import (
 
 	"github.com/aykhans/dodo/config"
 	customerrors "github.com/aykhans/dodo/custom_errors"
+	"github.com/aykhans/dodo/utils"
 	"github.com/valyala/fasthttp"
 )
 
@@ -108,19 +109,7 @@ func getRequestGeneratorFunc(
 	if bodiesLen == 1 {
 		getBody = func() string { return Bodies[0] }
 	} else if bodiesLen > 1 {
-		currentIndex := localRand.Intn(bodiesLen)
-		stopIndex := bodiesLen - 1
-
-		getBody = func() string {
-			body := Bodies[currentIndex%bodiesLen]
-			if currentIndex == stopIndex {
-				currentIndex = localRand.Intn(bodiesLen)
-				stopIndex = currentIndex - 1
-			} else {
-				currentIndex = (currentIndex + 1) % bodiesLen
-			}
-			return body
-		}
+		getBody = utils.RandomValueCycle(Bodies, localRand)
 	}
 	getHeaders := getKeyValueSetFunc(Headers, localRand)
 	getCookies := getKeyValueSetFunc(Cookies, localRand)
@@ -226,20 +215,7 @@ func getKeyValueSetFunc[
 		if valuesLen == 1 {
 			getKeyValue = func() string { return values[0] }
 		} else if valuesLen > 1 {
-			currentIndex := localRand.Intn(valuesLen)
-			stopIndex := valuesLen - 1
-
-			getKeyValue = func() string {
-				value := values[currentIndex%valuesLen]
-				if currentIndex == stopIndex {
-					currentIndex = localRand.Intn(valuesLen)
-					stopIndex = currentIndex - 1
-				} else {
-					currentIndex = (currentIndex + 1) % valuesLen
-				}
-				return value
-			}
-
+			getKeyValue = utils.RandomValueCycle(values, localRand)
 			isRandom = true
 		}
 
