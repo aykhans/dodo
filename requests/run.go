@@ -40,6 +40,9 @@ func Run(ctx context.Context, requestConfig *config.RequestConfig) (Responses, e
 		requestConfig.Yes,
 		requestConfig.URL,
 	)
+	if clients == nil {
+		return nil, customerrors.ErrInterrupt
+	}
 
 	responses := releaseDodos(ctx, requestConfig, clients)
 	if ctx.Err() != nil && len(responses) == 0 {
