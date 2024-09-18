@@ -11,10 +11,18 @@ import (
 	"github.com/valyala/fasthttp"
 )
 
-// Run executes the HTTP requests based on the provided request configuration.
-// It checks for internet connection and returns an error if there is no connection.
-// If the context is canceled while checking proxies, it returns the ErrInterrupt.
-// If the context is canceled while sending requests, it returns the response objects obtained so far.
+// Run executes the main logic for processing requests based on the provided configuration.
+// It first checks for an internet connection with a timeout context. If no connection is found,
+// it returns an error. Then, it initializes clients based on the request configuration and
+// releases the dodos. If the context is canceled and no responses are collected, it returns an interrupt error.
+//
+// Parameters:
+//   - ctx: The context for managing request lifecycle and cancellation.
+//   - requestConfig: The configuration for the request, including timeout, proxies, and other settings.
+//
+// Returns:
+//   - Responses: A collection of responses from the executed requests.
+//   - error: An error if the operation fails, such as no internet connection or an interrupt.
 func Run(ctx context.Context, requestConfig *config.RequestConfig) (Responses, error) {
 	checkConnectionCtx, checkConnectionCtxCancel := context.WithTimeout(ctx, 8*time.Second)
 	if !checkConnection(checkConnectionCtx) {
@@ -23,7 +31,7 @@ func Run(ctx context.Context, requestConfig *config.RequestConfig) (Responses, e
 	}
 	checkConnectionCtxCancel()
 
-	clientDoFunc := getClientDoFunc(
+	clients := getClients(
 		ctx,
 		requestConfig.Timeout,
 		requestConfig.Proxies,
@@ -32,26 +40,11 @@ func Run(ctx context.Context, requestConfig *config.RequestConfig) (Responses, e
 		requestConfig.Yes,
 		requestConfig.URL,
 	)
-	if clientDoFunc == nil {
+	if clients == nil {
 		return nil, customerrors.ErrInterrupt
 	}
 
-	request := newRequest(
-		requestConfig.URL,
-		requestConfig.Headers,
-		requestConfig.Cookies,
-		requestConfig.Params,
-		requestConfig.Method,
-		requestConfig.Body,
-	)
-	defer fasthttp.ReleaseRequest(request)
-	responses := releaseDodos(
-		ctx,
-		request,
-		clientDoFunc,
-		requestConfig.GetValidDodosCountForRequests(),
-		requestConfig.RequestCount,
-	)
+	responses := releaseDodos(ctx, requestConfig, clients)
 	if ctx.Err() != nil && len(responses) == 0 {
 		return nil, customerrors.ErrInterrupt
 	}
@@ -59,30 +52,36 @@ func Run(ctx context.Context, requestConfig *config.RequestConfig) (Responses, e
 	return responses, nil
 }
 
-// releaseDodos sends multiple HTTP requests concurrently using multiple "dodos" (goroutines).
-// It takes a mainRequest as the base request, timeout duration for each request, clientDoFunc for customizing the client behavior,
-// dodosCount as the number of goroutines to be used, and requestCount as the total number of requests to be sent.
-// It returns the responses received from all the requests.
+// releaseDodos sends requests concurrently using multiple dodos (goroutines) and returns the aggregated responses.
+//
+// The function performs the following steps:
+//  1. Initializes wait groups and other necessary variables.
+//  2. Starts a goroutine to stream progress updates.
+//  3. Distributes the total request count among the dodos.
+//  4. Starts a goroutine for each dodo to send requests concurrently.
+//  5. Waits for all dodos to complete their requests.
+//  6. Cancels the progress streaming context and waits for the progress goroutine to finish.
+//  7. Flattens and returns the aggregated responses.
 func releaseDodos(
 	ctx context.Context,
-	mainRequest *fasthttp.Request,
-	clientDoFunc ClientDoFunc,
-	dodosCount uint,
-	requestCount uint,
+	requestConfig *config.RequestConfig,
+	clients []*fasthttp.HostClient,
 ) Responses {
 	var (
 		wg                  sync.WaitGroup
 		streamWG            sync.WaitGroup
 		requestCountPerDodo uint
-		dodosCountInt       = int(dodosCount)
+		dodosCount          uint = requestConfig.GetValidDodosCountForRequests()
+		dodosCountInt       int  = int(dodosCount)
+		requestCount        uint = uint(requestConfig.RequestCount)
+		responses                = make([][]*Response, dodosCount)
+		increase                 = make(chan int64, requestCount)
 	)
 
 	wg.Add(dodosCountInt)
 	streamWG.Add(1)
-	responses := make([][]Response, dodosCount)
-	increase := make(chan int64, requestCount)
-
 	streamCtx, streamCtxCancel := context.WithCancel(context.Background())
+
 	go streamProgress(streamCtx, &streamWG, int64(requestCount), "Dodos Working🔥", increase)
 
 	for i := range dodosCount {
@@ -92,16 +91,14 @@ func releaseDodos(
 			requestCountPerDodo = ((i + 1) * requestCount / dodosCount) -
 				(i * requestCount / dodosCount)
 		}
-		dodoSpecificRequest := &fasthttp.Request{}
-		mainRequest.CopyTo(dodoSpecificRequest)
 
 		go sendRequest(
 			ctx,
-			dodoSpecificRequest,
+			newRequest(*requestConfig, clients, int64(i)),
+			requestConfig.Timeout,
+			requestCountPerDodo,
 			&responses[i],
 			increase,
-			requestCountPerDodo,
-			clientDoFunc,
 			&wg,
 		)
 	}
@@ -111,29 +108,19 @@ func releaseDodos(
 	return utils.Flatten(responses)
 }
 
-// sendRequest sends an HTTP request using the provided clientDo function and handles the response.
-//
-// Parameters:
-//   - ctx: The context to control cancellation and timeout.
-//   - request: The HTTP request to be sent.
-//   - responseData: A slice to store the response data.
-//   - increase: A channel to signal the completion of a request.
-//   - requestCount: The number of requests to be sent.
-//   - clientDo: A function to execute the HTTP request.
-//   - wg: A wait group to signal the completion of the function.
-//
-// The function sends the specified number of requests, handles errors, and appends the response data
-// to the responseData slice.
+// sendRequest sends a specified number of HTTP requests concurrently with a given timeout.
+// It appends the responses to the provided responseData slice and sends the count of completed requests
+// to the increase channel. The function terminates early if the context is canceled or if a custom
+// interrupt error is encountered.
 func sendRequest(
 	ctx context.Context,
-	request *fasthttp.Request,
-	responseData *[]Response,
-	increase chan<- int64,
+	request *Request,
+	timeout time.Duration,
 	requestCount uint,
-	clientDo ClientDoFunc,
+	responseData *[]*Response,
+	increase chan<- int64,
 	wg *sync.WaitGroup,
 ) {
-	defer fasthttp.ReleaseRequest(request)
 	defer wg.Done()
 
 	for range requestCount {
@@ -143,14 +130,17 @@ func sendRequest(
 
 		func() {
 			startTime := time.Now()
-			response, err := clientDo(ctx, request)
+			response, err := request.Send(ctx, timeout)
 			completedTime := time.Since(startTime)
+			if response != nil {
+				defer fasthttp.ReleaseResponse(response)
+			}
 
 			if err != nil {
 				if err == customerrors.ErrInterrupt {
 					return
 				}
-				*responseData = append(*responseData, Response{
+				*responseData = append(*responseData, &Response{
 					StatusCode: 0,
 					Error:      err,
 					Time:       completedTime,
@@ -158,9 +148,8 @@ func sendRequest(
 				increase <- 1
 				return
 			}
-			defer fasthttp.ReleaseResponse(response)
 
-			*responseData = append(*responseData, Response{
+			*responseData = append(*responseData, &Response{
 				StatusCode: response.StatusCode(),
 				Error:      nil,
 				Time:       completedTime,

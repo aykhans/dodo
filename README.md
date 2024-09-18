@@ -99,6 +99,8 @@ docker run --rm -v ./path/config.json:/dodo/config.json -i aykhans/dodo -u https
 ```
 
 ## CLI and JSON Config Parameters
+If the Headers, Params, Cookies and Body fields have multiple values, each request will choose a random value from the list.
+
 | Parameter | JSON config file | CLI Flag | CLI Short Flag | Type | Description | Default |
 | ----------- | ----------- | ----------- | ----------- | ----------- | ----------- | ----------- |
 | Config file | - | --config-file | -c | String | Path to the JSON config file | - |
@@ -108,11 +110,8 @@ docker run --rm -v ./path/config.json:/dodo/config.json -i aykhans/dodo -u https
 | Request count | request_count | --request-count | -r | Integer | Total number of requests to send | 1000 |
 | Dodos count (Threads) | dodos_count | --dodos-count | -d | Integer | Number of dodos (threads) to send requests in parallel | 1 |
 | Timeout | timeout | --timeout | -t | Integer | Timeout for canceling each request (milliseconds) | 10000 |
-| Params | params | - | - | Key-Value {string: string} | Request parameters | - |
-| Headers | headers | - | - | Key-Value {string: string} | Request headers | - |
-| Cookies | cookies | - | - | Key-Value {string: string} | Request cookies | - |
-| Body | body | - | - | String | Request body | - |
+| Params | params | - | - | Key-Value {String: [String]} | Request parameters | - |
+| Headers | headers | - | - | Key-Value {String: [String]} | Request headers | - |
+| Cookies | cookies | - | - | Key-Value {String: [String]} | Request cookies | - |
+| Body | body | - | - | [String] | Request body | - |
 | Proxy | proxies | - | - | List[Key-Value {string: string}] | List of proxies (will check active proxies before sending requests) | - |
-
-## Examples
-![dodo_example](https://raw.githubusercontent.com/aykhans/dodo/main/assets/dodo-example.gif)

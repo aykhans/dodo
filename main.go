@@ -106,6 +106,7 @@ func main() {
 			return
 		} else if customerrors.Is(err, customerrors.ErrNoInternet) {
 			utils.PrintAndExit("No internet connection")
+			return
 		}
 		panic(err)
 	}

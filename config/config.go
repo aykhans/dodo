@@ -6,11 +6,12 @@ import (
 	"os"
 	"time"
 
+	"github.com/aykhans/dodo/utils"
 	"github.com/jedib0t/go-pretty/v6/table"
 )
 
 const (
-	VERSION                 string = "0.4.2"
+	VERSION                 string = "0.5.0"
 	DefaultUserAgent        string = "Dodo/" + VERSION
 	ProxyCheckURL           string = "https://www.google.com"
 	DefaultMethod           string = "GET"
@@ -30,11 +31,11 @@ type RequestConfig struct {
 	Timeout      time.Duration
 	DodosCount   uint
 	RequestCount uint
-	Params       map[string]string
-	Headers      map[string]string
-	Cookies      map[string]string
+	Params       map[string][]string
+	Headers      map[string][]string
+	Cookies      map[string][]string
 	Proxies      []Proxy
-	Body         string
+	Body         []string
 	Yes          bool
 }
 
@@ -55,17 +56,17 @@ func (config *RequestConfig) Print() {
 	t.AppendSeparator()
 	t.AppendRow(table.Row{"Dodos", config.DodosCount})
 	t.AppendSeparator()
-	t.AppendRow(table.Row{"Request Count", config.RequestCount})
+	t.AppendRow(table.Row{"Request", config.RequestCount})
 	t.AppendSeparator()
-	t.AppendRow(table.Row{"Params Count", len(config.Params)})
+	t.AppendRow(table.Row{"Params", utils.MarshalJSON(config.Params, 3)})
 	t.AppendSeparator()
-	t.AppendRow(table.Row{"Headers Count", len(config.Headers)})
+	t.AppendRow(table.Row{"Headers", utils.MarshalJSON(config.Headers, 3)})
 	t.AppendSeparator()
-	t.AppendRow(table.Row{"Cookies Count", len(config.Cookies)})
+	t.AppendRow(table.Row{"Cookies", utils.MarshalJSON(config.Cookies, 3)})
 	t.AppendSeparator()
-	t.AppendRow(table.Row{"Proxies Count", len(config.Proxies)})
+	t.AppendRow(table.Row{"Proxies", utils.MarshalJSON(config.Proxies, 3)})
 	t.AppendSeparator()
-	t.AppendRow(table.Row{"Body", config.Body})
+	t.AppendRow(table.Row{"Body", utils.MarshalJSON(config.Body, 3)})
 
 	t.Render()
 }
@@ -134,11 +135,11 @@ type Proxy struct {
 
 type JSONConfig struct {
 	Config
-	Params  map[string]string `json:"params"`
-	Headers map[string]string `json:"headers"`
-	Cookies map[string]string `json:"cookies"`
-	Proxies []Proxy           `json:"proxies" validate:"dive"`
-	Body    string            `json:"body"`
+	Params  map[string][]string `json:"params"`
+	Headers map[string][]string `json:"headers"`
+	Cookies map[string][]string `json:"cookies"`
+	Proxies []Proxy             `json:"proxies" validate:"dive"`
+	Body    []string            `json:"body"`
 }
 
 func (config *JSONConfig) MergeConfigs(newConfig *JSONConfig) {
@@ -152,7 +153,7 @@ func (config *JSONConfig) MergeConfigs(newConfig *JSONConfig) {
 	if len(newConfig.Cookies) != 0 {
 		config.Cookies = newConfig.Cookies
 	}
-	if newConfig.Body != "" {
+	if len(newConfig.Body) != 0 {
 		config.Body = newConfig.Body
 	}
 	if len(newConfig.Proxies) != 0 {
