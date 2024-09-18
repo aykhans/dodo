@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	VERSION                 string = "0.5.0"
+	VERSION                 string = "0.5.1"
 	DefaultUserAgent        string = "Dodo/" + VERSION
 	ProxyCheckURL           string = "https://www.google.com"
 	DefaultMethod           string = "GET"
@@ -64,7 +64,7 @@ func (config *RequestConfig) Print() {
 	t.AppendSeparator()
 	t.AppendRow(table.Row{"Cookies", utils.MarshalJSON(config.Cookies, 3)})
 	t.AppendSeparator()
-	t.AppendRow(table.Row{"Proxies", utils.MarshalJSON(config.Proxies, 3)})
+	t.AppendRow(table.Row{"Proxies Count", len(config.Proxies)})
 	t.AppendSeparator()
 	t.AppendRow(table.Row{"Body", utils.MarshalJSON(config.Body, 3)})
 
