@@ -7,7 +7,7 @@
     "params": {},
     "headers": {},
     "cookies": {},
-    "body": "",
+    "body": [""],
     "proxies": [
         {
             "url": "http://example.com:8080",
