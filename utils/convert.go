@@ -2,8 +2,8 @@ package utils
 
 import (
 	"encoding/json"
+	"fmt"
 	"reflect"
-	"strings"
 )
 
 func MarshalJSON(v any, maxSliceSize uint) string {
@@ -17,7 +17,7 @@ func MarshalJSON(v any, maxSliceSize uint) string {
 		return "{}"
 	}
 
-	return strings.Replace(string(data), `"..."`, "...", -1)
+	return string(data)
 }
 
 func truncateLists(v interface{}, maxItems int) interface{} {
@@ -28,7 +28,7 @@ func truncateLists(v interface{}, maxItems int) interface{} {
 		if rv.Len() > maxItems {
 			newSlice := reflect.MakeSlice(rv.Type(), maxItems, maxItems)
 			reflect.Copy(newSlice, rv.Slice(0, maxItems))
-			newSlice = reflect.Append(newSlice, reflect.ValueOf("..."))
+			newSlice = reflect.Append(newSlice, reflect.ValueOf(fmt.Sprintf("...(%d more)", rv.Len()-maxItems)))
 			return newSlice.Interface()
 		}
 	case reflect.Map:

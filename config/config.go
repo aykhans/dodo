@@ -64,7 +64,7 @@ func (config *RequestConfig) Print() {
 	t.AppendSeparator()
 	t.AppendRow(table.Row{"Cookies", utils.MarshalJSON(config.Cookies, 3)})
 	t.AppendSeparator()
-	t.AppendRow(table.Row{"Proxies", utils.MarshalJSON(config.Proxies, 3)})
+	t.AppendRow(table.Row{"Proxies Count", len(config.Proxies)})
 	t.AppendSeparator()
 	t.AppendRow(table.Row{"Body", utils.MarshalJSON(config.Body, 3)})
 
