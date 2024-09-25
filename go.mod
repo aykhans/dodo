@@ -7,7 +7,7 @@ require (
 	github.com/jedib0t/go-pretty/v6 v6.5.9
 	github.com/spf13/cobra v1.8.1
 	github.com/spf13/pflag v1.0.5
-	github.com/valyala/fasthttp v1.55.0
+	github.com/valyala/fasthttp v1.56.0
 	golang.org/x/net v0.29.0
 )
 
