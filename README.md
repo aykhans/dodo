@@ -64,7 +64,7 @@ You can find an example config structure in the [config.json](https://github.com
     "params": {},
     "headers": {},
     "cookies": {},
-    "body": "",
+    "body": [""],
     "proxies": [
         {
             "url": "http://example.com:8080",
