@@ -32,16 +32,6 @@ func CLIConfigReader() (*config.CLIConfig, error) {
 
   Usage with all flags:
     dodo -c /path/to/config/file/config.json -u https://example.com -m POST -d 10 -r 1000 -t 2000`,
-			Short: `
-██████████      ███████    ██████████      ███████   
-░░███░░░░███   ███░░░░░███ ░░███░░░░███   ███░░░░░███ 
- ░███   ░░███ ███     ░░███ ░███   ░░███ ███     ░░███
- ░███    ░███░███      ░███ ░███    ░███░███      ░███
- ░███    ░███░███      ░███ ░███    ░███░███      ░███
- ░███    ███ ░░███     ███  ░███    ███ ░░███     ███ 
- ██████████   ░░░███████░   ██████████   ░░░███████░  
-░░░░░░░░░░      ░░░░░░░    ░░░░░░░░░░      ░░░░░░░    
-`,
 			Run:           func(cmd *cobra.Command, args []string) {},
 			SilenceErrors: true,
 			SilenceUsage:  true,
@@ -56,7 +46,7 @@ func CLIConfigReader() (*config.CLIConfig, error) {
 	rootCmd.Flags().UintVarP(&dodosCount, "dodos-count", "d", config.DefaultDodosCount, "Number of dodos(threads)")
 	rootCmd.Flags().UintVarP(&requestCount, "request-count", "r", config.DefaultRequestCount, "Number of total requests")
 	rootCmd.Flags().Uint32VarP(&timeout, "timeout", "t", config.DefaultTimeout, "Timeout for each request in milliseconds")
-	rootCmd.Flags().BoolVar(&noProxyCheck, "no-proxy-check", false, "Do not check for proxy")
+	rootCmd.Flags().BoolVar(&noProxyCheck, "no-proxy-check", false, "Do not check for proxies")
 	if err := rootCmd.Execute(); err != nil {
 		utils.PrintErr(err)
 		rootCmd.Println(rootCmd.UsageString())
