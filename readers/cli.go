@@ -56,7 +56,7 @@ func CLIConfigReader() (*config.CLIConfig, error) {
 	rootCmd.Flags().UintVarP(&dodosCount, "dodos-count", "d", config.DefaultDodosCount, "Number of dodos(threads)")
 	rootCmd.Flags().UintVarP(&requestCount, "request-count", "r", config.DefaultRequestCount, "Number of total requests")
 	rootCmd.Flags().Uint32VarP(&timeout, "timeout", "t", config.DefaultTimeout, "Timeout for each request in milliseconds")
-	rootCmd.Flags().BoolVarP(&noProxyCheck, "no-proxy-check", "n", false, "Do not check for proxy")
+	rootCmd.Flags().BoolVar(&noProxyCheck, "no-proxy-check", false, "Do not check for proxy")
 	if err := rootCmd.Execute(); err != nil {
 		utils.PrintErr(err)
 		rootCmd.Println(rootCmd.UsageString())
