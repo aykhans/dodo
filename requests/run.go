@@ -2,6 +2,7 @@ package requests
 
 import (
 	"context"
+	"fmt"
 	"sync"
 	"time"
 
@@ -24,6 +25,8 @@ import (
 //   - Responses: A collection of responses from the executed requests.
 //   - error: An error if the operation fails, such as no internet connection or an interrupt.
 func Run(ctx context.Context, requestConfig *config.RequestConfig) (Responses, error) {
+	fmt.Println("No Proxy Check:", requestConfig.NoProxyCheck)
+
 	checkConnectionCtx, checkConnectionCtxCancel := context.WithTimeout(ctx, 8*time.Second)
 	if !checkConnection(checkConnectionCtx) {
 		checkConnectionCtxCancel()
@@ -38,6 +41,7 @@ func Run(ctx context.Context, requestConfig *config.RequestConfig) (Responses, e
 		requestConfig.GetValidDodosCountForProxies(),
 		requestConfig.GetMaxConns(fasthttp.DefaultMaxConnsPerHost),
 		requestConfig.Yes,
+		requestConfig.NoProxyCheck,
 		requestConfig.URL,
 	)
 	if clients == nil {

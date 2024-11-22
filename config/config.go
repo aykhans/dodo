@@ -37,6 +37,7 @@ type RequestConfig struct {
 	Proxies      []Proxy
 	Body         []string
 	Yes          bool
+	NoProxyCheck bool
 }
 
 func (config *RequestConfig) Print() {
@@ -66,6 +67,8 @@ func (config *RequestConfig) Print() {
 	t.AppendSeparator()
 	t.AppendRow(table.Row{"Proxies Count", len(config.Proxies)})
 	t.AppendSeparator()
+	t.AppendRow(table.Row{"Proxy Check", !config.NoProxyCheck})
+	t.AppendSeparator()
 	t.AppendRow(table.Row{"Body", utils.MarshalJSON(config.Body, 3)})
 
 	t.Render()
@@ -87,11 +90,12 @@ func (config *RequestConfig) GetMaxConns(minConns uint) uint {
 }
 
 type Config struct {
-	Method       string `json:"method" validate:"http_method"` // custom validations: http_method
-	URL          string `json:"url" validate:"http_url,required"`
-	Timeout      uint32 `json:"timeout" validate:"gte=1,lte=100000"`
-	DodosCount   uint   `json:"dodos_count" validate:"gte=1"`
-	RequestCount uint   `json:"request_count" validation_name:"request-count" validate:"gte=1"`
+	Method       string             `json:"method" validate:"http_method"` // custom validations: http_method
+	URL          string             `json:"url" validate:"http_url,required"`
+	Timeout      uint32             `json:"timeout" validate:"gte=1,lte=100000"`
+	DodosCount   uint               `json:"dodos_count" validate:"gte=1"`
+	RequestCount uint               `json:"request_count" validation_name:"request-count" validate:"gte=1"`
+	NoProxyCheck utils.Option[bool] `json:"no_proxy_check"`
 }
 
 func (config *Config) MergeConfigs(newConfig *Config) {
@@ -110,6 +114,9 @@ func (config *Config) MergeConfigs(newConfig *Config) {
 	if newConfig.RequestCount != 0 {
 		config.RequestCount = newConfig.RequestCount
 	}
+	if !newConfig.NoProxyCheck.IsNone() {
+		config.NoProxyCheck = newConfig.NoProxyCheck
+	}
 }
 
 func (config *Config) SetDefaults() {
@@ -124,6 +131,9 @@ func (config *Config) SetDefaults() {
 	}
 	if config.RequestCount == 0 {
 		config.RequestCount = DefaultRequestCount
+	}
+	if config.NoProxyCheck.IsNone() {
+		config.NoProxyCheck = utils.NewOption(false)
 	}
 }
 

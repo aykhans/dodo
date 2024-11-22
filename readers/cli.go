@@ -13,10 +13,15 @@ import (
 func CLIConfigReader() (*config.CLIConfig, error) {
 	var (
 		returnNil    = false
-		cliConfig    = &config.CLIConfig{}
+		cliConfig    = &config.CLIConfig{
+			Config: config.Config{
+				NoProxyCheck: utils.NewNoneOption[bool](),
+			},
+		}
 		dodosCount   uint
 		requestCount uint
 		timeout      uint32
+		noProxyCheck bool
 		rootCmd      = &cobra.Command{
 			Use: "dodo [flags]",
 			Example: `  Simple usage only with URL:
@@ -51,6 +56,7 @@ func CLIConfigReader() (*config.CLIConfig, error) {
 	rootCmd.Flags().UintVarP(&dodosCount, "dodos-count", "d", config.DefaultDodosCount, "Number of dodos(threads)")
 	rootCmd.Flags().UintVarP(&requestCount, "request-count", "r", config.DefaultRequestCount, "Number of total requests")
 	rootCmd.Flags().Uint32VarP(&timeout, "timeout", "t", config.DefaultTimeout, "Timeout for each request in milliseconds")
+	rootCmd.Flags().BoolVarP(&noProxyCheck, "no-proxy-check", "n", false, "Do not check for proxy")
 	if err := rootCmd.Execute(); err != nil {
 		utils.PrintErr(err)
 		rootCmd.Println(rootCmd.UsageString())
@@ -68,6 +74,8 @@ func CLIConfigReader() (*config.CLIConfig, error) {
 			cliConfig.RequestCount = requestCount
 		case "timeout":
 			cliConfig.Timeout = timeout
+		case "no-proxy-check":
+			cliConfig.NoProxyCheck = utils.NewOption(noProxyCheck)
 		}
 	})
 	if returnNil {

@@ -26,11 +26,42 @@ func getClients(
 	dodosCount uint,
 	maxConns uint,
 	yes bool,
+	noProxyCheck bool,
 	URL *url.URL,
 ) []*fasthttp.HostClient {
 	isTLS := URL.Scheme == "https"
 
-	if len(proxies) > 0 {
+	if proxiesLen := len(proxies); proxiesLen > 0 {
+		// If noProxyCheck is true, we will return the clients without checking the proxies.
+		if noProxyCheck {
+			clients := make([]*fasthttp.HostClient, 0, proxiesLen)
+			addr := URL.Host
+			if isTLS && URL.Port() == "" {
+				addr += ":443"
+			}
+
+			for _, proxy := range proxies {
+				dialFunc, err := getDialFunc(&proxy, timeout)
+				if err != nil {
+					continue
+				}
+
+				clients = append(clients, &fasthttp.HostClient{
+						MaxConns:            int(maxConns),
+						IsTLS:               isTLS,
+						Addr:                addr,
+						Dial:                dialFunc,
+						MaxIdleConnDuration: timeout,
+						MaxConnDuration:     timeout,
+						WriteTimeout:        timeout,
+						ReadTimeout:         timeout,
+					},
+				)
+			}
+			return clients
+		}
+
+		// Else, we will check the proxies and return the active ones.
 		activeProxyClients := getActiveProxyClients(
 			ctx, proxies, timeout, dodosCount, maxConns, URL,
 		)
