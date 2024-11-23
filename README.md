@@ -33,7 +33,7 @@ Follow the steps below to build dodo:
 3. **Build the project:**
 
     ```sh
-    go build -o dodo
+    go build -ldflags "-s -w" -o dodo
     ```
 
 This will generate an executable named `dodo` in the project directory.
