@@ -31,7 +31,7 @@ func CLIConfigReader() (*config.CLIConfig, error) {
     dodo -c /path/to/config/file/config.json
 
   Usage with all flags:
-    dodo -c /path/to/config/file/config.json -u https://example.com -m POST -d 10 -r 1000 -t 2000`,
+    dodo -c /path/to/config/file/config.json -u https://example.com -m POST -d 10 -r 1000 -t 2000 --no-proxy-check -y`,
 			Run:           func(cmd *cobra.Command, args []string) {},
 			SilenceErrors: true,
 			SilenceUsage:  true,
