@@ -1,6 +1,6 @@
 module github.com/aykhans/dodo
 
-go 1.22.6
+go 1.23.2
 
 require (
 	github.com/go-playground/validator/v10 v10.23.0
