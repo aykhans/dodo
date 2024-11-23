@@ -5,7 +5,11 @@ import (
 	"errors"
 )
 
-type IOption[T any] interface {
+type NonNilConcrete interface {
+    ~int | ~float64 | ~string | ~bool
+}
+
+type IOption[T NonNilConcrete] interface {
 	IsNone() bool
 	ValueOrErr() (*T, error)
 	ValueOr(def *T) *T
@@ -14,7 +18,7 @@ type IOption[T any] interface {
 }
 
 // Don't call this struct directly, use NewOption[T] or NewNoneOption[T] instead.
-type option[T any] struct {
+type option[T NonNilConcrete] struct {
 	// value holds the actual value of the Option if it is not None.
 	value T
 	// none indicates whether the Option is None (i.e., has no value).
@@ -58,10 +62,10 @@ func (o *option[T]) UnmarshalJSON(data []byte) error {
 	return json.Unmarshal(data, &o.value)
 }
 
-func NewOption[T any](value T) *option[T] {
+func NewOption[T NonNilConcrete](value T) *option[T] {
 	return &option[T]{value: value}
 }
 
-func NewNoneOption[T any]() *option[T] {
+func NewNoneOption[T NonNilConcrete]() *option[T] {
 	return &option[T]{none: true}
 }
