@@ -58,8 +58,9 @@ You can find an example config structure in the [config.json](https://github.com
 {
     "method": "GET",
     "url": "https://example.com",
-    "timeout": 10000,
-    "dodos_count": 50,
+    "no_proxy_check": false,
+    "timeout": 2000,
+    "dodos_count": 10,
     "request_count": 1000,
     "params": {},
     "headers": {},
@@ -77,7 +78,7 @@ You can find an example config structure in the [config.json](https://github.com
     ]
 }
 ```
-Send 1000 GET requests to https://example.com with 5 parallel dodos (threads) and a timeout of 10000 milliseconds:
+Send 1000 GET requests to https://example.com with 10 parallel dodos (threads) and a timeout of 2000 milliseconds:
 
 ```sh
 dodo -c /path/config.json
