@@ -5,20 +5,28 @@ import (
 	"errors"
 )
 
+type IOption[T any] interface {
+	IsNone() bool
+	ValueOrErr() (*T, error)
+	ValueOr(def *T) *T
+	ValueOrPanic() *T
+	UnmarshalJSON(data []byte) error
+}
+
 // Don't call this struct directly, use NewOption[T] or NewNoneOption[T] instead.
-type Option[T any] struct {
+type option[T any] struct {
 	// value holds the actual value of the Option if it is not None.
 	value T
 	// none indicates whether the Option is None (i.e., has no value).
 	none bool
 }
 
-func (o *Option[T]) IsNone() bool {
+func (o *option[T]) IsNone() bool {
 	return o.none
 }
 
 // The returned value can be nil, if the Option is None, it will return nil and an error.
-func (o *Option[T]) ValueOrErr() (*T, error) {
+func (o *option[T]) ValueOrErr() (*T, error) {
 	if o.IsNone() {
 		return nil, errors.New("Option is None")
 	}
@@ -26,7 +34,7 @@ func (o *Option[T]) ValueOrErr() (*T, error) {
 }
 
 // The returned value can't be nil, if the Option is None, it will return the default value.
-func (o *Option[T]) ValueOr(def *T) *T {
+func (o *option[T]) ValueOr(def *T) *T {
 	if o.IsNone() {
 		return def
 	}
@@ -34,14 +42,14 @@ func (o *Option[T]) ValueOr(def *T) *T {
 }
 
 // The returned value can't be nil, if the Option is None, it will panic.
-func (o *Option[T]) ValueOrPanic() *T {
+func (o *option[T]) ValueOrPanic() *T {
 	if o.IsNone() {
 		panic("Option is None")
 	}
 	return &o.value
 }
 
-func (o *Option[T]) UnmarshalJSON(data []byte) error {
+func (o *option[T]) UnmarshalJSON(data []byte) error {
 	if string(data) == "null" {
 		o.none = true
 		return nil
@@ -50,10 +58,10 @@ func (o *Option[T]) UnmarshalJSON(data []byte) error {
 	return json.Unmarshal(data, &o.value)
 }
 
-func NewOption[T any](value T) Option[T] {
-	return Option[T]{value: value}
+func NewOption[T any](value T) *option[T] {
+	return &option[T]{value: value}
 }
 
-func NewNoneOption[T any]() Option[T] {
-	return Option[T]{none: true}
+func NewNoneOption[T any]() *option[T] {
+	return &option[T]{none: true}
 }

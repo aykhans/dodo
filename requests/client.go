@@ -47,15 +47,15 @@ func getClients(
 				}
 
 				clients = append(clients, &fasthttp.HostClient{
-						MaxConns:            int(maxConns),
-						IsTLS:               isTLS,
-						Addr:                addr,
-						Dial:                dialFunc,
-						MaxIdleConnDuration: timeout,
-						MaxConnDuration:     timeout,
-						WriteTimeout:        timeout,
-						ReadTimeout:         timeout,
-					},
+					MaxConns:            int(maxConns),
+					IsTLS:               isTLS,
+					Addr:                addr,
+					Dial:                dialFunc,
+					MaxIdleConnDuration: timeout,
+					MaxConnDuration:     timeout,
+					WriteTimeout:        timeout,
+					ReadTimeout:         timeout,
+				},
 				)
 			}
 			return clients

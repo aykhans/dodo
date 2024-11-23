@@ -12,8 +12,8 @@ import (
 
 func CLIConfigReader() (*config.CLIConfig, error) {
 	var (
-		returnNil    = false
-		cliConfig    = &config.CLIConfig{
+		returnNil = false
+		cliConfig = &config.CLIConfig{
 			Config: config.Config{
 				NoProxyCheck: utils.NewNoneOption[bool](),
 			},
