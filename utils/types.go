@@ -6,10 +6,10 @@ import (
 )
 
 type NonNilConcrete interface {
-    ~int | ~float64 | ~string | ~bool
+	~int | ~float64 | ~string | ~bool
 }
 
-type IOption[T NonNilConcrete] interface {
+type Option[T NonNilConcrete] interface {
 	IsNone() bool
 	ValueOrErr() (*T, error)
 	ValueOr(def *T) *T
