@@ -5,20 +5,20 @@ import (
 	"errors"
 )
 
-type NonNilConcrete interface {
+type NonNilT interface {
 	~int | ~float64 | ~string | ~bool
 }
 
-type Option[T NonNilConcrete] interface {
+type Option[T NonNilT] interface {
 	IsNone() bool
-	ValueOrErr() (*T, error)
-	ValueOr(def *T) *T
-	ValueOrPanic() *T
+	ValueOrErr() (T, error)
+	ValueOr(def T) T
+	ValueOrPanic() T
 	UnmarshalJSON(data []byte) error
 }
 
 // Don't call this struct directly, use NewOption[T] or NewNoneOption[T] instead.
-type option[T NonNilConcrete] struct {
+type option[T NonNilT] struct {
 	// value holds the actual value of the Option if it is not None.
 	value T
 	// none indicates whether the Option is None (i.e., has no value).
@@ -29,28 +29,39 @@ func (o *option[T]) IsNone() bool {
 	return o.none
 }
 
-// The returned value can be nil, if the Option is None, it will return nil and an error.
-func (o *option[T]) ValueOrErr() (*T, error) {
+// If the Option is None, it will return zero value of the type and an error.
+func (o *option[T]) ValueOrErr() (T, error) {
 	if o.IsNone() {
-		return nil, errors.New("Option is None")
+		return o.value, errors.New("Option is None")
 	}
-	return &o.value, nil
+	return o.value, nil
 }
 
-// The returned value can't be nil, if the Option is None, it will return the default value.
-func (o *option[T]) ValueOr(def *T) *T {
+// If the Option is None, it will return the default value.
+func (o *option[T]) ValueOr(def T) T {
 	if o.IsNone() {
 		return def
 	}
-	return &o.value
+	return o.value
 }
 
-// The returned value can't be nil, if the Option is None, it will panic.
-func (o *option[T]) ValueOrPanic() *T {
+// If the Option is None, it will panic.
+func (o *option[T]) ValueOrPanic() T {
 	if o.IsNone() {
 		panic("Option is None")
 	}
-	return &o.value
+	return o.value
+}
+
+func (o *option[T]) SetValue(value T) {
+	o.value = value
+	o.none = false
+}
+
+func (o *option[T]) SetNone() {
+	var zeroValue T
+	o.value = zeroValue
+	o.none = true
 }
 
 func (o *option[T]) UnmarshalJSON(data []byte) error {
@@ -62,10 +73,10 @@ func (o *option[T]) UnmarshalJSON(data []byte) error {
 	return json.Unmarshal(data, &o.value)
 }
 
-func NewOption[T NonNilConcrete](value T) *option[T] {
+func NewOption[T NonNilT](value T) *option[T] {
 	return &option[T]{value: value}
 }
 
-func NewNoneOption[T NonNilConcrete]() *option[T] {
+func NewNoneOption[T NonNilT]() *option[T] {
 	return &option[T]{none: true}
 }

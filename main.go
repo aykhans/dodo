@@ -81,7 +81,7 @@ func main() {
 		Proxies:      jsonConf.Proxies,
 		Body:         jsonConf.Body,
 		Yes:          cliConf.Yes,
-		NoProxyCheck: *conf.NoProxyCheck.ValueOrPanic(),
+		NoProxyCheck: conf.NoProxyCheck.ValueOrPanic(),
 	}
 	requestConf.Print()
 	if !cliConf.Yes {
