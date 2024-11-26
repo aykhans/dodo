@@ -21,8 +21,10 @@ import (
 
 func main() {
 	validator := validation.NewValidator()
-	conf := config.Config{}
-	jsonConf := config.JSONConfig{}
+	conf := config.NewConfig("", 0, 0, 0, nil)
+	jsonConf := config.NewJSONConfig(
+		config.NewConfig("", 0, 0, 0, nil), nil, nil, nil, nil, nil,
+	)
 
 	cliConf, err := readers.CLIConfigReader()
 	if err != nil || cliConf == nil {
@@ -51,11 +53,11 @@ func main() {
 				),
 			)
 		}
-		jsonConf = *jsonConfNew
-		conf.MergeConfigs(&jsonConf.Config)
+		jsonConf = jsonConfNew
+		conf.MergeConfigs(jsonConf.Config)
 	}
 
-	conf.MergeConfigs(&cliConf.Config)
+	conf.MergeConfigs(cliConf.Config)
 	conf.SetDefaults()
 	if err := validator.Struct(conf); err != nil {
 		utils.PrintErrAndExit(

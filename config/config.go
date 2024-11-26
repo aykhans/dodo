@@ -21,10 +21,6 @@ const (
 	MaxDodosCountForProxies uint   = 20 // Max dodos count for proxy check
 )
 
-type IConfig interface {
-	MergeConfigs(newConfig IConfig) IConfig
-}
-
 type RequestConfig struct {
 	Method       string
 	URL          *url.URL
@@ -48,6 +44,12 @@ func (config *RequestConfig) Print() {
 		{Number: 2, WidthMax: 50},
 	})
 
+	newHeaders := make(map[string][]string)
+	newHeaders["User-Agent"] = []string{DefaultUserAgent}
+	for k, v := range config.Headers {
+		newHeaders[k] = v
+	}
+
 	t.AppendHeader(table.Row{"Request Configuration"})
 	t.AppendRow(table.Row{"Method", config.Method})
 	t.AppendSeparator()
@@ -57,11 +59,11 @@ func (config *RequestConfig) Print() {
 	t.AppendSeparator()
 	t.AppendRow(table.Row{"Dodos", config.DodosCount})
 	t.AppendSeparator()
-	t.AppendRow(table.Row{"Request", config.RequestCount})
+	t.AppendRow(table.Row{"Requests", config.RequestCount})
 	t.AppendSeparator()
 	t.AppendRow(table.Row{"Params", utils.MarshalJSON(config.Params, 3)})
 	t.AppendSeparator()
-	t.AppendRow(table.Row{"Headers", utils.MarshalJSON(config.Headers, 3)})
+	t.AppendRow(table.Row{"Headers", utils.MarshalJSON(newHeaders, 3)})
 	t.AppendSeparator()
 	t.AppendRow(table.Row{"Cookies", utils.MarshalJSON(config.Cookies, 3)})
 	t.AppendSeparator()
@@ -96,6 +98,26 @@ type Config struct {
 	DodosCount   uint               `json:"dodos_count" validate:"gte=1"`
 	RequestCount uint               `json:"request_count" validation_name:"request-count" validate:"gte=1"`
 	NoProxyCheck utils.Option[bool] `json:"no_proxy_check"`
+}
+
+func NewConfig(
+	method string,
+	timeout uint32,
+	dodosCount uint,
+	requestCount uint,
+	noProxyCheck utils.Option[bool],
+) *Config {
+	if noProxyCheck == nil {
+		noProxyCheck = utils.NewNoneOption[bool]()
+	}
+
+	return &Config{
+		Method:       method,
+		Timeout:      timeout,
+		DodosCount:   dodosCount,
+		RequestCount: requestCount,
+		NoProxyCheck: noProxyCheck,
+	}
 }
 
 func (config *Config) MergeConfigs(newConfig *Config) {
@@ -144,7 +166,7 @@ type Proxy struct {
 }
 
 type JSONConfig struct {
-	Config
+	*Config
 	Params  map[string][]string `json:"params"`
 	Headers map[string][]string `json:"headers"`
 	Cookies map[string][]string `json:"cookies"`
@@ -152,8 +174,21 @@ type JSONConfig struct {
 	Body    []string            `json:"body"`
 }
 
+func NewJSONConfig(
+	config *Config,
+	params map[string][]string,
+	headers map[string][]string,
+	cookies map[string][]string,
+	proxies []Proxy,
+	body []string,
+) *JSONConfig {
+	return &JSONConfig{
+		config, params, headers, cookies, proxies, body,
+	}
+}
+
 func (config *JSONConfig) MergeConfigs(newConfig *JSONConfig) {
-	config.Config.MergeConfigs(&newConfig.Config)
+	config.Config.MergeConfigs(newConfig.Config)
 	if len(newConfig.Params) != 0 {
 		config.Params = newConfig.Params
 	}
@@ -172,13 +207,23 @@ func (config *JSONConfig) MergeConfigs(newConfig *JSONConfig) {
 }
 
 type CLIConfig struct {
-	Config
+	*Config
 	Yes        bool   `json:"yes" validate:"omitempty"`
 	ConfigFile string `validation_name:"config-file" validate:"omitempty,filepath"`
 }
 
+func NewCLIConfig(
+	config *Config,
+	yes bool,
+	configFile string,
+) *CLIConfig {
+	return &CLIConfig{
+		config, yes, configFile,
+	}
+}
+
 func (config *CLIConfig) MergeConfigs(newConfig *CLIConfig) {
-	config.Config.MergeConfigs(&newConfig.Config)
+	config.Config.MergeConfigs(newConfig.Config)
 	if newConfig.ConfigFile != "" {
 		config.ConfigFile = newConfig.ConfigFile
 	}

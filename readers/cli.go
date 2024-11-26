@@ -12,12 +12,8 @@ import (
 
 func CLIConfigReader() (*config.CLIConfig, error) {
 	var (
-		returnNil = false
-		cliConfig = &config.CLIConfig{
-			Config: config.Config{
-				NoProxyCheck: utils.NewNoneOption[bool](),
-			},
-		}
+		returnNil    = false
+		cliConfig    = config.NewCLIConfig(config.NewConfig("", 0, 0, 0, nil), false, "")
 		dodosCount   uint
 		requestCount uint
 		timeout      uint32

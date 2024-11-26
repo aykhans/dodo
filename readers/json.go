@@ -6,7 +6,6 @@ import (
 
 	"github.com/aykhans/dodo/config"
 	customerrors "github.com/aykhans/dodo/custom_errors"
-	"github.com/aykhans/dodo/utils"
 )
 
 func JSONConfigReader(filePath string) (*config.JSONConfig, error) {
@@ -14,11 +13,10 @@ func JSONConfigReader(filePath string) (*config.JSONConfig, error) {
 	if err != nil {
 		return nil, customerrors.OSErrorFormater(err)
 	}
-	jsonConf := &config.JSONConfig{
-		Config: config.Config{
-			NoProxyCheck: utils.NewNoneOption[bool](),
-		},
-	}
+	jsonConf := config.NewJSONConfig(
+		config.NewConfig("", 0, 0, 0, nil),
+		nil, nil, nil, nil, nil,
+	)
 	err = json.Unmarshal(data, &jsonConf)
 
 	if err != nil {
