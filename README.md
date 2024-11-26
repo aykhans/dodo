@@ -1,6 +1,6 @@
 <h1 align="center">Dodo is a simple and easy-to-use HTTP benchmarking tool.</h1>
 <p align="center">
-<img width="30%" height="30%" src="https://raw.githubusercontent.com/aykhans/dodo/main/assets/dodo.png">
+<img width="30%" height="30%" src="https://ftp.aykhans.me/web/client/pubshares/hB6VSdCnBCr8gFPeiMuCji/browse?path=%2Fdodo.png">
 </p>
 
 ## Installation
