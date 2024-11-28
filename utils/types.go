@@ -65,12 +65,17 @@ func (o *option[T]) SetNone() {
 }
 
 func (o *option[T]) UnmarshalJSON(data []byte) error {
-	if string(data) == "null" {
-		o.none = true
+	if string(data) == "null" || len(data) == 0 {
+		o.SetNone()
 		return nil
 	}
+
+	if err := json.Unmarshal(data, &o.value); err != nil {
+		o.SetNone()
+		return err
+	}
 	o.none = false
-	return json.Unmarshal(data, &o.value)
+	return nil
 }
 
 func NewOption[T NonNilT](value T) *option[T] {
