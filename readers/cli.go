@@ -13,10 +13,11 @@ import (
 func CLIConfigReader() (*config.CLIConfig, error) {
 	var (
 		returnNil    = false
-		cliConfig    = &config.CLIConfig{}
+		cliConfig    = config.NewCLIConfig(config.NewConfig("", 0, 0, 0, nil), false, "")
 		dodosCount   uint
 		requestCount uint
 		timeout      uint32
+		noProxyCheck bool
 		rootCmd      = &cobra.Command{
 			Use: "dodo [flags]",
 			Example: `  Simple usage only with URL:
@@ -26,17 +27,7 @@ func CLIConfigReader() (*config.CLIConfig, error) {
     dodo -c /path/to/config/file/config.json
 
   Usage with all flags:
-    dodo -c /path/to/config/file/config.json -u https://example.com -m POST -d 10 -r 1000 -t 2000`,
-			Short: `
-██████████      ███████    ██████████      ███████   
-░░███░░░░███   ███░░░░░███ ░░███░░░░███   ███░░░░░███ 
- ░███   ░░███ ███     ░░███ ░███   ░░███ ███     ░░███
- ░███    ░███░███      ░███ ░███    ░███░███      ░███
- ░███    ░███░███      ░███ ░███    ░███░███      ░███
- ░███    ███ ░░███     ███  ░███    ███ ░░███     ███ 
- ██████████   ░░░███████░   ██████████   ░░░███████░  
-░░░░░░░░░░      ░░░░░░░    ░░░░░░░░░░      ░░░░░░░    
-`,
+    dodo -c /path/to/config/file/config.json -u https://example.com -m POST -d 10 -r 1000 -t 2000 --no-proxy-check -y`,
 			Run:           func(cmd *cobra.Command, args []string) {},
 			SilenceErrors: true,
 			SilenceUsage:  true,
@@ -51,6 +42,7 @@ func CLIConfigReader() (*config.CLIConfig, error) {
 	rootCmd.Flags().UintVarP(&dodosCount, "dodos-count", "d", config.DefaultDodosCount, "Number of dodos(threads)")
 	rootCmd.Flags().UintVarP(&requestCount, "request-count", "r", config.DefaultRequestCount, "Number of total requests")
 	rootCmd.Flags().Uint32VarP(&timeout, "timeout", "t", config.DefaultTimeout, "Timeout for each request in milliseconds")
+	rootCmd.Flags().BoolVar(&noProxyCheck, "no-proxy-check", false, "Do not check for proxies")
 	if err := rootCmd.Execute(); err != nil {
 		utils.PrintErr(err)
 		rootCmd.Println(rootCmd.UsageString())
@@ -68,6 +60,8 @@ func CLIConfigReader() (*config.CLIConfig, error) {
 			cliConfig.RequestCount = requestCount
 		case "timeout":
 			cliConfig.Timeout = timeout
+		case "no-proxy-check":
+			cliConfig.NoProxyCheck = utils.NewOption(noProxyCheck)
 		}
 	})
 	if returnNil {

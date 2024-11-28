@@ -1,6 +1,7 @@
 {
     "method": "GET",
     "url": "https://example.com",
+    "no_proxy_check": true,
     "timeout": 10000,
     "dodos_count": 50,
     "request_count": 1000,

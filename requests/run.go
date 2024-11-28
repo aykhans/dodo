@@ -38,6 +38,7 @@ func Run(ctx context.Context, requestConfig *config.RequestConfig) (Responses, e
 		requestConfig.GetValidDodosCountForProxies(),
 		requestConfig.GetMaxConns(fasthttp.DefaultMaxConnsPerHost),
 		requestConfig.Yes,
+		requestConfig.NoProxyCheck,
 		requestConfig.URL,
 	)
 	if clients == nil {

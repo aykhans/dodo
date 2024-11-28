@@ -1,6 +1,6 @@
 <h1 align="center">Dodo is a simple and easy-to-use HTTP benchmarking tool.</h1>
 <p align="center">
-<img width="30%" height="30%" src="https://raw.githubusercontent.com/aykhans/dodo/main/assets/dodo.png">
+<img width="30%" height="30%" src="https://ftp.aykhans.me/web/client/pubshares/hB6VSdCnBCr8gFPeiMuCji/browse?path=%2Fdodo.png">
 </p>
 
 ## Installation
@@ -33,7 +33,7 @@ Follow the steps below to build dodo:
 3. **Build the project:**
 
     ```sh
-    go build -o dodo
+    go build -ldflags "-s -w" -o dodo
     ```
 
 This will generate an executable named `dodo` in the project directory.
@@ -58,8 +58,9 @@ You can find an example config structure in the [config.json](https://github.com
 {
     "method": "GET",
     "url": "https://example.com",
-    "timeout": 10000,
-    "dodos_count": 50,
+    "no_proxy_check": false,
+    "timeout": 2000,
+    "dodos_count": 10,
     "request_count": 1000,
     "params": {},
     "headers": {},
@@ -77,7 +78,7 @@ You can find an example config structure in the [config.json](https://github.com
     ]
 }
 ```
-Send 1000 GET requests to https://example.com with 5 parallel dodos (threads) and a timeout of 10000 milliseconds:
+Send 1000 GET requests to https://example.com with 10 parallel dodos (threads) and a timeout of 2000 milliseconds:
 
 ```sh
 dodo -c /path/config.json
@@ -101,17 +102,18 @@ docker run --rm -v ./path/config.json:/dodo/config.json -i aykhans/dodo -u https
 ## CLI and JSON Config Parameters
 If the Headers, Params, Cookies and Body fields have multiple values, each request will choose a random value from the list.
 
-| Parameter | JSON config file | CLI Flag | CLI Short Flag | Type | Description | Default |
-| ----------- | ----------- | ----------- | ----------- | ----------- | ----------- | ----------- |
-| Config file | - | --config-file | -c | String | Path to the JSON config file | - |
-| Yes | - | --yes | -y | Boolean | Answer yes to all questions | false |
-| URL | url | --url | -u | String | URL to send the request to | - |
-| Method | method | --method | -m | String | HTTP method | GET |
-| Request count | request_count | --request-count | -r | Integer | Total number of requests to send | 1000 |
-| Dodos count (Threads) | dodos_count | --dodos-count | -d | Integer | Number of dodos (threads) to send requests in parallel | 1 |
-| Timeout | timeout | --timeout | -t | Integer | Timeout for canceling each request (milliseconds) | 10000 |
-| Params | params | - | - | Key-Value {String: [String]} | Request parameters | - |
-| Headers | headers | - | - | Key-Value {String: [String]} | Request headers | - |
-| Cookies | cookies | - | - | Key-Value {String: [String]} | Request cookies | - |
-| Body | body | - | - | [String] | Request body | - |
-| Proxy | proxies | - | - | List[Key-Value {string: string}] | List of proxies (will check active proxies before sending requests) | - |
+| Parameter             | JSON config file | CLI Flag        | CLI Short Flag | Type                             | Description                                                         | Default     |
+| --------------------- | ---------------- | --------------- | -------------- | -------------------------------- | ------------------------------------------------------------------- | ----------- |
+| Config file           | -                | --config-file   | -c             | String                           | Path to the JSON config file                                        | -           |
+| Yes                   | -                | --yes           | -y             | Boolean                          | Answer yes to all questions                                         | false       |
+| URL                   | url              | --url           | -u             | String                           | URL to send the request to                                          | -           |
+| Method                | method           | --method        | -m             | String                           | HTTP method                                                         | GET         |
+| Request count         | request_count    | --request-count | -r             | Integer                          | Total number of requests to send                                    | 1000        |
+| Dodos count (Threads) | dodos_count      | --dodos-count   | -d             | Integer                          | Number of dodos (threads) to send requests in parallel              | 1           |
+| Timeout               | timeout          | --timeout       | -t             | Integer                          | Timeout for canceling each request (milliseconds)                   | 10000       |
+| No Proxy Check        | no_proxy_check   | --no-proxy-check| -              | Boolean                          | Disable proxy check                                                 | false       |
+| Params                | params           | -               | -              | Key-Value {String: [String]}     | Request parameters                                                  | -           |
+| Headers               | headers          | -               | -              | Key-Value {String: [String]}     | Request headers                                                     | -           |
+| Cookies               | cookies          | -               | -              | Key-Value {String: [String]}     | Request cookies                                                     | -           |
+| Body                  | body             | -               | -              | [String]                         | Request body                                                        | -           |
+| Proxy                 | proxies          | -               | -              | List[Key-Value {string: string}] | List of proxies (will check active proxies before sending requests) | -           |
