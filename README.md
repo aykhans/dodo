@@ -49,7 +49,7 @@ dodo -u https://example.com -m GET -d 10 -r 1000 -t 2000
 ```
 With Docker:
 ```sh
-docker run --rm aykhans/dodo -u https://example.com -m GET -d 10 -r 1000 -t 2000
+docker run --rm -i aykhans/dodo -u https://example.com -m GET -d 10 -r 1000 -t 2000
 ```
 
 ### 2. JSON config file
@@ -85,7 +85,7 @@ dodo -c /path/config.json
 ```
 With Docker:
 ```sh
-docker run --rm -v ./path/config.json:/dodo/config.json -i aykhans/dodo
+docker run --rm -i -v ./path/config.json:/dodo/config.json aykhans/dodo
 ```
 
 ### 3. Both (CLI & JSON)
@@ -96,7 +96,7 @@ dodo -c /path/config.json -u https://example.com -m GET -d 10 -r 1000 -t 2000
 ```
 With Docker:
 ```sh
-docker run --rm -v ./path/config.json:/dodo/config.json -i aykhans/dodo -u https://example.com -m GET -d 10 -r 1000 -t 2000
+docker run --rm -i -v ./path/config.json:/dodo/config.json aykhans/dodo -u https://example.com -m GET -d 10 -r 1000 -t 2000
 ```
 
 ## CLI and JSON Config Parameters
