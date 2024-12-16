@@ -6,6 +6,7 @@ import (
 	"os"
 	"time"
 
+	. "github.com/aykhans/dodo/types"
 	"github.com/aykhans/dodo/utils"
 	"github.com/jedib0t/go-pretty/v6/table"
 )
@@ -92,12 +93,12 @@ func (config *RequestConfig) GetMaxConns(minConns uint) uint {
 }
 
 type Config struct {
-	Method       string             `json:"method" validate:"http_method"` // custom validations: http_method
-	URL          string             `json:"url" validate:"http_url,required"`
-	Timeout      uint32             `json:"timeout" validate:"gte=1,lte=100000"`
-	DodosCount   uint               `json:"dodos_count" validate:"gte=1"`
-	RequestCount uint               `json:"request_count" validation_name:"request-count" validate:"gte=1"`
-	NoProxyCheck utils.Option[bool] `json:"no_proxy_check"`
+	Method       string       `json:"method" validate:"http_method"` // custom validations: http_method
+	URL          string       `json:"url" validate:"http_url,required"`
+	Timeout      uint32       `json:"timeout" validate:"gte=1,lte=100000"`
+	DodosCount   uint         `json:"dodos_count" validate:"gte=1"`
+	RequestCount uint         `json:"request_count" validation_name:"request-count" validate:"gte=1"`
+	NoProxyCheck Option[bool] `json:"no_proxy_check"`
 }
 
 func NewConfig(
@@ -105,10 +106,10 @@ func NewConfig(
 	timeout uint32,
 	dodosCount uint,
 	requestCount uint,
-	noProxyCheck utils.Option[bool],
+	noProxyCheck Option[bool],
 ) *Config {
 	if noProxyCheck == nil {
-		noProxyCheck = utils.NewNoneOption[bool]()
+		noProxyCheck = NewNoneOption[bool]()
 	}
 
 	return &Config{
@@ -155,7 +156,7 @@ func (config *Config) SetDefaults() {
 		config.RequestCount = DefaultRequestCount
 	}
 	if config.NoProxyCheck.IsNone() {
-		config.NoProxyCheck = utils.NewOption(false)
+		config.NoProxyCheck = NewOption(false)
 	}
 }
 

@@ -5,6 +5,7 @@ import (
 
 	"github.com/aykhans/dodo/config"
 	"github.com/aykhans/dodo/custom_errors"
+	. "github.com/aykhans/dodo/types"
 	"github.com/aykhans/dodo/utils"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
@@ -61,7 +62,7 @@ func CLIConfigReader() (*config.CLIConfig, error) {
 		case "timeout":
 			cliConfig.Timeout = timeout
 		case "no-proxy-check":
-			cliConfig.NoProxyCheck = utils.NewOption(noProxyCheck)
+			cliConfig.NoProxyCheck = NewOption(noProxyCheck)
 		}
 	})
 	if returnNil {
