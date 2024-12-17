@@ -2,6 +2,7 @@ package requests
 
 import (
 	"context"
+	"strconv"
 	"sync"
 	"time"
 
@@ -142,18 +143,16 @@ func sendRequest(
 					return
 				}
 				*responseData = append(*responseData, &Response{
-					StatusCode: 0,
-					Error:      err,
-					Time:       completedTime,
+					Response: err.Error(),
+					Time:     completedTime,
 				})
 				increase <- 1
 				return
 			}
 
 			*responseData = append(*responseData, &Response{
-				StatusCode: response.StatusCode(),
-				Error:      nil,
-				Time:       completedTime,
+				Response: strconv.Itoa(response.StatusCode()),
+				Time:     completedTime,
 			})
 			increase <- 1
 		}()
