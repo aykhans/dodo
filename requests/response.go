@@ -1,7 +1,6 @@
 package requests
 
 import (
-	"fmt"
 	"os"
 	"time"
 
@@ -10,9 +9,8 @@ import (
 )
 
 type Response struct {
-	StatusCode int
-	Error      error
-	Time       time.Duration
+	Response string
+	Time     time.Duration
 }
 
 type Responses []*Response
@@ -45,17 +43,10 @@ func (respones Responses) Print() {
 		}
 		total.Sum += response.Time
 
-		if response.Error != nil {
-			mergedResponses[response.Error.Error()] = append(
-				mergedResponses[response.Error.Error()],
-				response.Time,
-			)
-		} else {
-			mergedResponses[fmt.Sprintf("%d", response.StatusCode)] = append(
-				mergedResponses[fmt.Sprintf("%d", response.StatusCode)],
-				response.Time,
-			)
-		}
+		mergedResponses[response.Response] = append(
+			mergedResponses[response.Response],
+			response.Time,
+		)
 		allDurations = append(allDurations, response.Time)
 	}
 	allDurations.Sort()
