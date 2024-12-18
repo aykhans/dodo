@@ -14,6 +14,8 @@ type Option[T NonNilT] interface {
 	ValueOrErr() (T, error)
 	ValueOr(def T) T
 	ValueOrPanic() T
+	SetValue(value T)
+	SetNone()
 	UnmarshalJSON(data []byte) error
 }
 

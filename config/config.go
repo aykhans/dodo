@@ -12,13 +12,13 @@ import (
 )
 
 const (
-	VERSION                 string = "0.5.3"
+	VERSION                 string = "0.5.4"
 	DefaultUserAgent        string = "Dodo/" + VERSION
 	ProxyCheckURL           string = "https://www.google.com"
 	DefaultMethod           string = "GET"
 	DefaultTimeout          uint32 = 10000 // Milliseconds (10 seconds)
 	DefaultDodosCount       uint   = 1
-	DefaultRequestCount     uint   = 1000
+	DefaultRequestCount     uint   = 1
 	MaxDodosCountForProxies uint   = 20 // Max dodos count for proxy check
 )
 
@@ -209,13 +209,13 @@ func (config *JSONConfig) MergeConfigs(newConfig *JSONConfig) {
 
 type CLIConfig struct {
 	*Config
-	Yes        bool   `json:"yes" validate:"omitempty"`
+	Yes        Option[bool]   `json:"yes" validate:"omitempty"`
 	ConfigFile string `validation_name:"config-file" validate:"omitempty,filepath"`
 }
 
 func NewCLIConfig(
 	config *Config,
-	yes bool,
+	yes Option[bool],
 	configFile string,
 ) *CLIConfig {
 	return &CLIConfig{
@@ -227,5 +227,8 @@ func (config *CLIConfig) MergeConfigs(newConfig *CLIConfig) {
 	config.Config.MergeConfigs(newConfig.Config)
 	if newConfig.ConfigFile != "" {
 		config.ConfigFile = newConfig.ConfigFile
+	}
+	if !newConfig.Yes.IsNone() {
+		config.Yes = newConfig.Yes
 	}
 }

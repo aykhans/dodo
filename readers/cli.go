@@ -1,70 +1,128 @@
 package readers
 
 import (
+	"flag"
 	"fmt"
+	"math"
+	"strings"
 
 	"github.com/aykhans/dodo/config"
-	"github.com/aykhans/dodo/custom_errors"
 	. "github.com/aykhans/dodo/types"
 	"github.com/aykhans/dodo/utils"
-	"github.com/spf13/cobra"
-	"github.com/spf13/pflag"
 )
 
+const usageText = `Usage:
+  dodo [flags]
+
+Examples:
+
+Simple usage only with URL:
+  dodo -u https://example.com
+
+Simple usage with config file:
+  dodo -c /path/to/config/file/config.json
+
+Usage with all flags:
+  dodo -c /path/to/config/file/config.json -u https://example.com -m POST -d 10 -r 1000 -t 2000 --no-proxy-check -y
+
+Flags:
+  -h, --help                 help for dodo
+  -v, --version              version for dodo
+  -c, --config-file string   Path to the config file
+  -d, --dodos-count uint     Number of dodos(threads) (default %d)
+  -m, --method string        HTTP Method (default %s)
+  -r, --request-count uint   Number of total requests (default %d)
+  -t, --timeout uint32       Timeout for each request in milliseconds (default %d)
+  -u, --url string           URL for stress testing
+      --no-proxy-check bool  Do not check for proxies (default false)
+  -y, --yes bool             Answer yes to all questions (default false)`
+
 func CLIConfigReader() (*config.CLIConfig, error) {
-	var (
-		returnNil    = false
-		cliConfig    = config.NewCLIConfig(config.NewConfig("", 0, 0, 0, nil), false, "")
-		dodosCount   uint
-		requestCount uint
-		timeout      uint32
-		noProxyCheck bool
-		rootCmd      = &cobra.Command{
-			Use: "dodo [flags]",
-			Example: `  Simple usage only with URL:
-    dodo -u https://example.com
-
-  Simple usage with config file:
-    dodo -c /path/to/config/file/config.json
-
-  Usage with all flags:
-    dodo -c /path/to/config/file/config.json -u https://example.com -m POST -d 10 -r 1000 -t 2000 --no-proxy-check -y`,
-			Run:           func(cmd *cobra.Command, args []string) {},
-			SilenceErrors: true,
-			SilenceUsage:  true,
-			Version:       config.VERSION,
-		}
-	)
-
-	rootCmd.Flags().StringVarP(&cliConfig.ConfigFile, "config-file", "c", "", "Path to the config file")
-	rootCmd.Flags().BoolVarP(&cliConfig.Yes, "yes", "y", false, "Answer yes to all questions")
-	rootCmd.Flags().StringVarP(&cliConfig.Method, "method", "m", "", fmt.Sprintf("HTTP Method (default %s)", config.DefaultMethod))
-	rootCmd.Flags().StringVarP(&cliConfig.URL, "url", "u", "", "URL for stress testing")
-	rootCmd.Flags().UintVarP(&dodosCount, "dodos-count", "d", config.DefaultDodosCount, "Number of dodos(threads)")
-	rootCmd.Flags().UintVarP(&requestCount, "request-count", "r", config.DefaultRequestCount, "Number of total requests")
-	rootCmd.Flags().Uint32VarP(&timeout, "timeout", "t", config.DefaultTimeout, "Timeout for each request in milliseconds")
-	rootCmd.Flags().BoolVar(&noProxyCheck, "no-proxy-check", false, "Do not check for proxies")
-	if err := rootCmd.Execute(); err != nil {
-		utils.PrintErr(err)
-		rootCmd.Println(rootCmd.UsageString())
-		return nil, customerrors.CobraErrorFormater(err)
+	flag.Usage = func() {
+		fmt.Printf(
+			usageText+"\n",
+			config.DefaultDodosCount,
+			config.DefaultMethod,
+			config.DefaultRequestCount,
+			config.DefaultTimeout,
+		)
 	}
-	rootCmd.Flags().Visit(func(f *pflag.Flag) {
+
+	var (
+		cliConfig          = config.NewCLIConfig(config.NewConfig("", 0, 0, 0, nil), NewOption(false), "")
+		configFile         = ""
+		yes                = false
+		method             = ""
+		url                = ""
+		dodosCount    uint = 0
+		requestsCount uint = 0
+		timeout       uint = 0
+		noProxyCheck  bool = false
+	)
+	{
+		flag.Bool("version", false, "Prints the version of the program")
+		flag.Bool("v", false, "Prints the version of the program")
+
+		flag.StringVar(&configFile, "config-file", "", "Path to the configuration file")
+		flag.StringVar(&configFile, "c", "", "Path to the configuration file")
+
+		flag.BoolVar(&yes, "yes", false, "Answer yes to all questions")
+		flag.BoolVar(&yes, "y", false, "Answer yes to all questions")
+
+		flag.StringVar(&method, "method", "", "HTTP Method")
+		flag.StringVar(&method, "m", "", "HTTP Method")
+
+		flag.StringVar(&url, "url", "", "URL to send the request")
+		flag.StringVar(&url, "u", "", "URL to send the request")
+
+		flag.UintVar(&dodosCount, "dodos-count", 0, "Number of dodos(threads)")
+		flag.UintVar(&dodosCount, "d", 0, "Number of dodos(threads)")
+
+		flag.UintVar(&requestsCount, "requests-count", 0, "Number of total requests")
+		flag.UintVar(&requestsCount, "r", 0, "Number of total requests")
+
+		flag.UintVar(&timeout, "timeout", 0, "Timeout for each request in milliseconds")
+		flag.UintVar(&timeout, "t", 0, "Timeout for each request in milliseconds")
+
+		flag.BoolVar(&noProxyCheck, "no-proxy-check", false, "Do not check for active proxies")
+	}
+
+	flag.Parse()
+
+	args := flag.Args()
+	if len(args) > 0 {
+		return nil, fmt.Errorf("unexpected arguments: %v", strings.Join(args, ", "))
+	}
+
+	returnNil := false
+	flag.Visit(func(f *flag.Flag) {
 		switch f.Name {
-		case "help":
+		case "version", "v":
+			fmt.Printf("dodo version %s\n", config.VERSION)
 			returnNil = true
-		case "version":
-			returnNil = true
-		case "dodos-count":
+		case "config-file", "c":
+			cliConfig.ConfigFile = configFile
+		case "yes", "y":
+			cliConfig.Yes.SetValue(yes)
+		case "method", "m":
+			cliConfig.Method = method
+		case "url", "u":
+			cliConfig.URL = url
+		case "dodos-count", "d":
 			cliConfig.DodosCount = dodosCount
-		case "request-count":
-			cliConfig.RequestCount = requestCount
-		case "timeout":
-			cliConfig.Timeout = timeout
+		case "requests-count", "r":
+			cliConfig.RequestCount = requestsCount
+		case "timeout", "t":
+			if timeout > math.MaxUint32 {
+				utils.PrintfC(utils.Colors.Yellow, "timeout value is too large, setting to %d\n", math.MaxUint32)
+				timeout = math.MaxUint32
+			}
+			cliConfig.Timeout = uint32(timeout)
 		case "no-proxy-check":
-			cliConfig.NoProxyCheck = NewOption(noProxyCheck)
+			cliConfig.NoProxyCheck.SetValue(noProxyCheck)
 		}
 	})
+
 	if returnNil {
 		return nil, nil
 	}
