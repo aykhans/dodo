@@ -27,9 +27,13 @@ func main() {
 	)
 
 	cliConf, err := readers.CLIConfigReader()
-	if err != nil || cliConf == nil {
+	if err != nil {
+		utils.PrintAndExit(err.Error())
+	}
+	if cliConf == nil {
 		os.Exit(0)
 	}
+
 	if err := validator.StructPartial(cliConf, "ConfigFile"); err != nil {
 		utils.PrintErrAndExit(
 			customerrors.ValidationErrorsFormater(
@@ -82,11 +86,11 @@ func main() {
 		Cookies:      jsonConf.Cookies,
 		Proxies:      jsonConf.Proxies,
 		Body:         jsonConf.Body,
-		Yes:          cliConf.Yes,
-		NoProxyCheck: conf.NoProxyCheck.ValueOrPanic(),
+		Yes:          cliConf.Yes.ValueOr(false),
+		NoProxyCheck: conf.NoProxyCheck.ValueOr(false),
 	}
 	requestConf.Print()
-	if !cliConf.Yes {
+	if !cliConf.Yes.ValueOr(false) {
 		response := readers.CLIYesOrNoReader("Do you want to continue?", true)
 		if !response {
 			utils.PrintAndExit("Exiting...")

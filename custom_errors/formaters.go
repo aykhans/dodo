@@ -19,10 +19,6 @@ func OSErrorFormater(err error) error {
 	return ErrInvalidFile
 }
 
-func CobraErrorFormater(err error) error {
-	return err
-}
-
 func shortenNamespace(namespace string) string {
 	return namespace[strings.Index(namespace, ".")+1:]
 }
