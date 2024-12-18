@@ -3,7 +3,6 @@ package readers
 import (
 	"flag"
 	"fmt"
-	"math"
 	"strings"
 
 	"github.com/aykhans/dodo/config"
@@ -113,9 +112,10 @@ func CLIConfigReader() (*config.CLIConfig, error) {
 		case "requests-count", "r":
 			cliConfig.RequestCount = requestsCount
 		case "timeout", "t":
-			if timeout > math.MaxUint32 {
-				utils.PrintfC(utils.Colors.Yellow, "timeout value is too large, setting to %d\n", math.MaxUint32)
-				timeout = math.MaxUint32
+			var maxUint32 uint = 4294967295
+			if timeout > maxUint32 {
+				utils.PrintfC(utils.Colors.Yellow, "timeout value is too large, setting to %d\n", maxUint32)
+				timeout = maxUint32
 			}
 			cliConfig.Timeout = uint32(timeout)
 		case "no-proxy-check":
