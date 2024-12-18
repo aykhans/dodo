@@ -59,13 +59,13 @@ You can find an example config structure in the [config.json](https://github.com
     "method": "GET",
     "url": "https://example.com",
     "no_proxy_check": false,
-    "timeout": 2000,
-    "dodos_count": 10,
-    "request_count": 1000,
+    "timeout": 10000,
+    "dodos_count": 1,
+    "request_count": 1,
     "params": {},
     "headers": {},
     "cookies": {},
-    "body": [""],
+    "body": [],
     "proxies": [
         {
             "url": "http://example.com:8080",

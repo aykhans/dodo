@@ -3,12 +3,12 @@
     "url": "https://example.com",
     "no_proxy_check": false,
     "timeout": 10000,
-    "dodos_count": 50,
-    "request_count": 1000,
+    "dodos_count": 1,
+    "request_count": 1,
     "params": {},
     "headers": {},
     "cookies": {},
-    "body": [""],
+    "body": [],
     "proxies": [
         {
             "url": "http://example.com:8080",
