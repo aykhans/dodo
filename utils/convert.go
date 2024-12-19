@@ -6,49 +6,77 @@ import (
 	"reflect"
 )
 
-func MarshalJSON(v any, maxSliceSize uint) string {
-	rv := reflect.ValueOf(v)
-	if rv.Kind() == reflect.Slice && rv.Len() == 0 {
-		return "[]"
-	}
-
-	data, err := json.MarshalIndent(truncateLists(v, int(maxSliceSize)), "", "  ")
-	if err != nil {
-		return "{}"
-	}
-
-	return string(data)
+type TruncatedMarshaller struct {
+	Value    interface{}
+	MaxItems int
 }
 
-func truncateLists(v interface{}, maxItems int) interface{} {
-	rv := reflect.ValueOf(v)
+func (t TruncatedMarshaller) MarshalJSON() ([]byte, error) {
+	val := reflect.ValueOf(t.Value)
 
-	switch rv.Kind() {
-	case reflect.Slice, reflect.Array:
-		if rv.Len() > maxItems {
-			newSlice := reflect.MakeSlice(rv.Type(), maxItems, maxItems)
-			reflect.Copy(newSlice, rv.Slice(0, maxItems))
-			newSlice = reflect.Append(newSlice, reflect.ValueOf(fmt.Sprintf("...(%d more)", rv.Len()-maxItems)))
-			return newSlice.Interface()
-		}
-	case reflect.Map:
-		newMap := reflect.MakeMap(rv.Type())
-		for _, key := range rv.MapKeys() {
-			newMap.SetMapIndex(key, reflect.ValueOf(truncateLists(rv.MapIndex(key).Interface(), maxItems)))
-		}
-		return newMap.Interface()
-	case reflect.Struct:
-		newStruct := reflect.New(rv.Type()).Elem()
-		for i := 0; i < rv.NumField(); i++ {
-			newStruct.Field(i).Set(reflect.ValueOf(truncateLists(rv.Field(i).Interface(), maxItems)))
-		}
-		return newStruct.Interface()
-	case reflect.Ptr:
-		if rv.IsNil() {
-			return nil
-		}
-		return truncateLists(rv.Elem().Interface(), maxItems)
+	if val.Kind() != reflect.Slice && val.Kind() != reflect.Array {
+		return json.Marshal(t.Value)
 	}
 
-	return v
+	length := val.Len()
+	if length <= t.MaxItems {
+		return json.Marshal(t.Value)
+	}
+
+	truncated := make([]interface{}, t.MaxItems+1)
+
+	for i := 0; i < t.MaxItems; i++ {
+		truncated[i] = val.Index(i).Interface()
+	}
+
+	remaining := length - t.MaxItems
+	truncated[t.MaxItems] = fmt.Sprintf("+%d", remaining)
+
+	return json.Marshal(truncated)
+}
+
+func PrettyJSONMarshal(v interface{}, maxItems int, prefix, indent string) []byte {
+	truncated := processValue(v, maxItems)
+	d, _ := json.MarshalIndent(truncated, prefix, indent)
+	return d
+}
+
+func processValue(v interface{}, maxItems int) interface{} {
+	val := reflect.ValueOf(v)
+
+	switch val.Kind() {
+	case reflect.Map:
+		newMap := make(map[string]interface{})
+		iter := val.MapRange()
+		for iter.Next() {
+			k := iter.Key().String()
+			newMap[k] = processValue(iter.Value().Interface(), maxItems)
+		}
+		return newMap
+
+	case reflect.Slice, reflect.Array:
+		return TruncatedMarshaller{Value: v, MaxItems: maxItems}
+
+	case reflect.Struct:
+		newMap := make(map[string]interface{})
+		t := val.Type()
+		for i := 0; i < t.NumField(); i++ {
+			field := t.Field(i)
+			if field.IsExported() {
+				jsonTag := field.Tag.Get("json")
+				if jsonTag == "-" {
+					continue
+				}
+				fieldName := field.Name
+				if jsonTag != "" {
+					fieldName = jsonTag
+				}
+				newMap[fieldName] = processValue(val.Field(i).Interface(), maxItems)
+			}
+		}
+		return newMap
+
+	default:
+		return v
+	}
 }
