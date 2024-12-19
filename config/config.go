@@ -209,8 +209,8 @@ func (config *JSONConfig) MergeConfigs(newConfig *JSONConfig) {
 
 type CLIConfig struct {
 	*Config
-	Yes        Option[bool]   `json:"yes" validate:"omitempty"`
-	ConfigFile string `validation_name:"config-file" validate:"omitempty,filepath"`
+	Yes        Option[bool] `json:"yes" validate:"omitempty"`
+	ConfigFile string       `validation_name:"config-file" validate:"omitempty,filepath"`
 }
 
 func NewCLIConfig(
