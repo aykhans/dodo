@@ -5,6 +5,7 @@ import (
 	"time"
 
 	. "github.com/aykhans/dodo/types"
+	"github.com/aykhans/dodo/utils"
 	"github.com/jedib0t/go-pretty/v6/table"
 )
 
@@ -17,7 +18,7 @@ type Responses []*Response
 
 // Print prints the responses in a tabular format, including information such as
 // response count, minimum time, maximum time, average time, and latency percentiles.
-func (respones Responses) Print() {
+func (responses Responses) Print() {
 	total := struct {
 		Count int
 		Min   time.Duration
@@ -27,14 +28,14 @@ func (respones Responses) Print() {
 		P95   time.Duration
 		P99   time.Duration
 	}{
-		Count: len(respones),
-		Min:   respones[0].Time,
-		Max:   respones[0].Time,
+		Count: len(responses),
+		Min:   responses[0].Time,
+		Max:   responses[0].Time,
 	}
 	mergedResponses := make(map[string]Durations)
 	var allDurations Durations
 
-	for _, response := range respones {
+	for _, response := range responses {
 		if response.Time < total.Min {
 			total.Min = response.Time
 		}
@@ -64,14 +65,15 @@ func (respones Responses) Print() {
 	t.AppendHeader(table.Row{
 		"Response",
 		"Count",
-		"Min Time",
-		"Max Time",
-		"Average Time",
+		"Min",
+		"Max",
+		"Average",
 		"P90",
 		"P95",
 		"P99",
 	})
 
+	var roundPrecision int64 = 4
 	for key, durations := range mergedResponses {
 		durations.Sort()
 		durationsLen := len(durations)
@@ -80,12 +82,12 @@ func (respones Responses) Print() {
 		t.AppendRow(table.Row{
 			key,
 			durationsLen,
-			durations.First(),
-			durations.Last(),
-			durations.Avg(),
-			durations[int(0.90*durationsLenAsFloat)],
-			durations[int(0.95*durationsLenAsFloat)],
-			durations[int(0.99*durationsLenAsFloat)],
+			utils.DurationRoundBy(*durations.First(), roundPrecision),
+			utils.DurationRoundBy(*durations.Last(), roundPrecision),
+			utils.DurationRoundBy(durations.Avg(), roundPrecision),
+			utils.DurationRoundBy(durations[int(0.90*durationsLenAsFloat)], roundPrecision),
+			utils.DurationRoundBy(durations[int(0.95*durationsLenAsFloat)], roundPrecision),
+			utils.DurationRoundBy(durations[int(0.99*durationsLenAsFloat)], roundPrecision),
 		})
 		t.AppendSeparator()
 	}
@@ -94,12 +96,12 @@ func (respones Responses) Print() {
 		t.AppendRow(table.Row{
 			"Total",
 			total.Count,
-			total.Min,
-			total.Max,
-			total.Sum / time.Duration(total.Count), // Average
-			total.P90,
-			total.P95,
-			total.P99,
+			utils.DurationRoundBy(total.Min, roundPrecision),
+			utils.DurationRoundBy(total.Max, roundPrecision),
+			utils.DurationRoundBy(total.Sum/time.Duration(total.Count), roundPrecision), // Average
+			utils.DurationRoundBy(total.P90, roundPrecision),
+			utils.DurationRoundBy(total.P95, roundPrecision),
+			utils.DurationRoundBy(total.P99, roundPrecision),
 		})
 	}
 	t.Render()
