@@ -1,9 +1,9 @@
 package config
 
 import (
-	"fmt"
 	"net/url"
 	"os"
+	"strings"
 	"time"
 
 	. "github.com/aykhans/dodo/types"
@@ -42,7 +42,18 @@ func (config *RequestConfig) Print() {
 	t.SetOutputMirror(os.Stdout)
 	t.SetStyle(table.StyleLight)
 	t.SetColumnConfigs([]table.ColumnConfig{
-		{Number: 2, WidthMax: 50},
+		{
+			Number: 2,
+			WidthMaxEnforcer: func(col string, maxLen int) string {
+				lines := strings.Split(col, "\n")
+				for i, line := range lines {
+					if len(line) > maxLen {
+						lines[i] = line[:maxLen-3] + "..."
+					}
+				}
+				return strings.Join(lines, "\n")
+			},
+			WidthMax: 50},
 	})
 
 	newHeaders := make(map[string][]string)
@@ -56,23 +67,23 @@ func (config *RequestConfig) Print() {
 	t.AppendSeparator()
 	t.AppendRow(table.Row{"URL", config.URL})
 	t.AppendSeparator()
-	t.AppendRow(table.Row{"Timeout", fmt.Sprintf("%dms", config.Timeout/time.Millisecond)})
+	t.AppendRow(table.Row{"Timeout", config.Timeout})
 	t.AppendSeparator()
 	t.AppendRow(table.Row{"Dodos", config.DodosCount})
 	t.AppendSeparator()
 	t.AppendRow(table.Row{"Requests", config.RequestCount})
 	t.AppendSeparator()
-	t.AppendRow(table.Row{"Params", utils.MarshalJSON(config.Params, 3)})
+	t.AppendRow(table.Row{"Params", string(utils.PrettyJSONMarshal(config.Params, 3, "", "  "))})
 	t.AppendSeparator()
-	t.AppendRow(table.Row{"Headers", utils.MarshalJSON(newHeaders, 3)})
+	t.AppendRow(table.Row{"Headers", string(utils.PrettyJSONMarshal(newHeaders, 3, "", "  "))})
 	t.AppendSeparator()
-	t.AppendRow(table.Row{"Cookies", utils.MarshalJSON(config.Cookies, 3)})
+	t.AppendRow(table.Row{"Cookies", string(utils.PrettyJSONMarshal(config.Cookies, 3, "", "  "))})
 	t.AppendSeparator()
-	t.AppendRow(table.Row{"Proxies Count", len(config.Proxies)})
+	t.AppendRow(table.Row{"Proxies Count", string(utils.PrettyJSONMarshal(config.Proxies, 3, "", "  "))})
 	t.AppendSeparator()
 	t.AppendRow(table.Row{"Proxy Check", !config.NoProxyCheck})
 	t.AppendSeparator()
-	t.AppendRow(table.Row{"Body", utils.MarshalJSON(config.Body, 3)})
+	t.AppendRow(table.Row{"Body", string(utils.PrettyJSONMarshal(config.Body, 3, "", "  "))})
 
 	t.Render()
 }
