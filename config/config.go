@@ -79,7 +79,7 @@ func (config *RequestConfig) Print() {
 	t.AppendSeparator()
 	t.AppendRow(table.Row{"Cookies", string(utils.PrettyJSONMarshal(config.Cookies, 3, "", "  "))})
 	t.AppendSeparator()
-	t.AppendRow(table.Row{"Proxies Count", string(utils.PrettyJSONMarshal(config.Proxies, 3, "", "  "))})
+	t.AppendRow(table.Row{"Proxies", string(utils.PrettyJSONMarshal(config.Proxies, 3, "", "  "))})
 	t.AppendSeparator()
 	t.AppendRow(table.Row{"Proxy Check", !config.NoProxyCheck})
 	t.AppendSeparator()
