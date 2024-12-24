@@ -17,6 +17,9 @@ func (t TruncatedMarshaller) MarshalJSON() ([]byte, error) {
 	if val.Kind() != reflect.Slice && val.Kind() != reflect.Array {
 		return json.Marshal(t.Value)
 	}
+	if val.Len() == 0 {
+		return []byte("[]"), nil
+	}
 
 	length := val.Len()
 	if length <= t.MaxItems {
