@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	VERSION                 string = "0.5.501"
+	VERSION                 string = "0.5.502"
 	DefaultUserAgent        string = "Dodo/" + VERSION
 	ProxyCheckURL           string = "https://www.google.com"
 	DefaultMethod           string = "GET"
@@ -107,8 +107,8 @@ type Config struct {
 	Method       string       `json:"method" validate:"http_method"` // custom validations: http_method
 	URL          string       `json:"url" validate:"http_url,required"`
 	Timeout      uint32       `json:"timeout" validate:"gte=1,lte=100000"`
-	DodosCount   uint         `json:"dodos_count" validate:"gte=1"`
-	RequestCount uint         `json:"request_count" validation_name:"request-count" validate:"gte=1"`
+	DodosCount   uint         `json:"dodos" validate:"gte=1"`
+	RequestCount uint         `json:"requests" validation_name:"request-count" validate:"gte=1"`
 	NoProxyCheck Option[bool] `json:"no_proxy_check"`
 }
 
