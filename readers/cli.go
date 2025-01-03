@@ -28,9 +28,9 @@ Flags:
   -h, --help                 help for dodo
   -v, --version              version for dodo
   -c, --config-file string   Path to the config file
-  -d, --dodos-count uint     Number of dodos(threads) (default %d)
+  -d, --dodos uint           Number of dodos(threads) (default %d)
   -m, --method string        HTTP Method (default %s)
-  -r, --request-count uint   Number of total requests (default %d)
+  -r, --request uint         Number of total requests (default %d)
   -t, --timeout uint32       Timeout for each request in milliseconds (default %d)
   -u, --url string           URL for stress testing
       --no-proxy-check bool  Do not check for proxies (default false)
@@ -74,10 +74,10 @@ func CLIConfigReader() (*config.CLIConfig, error) {
 		flag.StringVar(&url, "url", "", "URL to send the request")
 		flag.StringVar(&url, "u", "", "URL to send the request")
 
-		flag.UintVar(&dodosCount, "dodos-count", 0, "Number of dodos(threads)")
+		flag.UintVar(&dodosCount, "dodos", 0, "Number of dodos(threads)")
 		flag.UintVar(&dodosCount, "d", 0, "Number of dodos(threads)")
 
-		flag.UintVar(&requestsCount, "requests-count", 0, "Number of total requests")
+		flag.UintVar(&requestsCount, "requests", 0, "Number of total requests")
 		flag.UintVar(&requestsCount, "r", 0, "Number of total requests")
 
 		flag.UintVar(&timeout, "timeout", 0, "Timeout for each request in milliseconds")
@@ -107,9 +107,9 @@ func CLIConfigReader() (*config.CLIConfig, error) {
 			cliConfig.Method = method
 		case "url", "u":
 			cliConfig.URL = url
-		case "dodos-count", "d":
+		case "dodos", "d":
 			cliConfig.DodosCount = dodosCount
-		case "requests-count", "r":
+		case "requests", "r":
 			cliConfig.RequestCount = requestsCount
 		case "timeout", "t":
 			var maxUint32 uint = 4294967295
