@@ -26,7 +26,6 @@ type Request struct {
 func (r *Request) Send(ctx context.Context, timeout time.Duration) (*fasthttp.Response, error) {
 	client := r.getClient()
 	request := r.getRequest()
-	defer client.CloseIdleConnections()
 	defer fasthttp.ReleaseRequest(request)
 
 	response := fasthttp.AcquireResponse()
