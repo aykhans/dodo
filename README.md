@@ -63,18 +63,23 @@ You can find an example config structure in the [config.json](https://github.com
     "dodos": 1,
     "requests": 1,
     "params": {
+        // Random param value will be selected from the param-key1 and param-key2 list for each request
         "param-key1": ["param-value1", "param-value2", "param-value3"],
         "param-key2": ["param-value1", "param-value2", "param-value3"]
     },
     "headers": {
+        // Random header value will be selected from the header-key1 and header-key2 list for each request
         "header-key1": ["header-value1", "header-value2", "header-value3"],
         "header-key2": ["header-value2", "header-value2", "header-value3"]
     },
     "cookies": {
+        // Random cookie value will be selected from the cookie-key1 and cookie-key2 list for each request
         "cookie-key1": ["cookie-value1", "cookie-value2", "cookie-value3"],
         "cookie-key2": ["cookie-value2", "cookie-value2", "cookie-value3"]
     },
+    // Random body value will be selected from the body list for each request
     "body": ["body1", "body2", "body3"],
+    // Random proxy will be selected from the proxy list for each request
     "proxies": [
         {
             "url": "http://example.com:8080",
