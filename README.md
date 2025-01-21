@@ -54,7 +54,7 @@ docker run --rm -i aykhans/dodo -u https://example.com -m GET -d 10 -r 1000 -t 2
 
 ### 2. JSON config file
 You can find an example config structure in the [config.json](https://github.com/aykhans/dodo/blob/main/config.json) file:
-```json
+```jsonc
 {
     "method": "GET",
     "url": "https://example.com",
