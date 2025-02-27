@@ -75,7 +75,7 @@ func releaseDodos(
 		requestCountPerDodo uint
 		dodosCount          uint = requestConfig.GetValidDodosCountForRequests()
 		dodosCountInt       int  = int(dodosCount)
-		requestCount        uint = uint(requestConfig.RequestCount)
+		requestCount        uint = requestConfig.RequestCount
 		responses                = make([][]*Response, dodosCount)
 		increase                 = make(chan int64, requestCount)
 	)
