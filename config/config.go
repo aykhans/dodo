@@ -98,7 +98,7 @@ func (config *RequestConfig) GetValidDodosCountForProxies() uint {
 
 func (config *RequestConfig) GetMaxConns(minConns uint) uint {
 	maxConns := max(
-		minConns, uint(config.GetValidDodosCountForRequests()),
+		minConns, config.GetValidDodosCountForRequests(),
 	)
 	return ((maxConns * 50 / 100) + maxConns)
 }
