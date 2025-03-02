@@ -7,7 +7,7 @@ import (
 
 	"github.com/aykhans/dodo/config"
 	. "github.com/aykhans/dodo/types"
-	"github.com/aykhans/dodo/utils"
+	"github.com/fatih/color"
 )
 
 const usageText = `Usage:
@@ -114,7 +114,7 @@ func CLIConfigReader() (*config.CLIConfig, error) {
 		case "timeout", "t":
 			var maxUint32 uint = 4294967295
 			if timeout > maxUint32 {
-				utils.PrintfC(utils.Colors.Yellow, "timeout value is too large, setting to %d\n", maxUint32)
+				color.Yellow("timeout value is too large, setting to %d", maxUint32)
 				timeout = maxUint32
 			}
 			cliConfig.Timeout = uint32(timeout)
