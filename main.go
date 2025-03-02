@@ -16,6 +16,7 @@ import (
 	"github.com/aykhans/dodo/requests"
 	"github.com/aykhans/dodo/utils"
 	"github.com/aykhans/dodo/validation"
+	"github.com/fatih/color"
 	goValidator "github.com/go-playground/validator/v10"
 )
 
@@ -109,13 +110,13 @@ func main() {
 	responses, err := requests.Run(ctx, requestConf)
 	if err != nil {
 		if customerrors.Is(err, customerrors.ErrInterrupt) {
-			utils.PrintlnC(utils.Colors.Yellow, err.Error())
+			color.Yellow(err.Error())
 			return
 		} else if customerrors.Is(err, customerrors.ErrNoInternet) {
 			utils.PrintAndExit("No internet connection")
 			return
 		}
-		panic(err)
+		utils.PrintErrAndExit(err)
 	}
 
 	responses.Print()

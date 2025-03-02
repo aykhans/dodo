@@ -11,6 +11,7 @@ import (
 	"github.com/aykhans/dodo/config"
 	"github.com/aykhans/dodo/readers"
 	"github.com/aykhans/dodo/utils"
+	"github.com/fatih/color"
 	"github.com/valyala/fasthttp"
 	"github.com/valyala/fasthttp/fasthttpproxy"
 )
@@ -73,18 +74,9 @@ func getClients(
 		var yesOrNoDefault bool
 		if activeProxyClientsCount == 0 {
 			yesOrNoDefault = false
-			yesOrNoMessage = utils.Colored(
-				utils.Colors.Yellow,
-				"No active proxies found. Do you want to continue?",
-			)
+			yesOrNoMessage = color.YellowString("No active proxies found. Do you want to continue?")
 		} else {
-			yesOrNoMessage = utils.Colored(
-				utils.Colors.Yellow,
-				fmt.Sprintf(
-					"Found %d active proxies. Do you want to continue?",
-					activeProxyClientsCount,
-				),
-			)
+			yesOrNoMessage = color.YellowString("Found %d active proxies. Do you want to continue?", activeProxyClientsCount)
 		}
 		if !yes {
 			response := readers.CLIYesOrNoReader("\n"+yesOrNoMessage, yesOrNoDefault)
