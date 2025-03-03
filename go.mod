@@ -4,7 +4,7 @@ go 1.24
 
 require (
 	github.com/go-playground/validator/v10 v10.25.0
-	github.com/jedib0t/go-pretty/v6 v6.6.6
+	github.com/jedib0t/go-pretty/v6 v6.6.7
 	github.com/valyala/fasthttp v1.59.0
 	golang.org/x/net v0.35.0
 )
