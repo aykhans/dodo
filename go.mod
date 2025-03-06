@@ -6,7 +6,7 @@ require (
 	github.com/go-playground/validator/v10 v10.25.0
 	github.com/jedib0t/go-pretty/v6 v6.6.7
 	github.com/valyala/fasthttp v1.59.0
-	golang.org/x/net v0.35.0
+	golang.org/x/net v0.37.0
 )
 
 require (
@@ -25,8 +25,8 @@ require (
 	github.com/mattn/go-runewidth v0.0.16 // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
-	golang.org/x/crypto v0.33.0 // indirect
-	golang.org/x/sys v0.30.0 // indirect
-	golang.org/x/term v0.29.0 // indirect
-	golang.org/x/text v0.22.0 // indirect
+	golang.org/x/crypto v0.36.0 // indirect
+	golang.org/x/sys v0.31.0 // indirect
+	golang.org/x/term v0.30.0 // indirect
+	golang.org/x/text v0.23.0 // indirect
 )
