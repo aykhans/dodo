@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/aykhans/dodo/config"
-	customerrors "github.com/aykhans/dodo/custom_errors"
+	"github.com/aykhans/dodo/types"
 	"github.com/aykhans/dodo/utils"
 	"github.com/valyala/fasthttp"
 )
@@ -43,9 +43,9 @@ func (r *Request) Send(ctx context.Context, timeout time.Duration) (*fasthttp.Re
 		return response, nil
 	case <-time.After(timeout):
 		fasthttp.ReleaseResponse(response)
-		return nil, customerrors.ErrTimeout
+		return nil, types.ErrTimeout
 	case <-ctx.Done():
-		return nil, customerrors.ErrInterrupt
+		return nil, types.ErrInterrupt
 	}
 }
 
@@ -74,9 +74,9 @@ func newRequest(
 
 	getRequest := getRequestGeneratorFunc(
 		requestConfig.URL,
+		requestConfig.Params,
 		requestConfig.Headers,
 		requestConfig.Cookies,
-		requestConfig.Params,
 		requestConfig.Method,
 		requestConfig.Body,
 		localRand,
@@ -90,37 +90,36 @@ func newRequest(
 	return requests
 }
 
-// getRequestGeneratorFunc returns a RequestGeneratorFunc which generates HTTP requests
-// with the specified parameters.
-// The function uses a local random number generator to select bodies, headers, cookies, and parameters
-// if multiple options are provided.
+// getRequestGeneratorFunc returns a RequestGeneratorFunc which generates HTTP requests with the specified parameters.
+// The function uses a local random number generator to select bodies, headers, cookies, and parameters if multiple options are provided.
 func getRequestGeneratorFunc(
-	URL *url.URL,
-	Headers map[string][]string,
-	Cookies map[string][]string,
-	Params map[string][]string,
-	Method string,
-	Bodies []string,
+	URL url.URL,
+	params types.Params,
+	headers types.Headers,
+	cookies types.Cookies,
+	method string,
+	bodies []string,
 	localRand *rand.Rand,
 ) RequestGeneratorFunc {
-	bodiesLen := len(Bodies)
+	bodiesLen := len(bodies)
 	getBody := func() string { return "" }
 	if bodiesLen == 1 {
-		getBody = func() string { return Bodies[0] }
+		getBody = func() string { return bodies[0] }
 	} else if bodiesLen > 1 {
-		getBody = utils.RandomValueCycle(Bodies, localRand)
+		getBody = utils.RandomValueCycle(bodies, localRand)
 	}
-	getHeaders := getKeyValueSetFunc(Headers, localRand)
-	getCookies := getKeyValueSetFunc(Cookies, localRand)
-	getParams := getKeyValueSetFunc(Params, localRand)
+
+	getParams := getKeyValueGeneratorFunc(params, localRand)
+	getHeaders := getKeyValueGeneratorFunc(headers, localRand)
+	getCookies := getKeyValueGeneratorFunc(cookies, localRand)
 
 	return func() *fasthttp.Request {
 		return newFasthttpRequest(
 			URL,
+			getParams(),
 			getHeaders(),
 			getCookies(),
-			getParams(),
-			Method,
+			method,
 			getBody(),
 		)
 	}
@@ -129,12 +128,12 @@ func getRequestGeneratorFunc(
 // newFasthttpRequest creates a new fasthttp.Request object with the provided parameters.
 // It sets the request URI, host header, headers, cookies, params, method, and body.
 func newFasthttpRequest(
-	URL *url.URL,
-	Headers map[string]string,
-	Cookies map[string]string,
-	Params map[string]string,
-	Method string,
-	Body string,
+	URL url.URL,
+	params []types.KeyValue[string, string],
+	headers []types.KeyValue[string, string],
+	cookies []types.KeyValue[string, string],
+	method string,
+	body string,
 ) *fasthttp.Request {
 	request := fasthttp.AcquireRequest()
 	request.SetRequestURI(URL.Path)
@@ -142,12 +141,12 @@ func newFasthttpRequest(
 	// Set the host of the request to the host header
 	// If the host header is not set, the request will fail
 	// If there is host header in the headers, it will be overwritten
-	request.Header.Set("Host", URL.Host)
-	setRequestHeaders(request, Headers)
-	setRequestCookies(request, Cookies)
-	setRequestParams(request, Params)
-	setRequestMethod(request, Method)
-	setRequestBody(request, Body)
+	request.Header.SetHost(URL.Host)
+	setRequestParams(request, params)
+	setRequestHeaders(request, headers)
+	setRequestCookies(request, cookies)
+	setRequestMethod(request, method)
+	setRequestBody(request, body)
 	if URL.Scheme == "https" {
 		request.URI().SetScheme("https")
 	}
@@ -155,28 +154,28 @@ func newFasthttpRequest(
 	return request
 }
 
-// setRequestHeaders sets the headers of the given request with the provided key-value pairs.
-func setRequestHeaders(req *fasthttp.Request, headers map[string]string) {
-	req.Header.Set("User-Agent", config.DefaultUserAgent)
-	for key, value := range headers {
-		req.Header.Set(key, value)
+// setRequestParams adds the query parameters of the given request based on the provided key-value pairs.
+func setRequestParams(req *fasthttp.Request, params []types.KeyValue[string, string]) {
+	for _, param := range params {
+		req.URI().QueryArgs().Add(param.Key, param.Value)
 	}
 }
 
-// setRequestCookies sets the cookies in the given request.
-func setRequestCookies(req *fasthttp.Request, cookies map[string]string) {
-	for key, value := range cookies {
-		req.Header.SetCookie(key, value)
+// setRequestHeaders adds the headers of the given request with the provided key-value pairs.
+func setRequestHeaders(req *fasthttp.Request, headers []types.KeyValue[string, string]) {
+	for _, header := range headers {
+		req.Header.Add(header.Key, header.Value)
+	}
+	if req.Header.UserAgent() == nil {
+		req.Header.SetUserAgent(config.DefaultUserAgent)
 	}
 }
 
-// setRequestParams sets the query parameters of the given request based on the provided map of key-value pairs.
-func setRequestParams(req *fasthttp.Request, params map[string]string) {
-	urlParams := url.Values{}
-	for key, value := range params {
-		urlParams.Add(key, value)
+// setRequestCookies adds the cookies of the given request with the provided key-value pairs.
+func setRequestCookies(req *fasthttp.Request, cookies []types.KeyValue[string, string]) {
+	for _, cookie := range cookies {
+		req.Header.Add("Cookie", cookie.Key+"="+cookie.Value)
 	}
-	req.URI().SetQueryString(urlParams.Encode())
 }
 
 // setRequestMethod sets the HTTP request method for the given request.
@@ -190,59 +189,62 @@ func setRequestBody(req *fasthttp.Request, body string) {
 	req.SetBody([]byte(body))
 }
 
-// getKeyValueSetFunc generates a function that returns a map of key-value pairs based on the provided key-value set.
-// The generated function will either return fixed values or random values depending on the input.
+// getKeyValueGeneratorFunc creates a function that generates key-value pairs for HTTP requests.
+// It takes a slice of key-value pairs where each key maps to a slice of possible values,
+// and a random number generator.
 //
-// Returns:
-//   - A function that returns a map of key-value pairs. If the input map contains multiple values for a key,
-//     the returned function will generate random values for that key. If the input map contains a single value
-//     for a key, the returned function will always return that value. If the input map is empty for a key,
-//     the returned function will generate an empty string for that key.
-func getKeyValueSetFunc[
-	KeyValueSet map[string][]string,
-	KeyValue map[string]string,
-](keyValueSet KeyValueSet, localRand *rand.Rand) func() KeyValue {
+// If any key has multiple possible values, the function will randomly select one value for each
+// call (using the provided random number generator). If all keys have at most one value, the
+// function will always return the same set of key-value pairs for efficiency.
+func getKeyValueGeneratorFunc[
+	T []types.KeyValue[string, string],
+](
+	keyValueSlice []types.KeyValue[string, []string],
+	localRand *rand.Rand,
+) func() T {
 	getKeyValueSlice := []map[string]func() string{}
 	isRandom := false
-	for key, values := range keyValueSet {
-		valuesLen := len(values)
 
-		// if values is empty, return a function that generates empty string
-		// if values has only one element, return a function that generates that element
-		// if values has more than one element, return a function that generates a random element
-		getKeyValue := func() string { return "" }
+	for _, kv := range keyValueSlice {
+		valuesLen := len(kv.Value)
+
+		getValueFunc := func() string { return "" }
 		if valuesLen == 1 {
-			getKeyValue = func() string { return values[0] }
+			getValueFunc = func() string { return kv.Value[0] }
 		} else if valuesLen > 1 {
-			getKeyValue = utils.RandomValueCycle(values, localRand)
+			getValueFunc = utils.RandomValueCycle(kv.Value, localRand)
 			isRandom = true
 		}
 
 		getKeyValueSlice = append(
 			getKeyValueSlice,
-			map[string]func() string{key: getKeyValue},
+			map[string]func() string{kv.Key: getValueFunc},
 		)
 	}
 
-	// if isRandom is true, return a function that generates random values,
-	// otherwise return a function that generates fixed values to avoid unnecessary random number generation
 	if isRandom {
-		return func() KeyValue {
-			keyValues := make(KeyValue, len(getKeyValueSlice))
-			for _, keyValue := range getKeyValueSlice {
+		return func() T {
+			keyValues := make(T, len(getKeyValueSlice))
+			for i, keyValue := range getKeyValueSlice {
 				for key, value := range keyValue {
-					keyValues[key] = value()
+					keyValues[i] = types.KeyValue[string, string]{
+						Key:   key,
+						Value: value(),
+					}
 				}
 			}
 			return keyValues
 		}
 	} else {
-		keyValues := make(KeyValue, len(getKeyValueSlice))
-		for _, keyValue := range getKeyValueSlice {
+		keyValues := make(T, len(getKeyValueSlice))
+		for i, keyValue := range getKeyValueSlice {
 			for key, value := range keyValue {
-				keyValues[key] = value()
+				keyValues[i] = types.KeyValue[string, string]{
+					Key:   key,
+					Value: value(),
+				}
 			}
 		}
-		return func() KeyValue { return keyValues }
+		return func() T { return keyValues }
 	}
 }

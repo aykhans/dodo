@@ -10,15 +10,6 @@ func Flatten[T any](nested [][]*T) []*T {
 	return flattened
 }
 
-func Contains[T comparable](slice []T, item T) bool {
-	for _, i := range slice {
-		if i == item {
-			return true
-		}
-	}
-	return false
-}
-
 // RandomValueCycle returns a function that cycles through the provided slice of values
 // in a random order. Each call to the returned function will yield a value from the slice.
 // The order of values is determined by the provided random number generator.

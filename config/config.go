@@ -1,43 +1,73 @@
 package config
 
 import (
+	"errors"
+	"fmt"
 	"net/url"
 	"os"
+	"slices"
 	"strings"
 	"time"
 
-	. "github.com/aykhans/dodo/types"
+	"github.com/aykhans/dodo/types"
 	"github.com/aykhans/dodo/utils"
 	"github.com/jedib0t/go-pretty/v6/table"
 )
 
 const (
-	VERSION                 string = "0.5.7"
-	DefaultUserAgent        string = "Dodo/" + VERSION
-	ProxyCheckURL           string = "https://www.google.com"
-	DefaultMethod           string = "GET"
-	DefaultTimeout          uint32 = 10000 // Milliseconds (10 seconds)
-	DefaultDodosCount       uint   = 1
-	DefaultRequestCount     uint   = 1
-	MaxDodosCountForProxies uint   = 20 // Max dodos count for proxy check
+	VERSION             string        = "0.6.0"
+	DefaultUserAgent    string        = "Dodo/" + VERSION
+	DefaultMethod       string        = "GET"
+	DefaultTimeout      time.Duration = time.Second * 10
+	DefaultDodosCount   uint          = 1
+	DefaultRequestCount uint          = 1
+	DefaultYes          bool          = false
 )
 
+var SupportedProxySchemes []string = []string{"http", "socks5", "socks5h"}
+
 type RequestConfig struct {
-	Method       string
-	URL          *url.URL
-	Timeout      time.Duration
-	DodosCount   uint
-	RequestCount uint
-	Params       map[string][]string
-	Headers      map[string][]string
-	Cookies      map[string][]string
-	Proxies      []Proxy
-	Body         []string
-	Yes          bool
-	NoProxyCheck bool
+	Method       string        `json:"method"`
+	URL          url.URL       `json:"url"`
+	Timeout      time.Duration `json:"timeout"`
+	DodosCount   uint          `json:"dodos"`
+	RequestCount uint          `json:"requests"`
+	Yes          bool          `json:"yes"`
+	Params       types.Params  `json:"params"`
+	Headers      types.Headers `json:"headers"`
+	Cookies      types.Cookies `json:"cookies"`
+	Body         types.Body    `json:"body"`
+	Proxies      types.Proxies `json:"proxies"`
 }
 
-func (config *RequestConfig) Print() {
+func NewRequestConfig(conf *Config) *RequestConfig {
+	return &RequestConfig{
+		Method:       *conf.Method,
+		URL:          conf.URL.URL,
+		Timeout:      conf.Timeout.Duration,
+		DodosCount:   *conf.DodosCount,
+		RequestCount: *conf.RequestCount,
+		Yes:          *conf.Yes,
+		Params:       conf.Params,
+		Headers:      conf.Headers,
+		Cookies:      conf.Cookies,
+		Body:         conf.Body,
+		Proxies:      conf.Proxies,
+	}
+}
+
+func (rc *RequestConfig) GetValidDodosCountForRequests() uint {
+	return min(rc.DodosCount, rc.RequestCount)
+}
+
+func (rc *RequestConfig) GetMaxConns(minConns uint) uint {
+	maxConns := max(
+		minConns, rc.GetValidDodosCountForRequests(),
+	)
+	return ((maxConns * 50 / 100) + maxConns)
+}
+
+func (rc *RequestConfig) Print() {
 	t := table.NewWriter()
 	t.SetOutputMirror(os.Stdout)
 	t.SetStyle(table.StyleLight)
@@ -56,151 +86,118 @@ func (config *RequestConfig) Print() {
 			WidthMax: 50},
 	})
 
-	newHeaders := make(map[string][]string)
-	newHeaders["User-Agent"] = []string{DefaultUserAgent}
-	for k, v := range config.Headers {
-		newHeaders[k] = v
-	}
-
 	t.AppendHeader(table.Row{"Request Configuration"})
-	t.AppendRow(table.Row{"Method", config.Method})
+	t.AppendRow(table.Row{"URL", rc.URL.String()})
 	t.AppendSeparator()
-	t.AppendRow(table.Row{"URL", config.URL})
+	t.AppendRow(table.Row{"Method", rc.Method})
 	t.AppendSeparator()
-	t.AppendRow(table.Row{"Timeout", config.Timeout})
+	t.AppendRow(table.Row{"Timeout", rc.Timeout})
 	t.AppendSeparator()
-	t.AppendRow(table.Row{"Dodos", config.DodosCount})
+	t.AppendRow(table.Row{"Dodos", rc.DodosCount})
 	t.AppendSeparator()
-	t.AppendRow(table.Row{"Requests", config.RequestCount})
+	t.AppendRow(table.Row{"Requests", rc.RequestCount})
 	t.AppendSeparator()
-	t.AppendRow(table.Row{"Params", string(utils.PrettyJSONMarshal(config.Params, 3, "", "  "))})
+	t.AppendRow(table.Row{"Params", rc.Params.String()})
 	t.AppendSeparator()
-	t.AppendRow(table.Row{"Headers", string(utils.PrettyJSONMarshal(newHeaders, 3, "", "  "))})
+	t.AppendRow(table.Row{"Headers", rc.Headers.String()})
 	t.AppendSeparator()
-	t.AppendRow(table.Row{"Cookies", string(utils.PrettyJSONMarshal(config.Cookies, 3, "", "  "))})
+	t.AppendRow(table.Row{"Cookies", rc.Cookies.String()})
 	t.AppendSeparator()
-	t.AppendRow(table.Row{"Proxies", string(utils.PrettyJSONMarshal(config.Proxies, 3, "", "  "))})
+	t.AppendRow(table.Row{"Proxy", rc.Proxies.String()})
 	t.AppendSeparator()
-	t.AppendRow(table.Row{"Proxy Check", !config.NoProxyCheck})
-	t.AppendSeparator()
-	t.AppendRow(table.Row{"Body", string(utils.PrettyJSONMarshal(config.Body, 3, "", "  "))})
+	t.AppendRow(table.Row{"Body", rc.Body.String()})
 
 	t.Render()
 }
 
-func (config *RequestConfig) GetValidDodosCountForRequests() uint {
-	return min(config.DodosCount, config.RequestCount)
-}
-
-func (config *RequestConfig) GetValidDodosCountForProxies() uint {
-	return min(config.DodosCount, uint(len(config.Proxies)), MaxDodosCountForProxies)
-}
-
-func (config *RequestConfig) GetMaxConns(minConns uint) uint {
-	maxConns := max(
-		minConns, config.GetValidDodosCountForRequests(),
-	)
-	return ((maxConns * 50 / 100) + maxConns)
-}
-
 type Config struct {
-	Method       string       `json:"method" validate:"http_method"` // custom validations: http_method
-	URL          string       `json:"url" validate:"http_url,required"`
-	Timeout      uint32       `json:"timeout" validate:"gte=1,lte=100000"`
-	DodosCount   uint         `json:"dodos" validate:"gte=1"`
-	RequestCount uint         `json:"requests" validation_name:"request-count" validate:"gte=1"`
-	NoProxyCheck Option[bool] `json:"no_proxy_check"`
+	Method       *string           `json:"method"`
+	URL          *types.RequestURL `json:"url"`
+	Timeout      *types.Timeout    `json:"timeout"`
+	DodosCount   *uint             `json:"dodos"`
+	RequestCount *uint             `json:"requests"`
+	Yes          *bool             `json:"yes"`
+	Params       types.Params      `json:"params"`
+	Headers      types.Headers     `json:"headers"`
+	Cookies      types.Cookies     `json:"cookies"`
+	Body         types.Body        `json:"body"`
+	Proxies      types.Proxies     `json:"proxy"`
 }
 
-func NewConfig(
-	method string,
-	timeout uint32,
-	dodosCount uint,
-	requestCount uint,
-	noProxyCheck Option[bool],
-) *Config {
-	if noProxyCheck == nil {
-		noProxyCheck = NewNoneOption[bool]()
-	}
-
-	return &Config{
-		Method:       method,
-		Timeout:      timeout,
-		DodosCount:   dodosCount,
-		RequestCount: requestCount,
-		NoProxyCheck: noProxyCheck,
-	}
+func NewConfig() *Config {
+	return &Config{}
 }
 
-func (config *Config) MergeConfigs(newConfig *Config) {
-	if newConfig.Method != "" {
+func (c *Config) Validate() []error {
+	var errs []error
+	if utils.IsNilOrZero(c.URL) {
+		errs = append(errs, errors.New("request URL is required"))
+	}
+	if c.URL.Scheme == "" {
+		c.URL.Scheme = "http"
+	}
+	if c.URL.Scheme != "http" && c.URL.Scheme != "https" {
+		errs = append(errs, errors.New("request URL scheme must be http or https"))
+	}
+	urlParams := types.Params{}
+	for key, values := range c.URL.Query() {
+		for _, value := range values {
+			urlParams = append(urlParams, types.KeyValue[string, []string]{
+				Key:   key,
+				Value: []string{value},
+			})
+		}
+	}
+	c.Params = append(urlParams, c.Params...)
+	c.URL.RawQuery = ""
+
+	if utils.IsNilOrZero(c.Method) {
+		errs = append(errs, errors.New("request method is required"))
+	}
+	if utils.IsNilOrZero(c.Timeout) {
+		errs = append(errs, errors.New("request timeout must be greater than 0"))
+	}
+	if utils.IsNilOrZero(c.DodosCount) {
+		errs = append(errs, errors.New("dodos count must be greater than 0"))
+	}
+	if utils.IsNilOrZero(c.RequestCount) {
+		errs = append(errs, errors.New("request count must be greater than 0"))
+	}
+
+	for i, proxy := range c.Proxies {
+		if proxy.String() == "" {
+			errs = append(errs, fmt.Errorf("proxies[%d]: proxy cannot be empty", i))
+		} else if schema := proxy.Scheme; !slices.Contains(SupportedProxySchemes, schema) {
+			errs = append(errs,
+				fmt.Errorf("proxies[%d]: proxy has unsupported scheme \"%s\" (supported schemes: %s)",
+					i, proxy.String(), strings.Join(SupportedProxySchemes, ", "),
+				),
+			)
+		}
+	}
+
+	return errs
+}
+
+func (config *Config) MergeConfig(newConfig *Config) {
+	if newConfig.Method != nil {
 		config.Method = newConfig.Method
 	}
-	if newConfig.URL != "" {
+	if newConfig.URL != nil {
 		config.URL = newConfig.URL
 	}
-	if newConfig.Timeout != 0 {
+	if newConfig.Timeout != nil {
 		config.Timeout = newConfig.Timeout
 	}
-	if newConfig.DodosCount != 0 {
+	if newConfig.DodosCount != nil {
 		config.DodosCount = newConfig.DodosCount
 	}
-	if newConfig.RequestCount != 0 {
+	if newConfig.RequestCount != nil {
 		config.RequestCount = newConfig.RequestCount
 	}
-	if !newConfig.NoProxyCheck.IsNone() {
-		config.NoProxyCheck = newConfig.NoProxyCheck
+	if newConfig.Yes != nil {
+		config.Yes = newConfig.Yes
 	}
-}
-
-func (config *Config) SetDefaults() {
-	if config.Method == "" {
-		config.Method = DefaultMethod
-	}
-	if config.Timeout == 0 {
-		config.Timeout = DefaultTimeout
-	}
-	if config.DodosCount == 0 {
-		config.DodosCount = DefaultDodosCount
-	}
-	if config.RequestCount == 0 {
-		config.RequestCount = DefaultRequestCount
-	}
-	if config.NoProxyCheck.IsNone() {
-		config.NoProxyCheck = NewOption(false)
-	}
-}
-
-type Proxy struct {
-	URL      string `json:"url" validate:"required,proxy_url"`
-	Username string `json:"username"`
-	Password string `json:"password"`
-}
-
-type JSONConfig struct {
-	*Config
-	Params  map[string][]string `json:"params"`
-	Headers map[string][]string `json:"headers"`
-	Cookies map[string][]string `json:"cookies"`
-	Proxies []Proxy             `json:"proxies" validate:"dive"`
-	Body    []string            `json:"body"`
-}
-
-func NewJSONConfig(
-	config *Config,
-	params map[string][]string,
-	headers map[string][]string,
-	cookies map[string][]string,
-	proxies []Proxy,
-	body []string,
-) *JSONConfig {
-	return &JSONConfig{
-		config, params, headers, cookies, proxies, body,
-	}
-}
-
-func (config *JSONConfig) MergeConfigs(newConfig *JSONConfig) {
-	config.Config.MergeConfigs(newConfig.Config)
 	if len(newConfig.Params) != 0 {
 		config.Params = newConfig.Params
 	}
@@ -218,28 +215,20 @@ func (config *JSONConfig) MergeConfigs(newConfig *JSONConfig) {
 	}
 }
 
-type CLIConfig struct {
-	*Config
-	Yes        Option[bool] `json:"yes" validate:"omitempty"`
-	ConfigFile string       `validation_name:"config-file" validate:"omitempty,filepath"`
-}
-
-func NewCLIConfig(
-	config *Config,
-	yes Option[bool],
-	configFile string,
-) *CLIConfig {
-	return &CLIConfig{
-		config, yes, configFile,
+func (config *Config) SetDefaults() {
+	if config.Method == nil {
+		config.Method = utils.ToPtr(DefaultMethod)
 	}
-}
-
-func (config *CLIConfig) MergeConfigs(newConfig *CLIConfig) {
-	config.Config.MergeConfigs(newConfig.Config)
-	if newConfig.ConfigFile != "" {
-		config.ConfigFile = newConfig.ConfigFile
+	if config.Timeout == nil {
+		config.Timeout = &types.Timeout{Duration: DefaultTimeout}
 	}
-	if !newConfig.Yes.IsNone() {
-		config.Yes = newConfig.Yes
+	if config.DodosCount == nil {
+		config.DodosCount = utils.ToPtr(DefaultDodosCount)
+	}
+	if config.RequestCount == nil {
+		config.RequestCount = utils.ToPtr(DefaultRequestCount)
+	}
+	if config.Yes == nil {
+		config.Yes = utils.ToPtr(DefaultYes)
 	}
 }
