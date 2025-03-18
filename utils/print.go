@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/fatih/color"
+	"github.com/jedib0t/go-pretty/v6/text"
 )
 
 func PrintErr(err error) {
-	color.New(color.FgRed).Fprintln(os.Stderr, err.Error())
+	fmt.Fprintln(os.Stderr, text.FgRed.Sprint(err.Error()))
 }
 
 func PrintErrAndExit(err error) {

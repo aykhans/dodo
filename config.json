@@ -1,31 +1,35 @@
 {
     "method": "GET",
     "url": "https://example.com",
-    "no_proxy_check": false,
-    "timeout": 10000,
-    "dodos": 1,
-    "requests": 1,
-    "params": {
-        "param-key1": ["param-value1", "param-value2", "param-value3"],
-        "param-key2": ["param-value1", "param-value2", "param-value3"]
-    },
-    "headers": {
-        "header-key1": ["header-value1", "header-value2", "header-value3"],
-        "header-key2": ["header-value2", "header-value2", "header-value3"]
-    },
-    "cookies": {
-        "cookie-key1": ["cookie-value1", "cookie-value2", "cookie-value3"],
-        "cookie-key2": ["cookie-value2", "cookie-value2", "cookie-value3"]
-    },
-    "body": ["body1", "body2", "body3"],
-    "proxies": [
-        {
-            "url": "http://example.com:8080",
-            "username": "username",
-            "password": "password"
-        },
-        {
-            "url": "http://example.com:8080"
-        }
+    "yes": false,
+    "timeout": "5s",
+    "dodos": 8,
+    "requests": 1000,
+
+    "params": [
+        { "key1": ["value1", "value2", "value3", "value4"] },
+        { "key1": "value" },
+        { "key2": ["value1", "value2"] }
+    ],
+
+    "headers": [
+        { "key1": ["value1", "value2", "value3", "value4"] },
+        { "key1": "value" },
+        { "key2": ["value1", "value2"] }
+    ],
+
+    "cookies": [
+        { "key1": ["value1", "value2", "value3", "value4"] },
+        { "key1": "value" },
+        { "key2": ["value1", "value2"] }
+    ],
+
+    "body": ["body-text1", "body-text2", "body-text3"],
+
+    "proxy": [
+        "http://example.com:8080",
+        "http://username:password@example.com:8080",
+        "socks5://example.com:8080",
+        "socks5h://example.com:8080"
     ]
 }

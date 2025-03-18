@@ -4,7 +4,7 @@ import (
 	"os"
 	"time"
 
-	. "github.com/aykhans/dodo/types"
+	"github.com/aykhans/dodo/types"
 	"github.com/aykhans/dodo/utils"
 	"github.com/jedib0t/go-pretty/v6/table"
 )
@@ -32,8 +32,8 @@ func (responses Responses) Print() {
 		Min:   responses[0].Time,
 		Max:   responses[0].Time,
 	}
-	mergedResponses := make(map[string]Durations)
-	var allDurations Durations
+	mergedResponses := make(map[string]types.Durations)
+	var allDurations types.Durations
 
 	for _, response := range responses {
 		if response.Time < total.Min {

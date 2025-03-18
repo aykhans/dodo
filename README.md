@@ -1,22 +1,38 @@
-<h1 align="center">Dodo is a simple and easy-to-use HTTP benchmarking tool.</h1>
+<h1 align="center">Dodo - A Fast and Easy-to-Use HTTP Benchmarking Tool</h1>
 <p align="center">
-<img width="30%" height="30%" src="https://ftp.aykhans.me/web/client/pubshares/hB6VSdCnBCr8gFPeiMuCji/browse?path=%2Fdodo.png">
+<img width="30%" height="30%" src="https://ftp.aykhans.me/web/client/pubshares/VzPtSHS7yPQT7ngoZzZSNU/browse?path=%2Fdodo.png">
 </p>
 
 ## Installation
-### With Docker (Recommended)
+
+### Using Docker (Recommended)
+
 Pull the Dodo image from Docker Hub:
+
 ```sh
 docker pull aykhans/dodo:latest
 ```
-If you use Dodo with Docker and a config file, you must provide the config.json file as a volume to the Docker run command (not as the "-c config.json" argument), as shown in the examples in the [usage](#usage) section.
 
-### With Binary File
-You can grab binaries in the [releases](https://github.com/aykhans/dodo/releases) section.
+When using Dodo with Docker and a local config file, you must provide the config.json file as a volume to the Docker run command (not as the "-f config.json" argument):
 
-### Build from Source
-To build Dodo from source, you need to have [Go1.22+](https://golang.org/dl/) installed. <br>
-Follow the steps below to build dodo:
+```sh
+docker run -v /path/to/config.json:/config.json aykhans/dodo
+```
+
+If you're using Dodo with Docker and providing a config file via URL, you don't need to set a volume:
+
+```sh
+docker run aykhans/dodo -f https://raw.githubusercontent.com/aykhans/dodo/main/config.json
+```
+
+### Using Binary Files
+
+You can download pre-built binaries from the [releases](https://github.com/aykhans/dodo/releases) section.
+
+### Building from Source
+
+To build Dodo from source, you need to have [Go 1.24+](https://golang.org/dl/) installed.
+Follow these steps:
 
 1. **Clone the repository:**
 
@@ -39,95 +55,132 @@ Follow the steps below to build dodo:
 This will generate an executable named `dodo` in the project directory.
 
 ## Usage
-You can use Dodo with CLI arguments, a JSON config file, or both. If you use both, CLI arguments will always override JSON config arguments if there is a conflict.
+
+You can use Dodo with CLI arguments, a JSON config file, or both. When using both, CLI arguments will override JSON config values if there's a conflict.
 
 ### 1. CLI
-Send 1000 GET requests to https://example.com with 10 parallel dodos (threads) and a timeout of 2000 milliseconds:
+
+Send 1000 GET requests to https://example.com with 10 parallel dodos (threads) and a timeout of 2 seconds:
 
 ```sh
-dodo -u https://example.com -m GET -d 10 -r 1000 -t 2000
+dodo -u https://example.com -m GET -d 10 -r 1000 -t 2s
 ```
+
 With Docker:
+
 ```sh
-docker run --rm -i aykhans/dodo -u https://example.com -m GET -d 10 -r 1000 -t 2000
+docker run --rm -i aykhans/dodo -u https://example.com -m GET -d 10 -r 1000 -t 2s
 ```
 
-### 2. JSON config file
-You can find an example config structure in the [config.json](https://github.com/aykhans/dodo/blob/main/config.json) file:
+### 2. JSON Config File
+
+Send 1000 GET requests to https://example.com with 10 parallel dodos (threads) and a timeout of 800 milliseconds:
+
 ```jsonc
 {
     "method": "GET",
     "url": "https://example.com",
-    "no_proxy_check": false,
-    "timeout": 10000,
-    "dodos": 1,
-    "requests": 1,
-    "params": {
-        // Random param value will be selected from the param-key1 and param-key2 list for each request
-        "param-key1": ["param-value1", "param-value2", "param-value3"],
-        "param-key2": ["param-value1", "param-value2", "param-value3"]
-    },
-    "headers": {
-        // Random header value will be selected from the header-key1 and header-key2 list for each request
-        "header-key1": ["header-value1", "header-value2", "header-value3"],
-        "header-key2": ["header-value2", "header-value2", "header-value3"]
-    },
-    "cookies": {
-        // Random cookie value will be selected from the cookie-key1 and cookie-key2 list for each request
-        "cookie-key1": ["cookie-value1", "cookie-value2", "cookie-value3"],
-        "cookie-key2": ["cookie-value2", "cookie-value2", "cookie-value3"]
-    },
-    // Random body value will be selected from the body list for each request
-    "body": ["body1", "body2", "body3"],
-    // Random proxy will be selected from the proxy list for each request
-    "proxies": [
-        {
-            "url": "http://example.com:8080",
-            "username": "username",
-            "password": "password"
-        },
-        {
-            "url": "http://example.com:8080"
-        }
-    ]
+    "yes": false,
+    "timeout": "800ms",
+    "dodos": 10,
+    "requests": 1000,
+
+    "params": [
+        // A random value will be selected from the list for first "key1" param on each request
+        // And always "value" for second "key1" param on each request
+        // e.g. "?key1=value2&key1=value"
+        { "key1": ["value1", "value2", "value3", "value4"] },
+        { "key1": "value" },
+
+        // A random value will be selected from the list for param "key2" on each request
+        // e.g. "?key2=value2"
+        { "key2": ["value1", "value2"] },
+    ],
+
+    "headers": [
+        // A random value will be selected from the list for first "key1" header on each request
+        // And always "value" for second "key1" header on each request
+        // e.g. "key1: value3", "key1: value"
+        { "key1": ["value1", "value2", "value3", "value4"] },
+        { "key1": "value" },
+
+        // A random value will be selected from the list for header "key2" on each request
+        // e.g. "key2: value2"
+        { "key2": ["value1", "value2"] },
+    ],
+
+    "cookies": [
+        // A random value will be selected from the list for first "key1" cookie on each request
+        // And always "value" for second "key1" cookie on each request
+        // e.g. "key1=value4; key1=value"
+        { "key1": ["value1", "value2", "value3", "value4"] },
+        { "key1": "value" },
+
+        // A random value will be selected from the list for cookie "key2" on each request
+        // e.g. "key2=value1"
+        { "key2": ["value1", "value2"] },
+    ],
+
+    "body": "body-text",
+    // OR
+    // A random body value will be selected from the list for each request
+    "body": ["body-text1", "body-text2", "body-text3"],
+
+    "proxy": "http://example.com:8080",
+    // OR
+    // A random proxy will be selected from the list for each request
+    "proxy": [
+        "http://example.com:8080",
+        "http://username:password@example.com:8080",
+        "socks5://example.com:8080",
+        "socks5h://example.com:8080",
+    ],
 }
 ```
-Send 1000 GET requests to https://example.com with 10 parallel dodos (threads) and a timeout of 2000 milliseconds:
 
 ```sh
-dodo -c /path/config.json
+dodo -f /path/config.json
+# OR
+dodo -f https://example.com/config.json
 ```
+
 With Docker:
+
 ```sh
-docker run --rm -i -v ./path/config.json:/dodo/config.json aykhans/dodo
+docker run --rm -i -v /path/to/config.json:/config.json aykhans/dodo
+# OR
+docker run --rm -i aykhans/dodo -f https://example.com/config.json
 ```
 
-### 3. Both (CLI & JSON)
+### 3. Combined (CLI & JSON)
+
 Override the config file arguments with CLI arguments:
 
 ```sh
-dodo -c /path/config.json -u https://example.com -m GET -d 10 -r 1000 -t 2000
+dodo -f /path/to/config.json -u https://example.com -m GET -d 10 -r 1000 -t 5s
 ```
+
 With Docker:
+
 ```sh
-docker run --rm -i -v ./path/config.json:/dodo/config.json aykhans/dodo -u https://example.com -m GET -d 10 -r 1000 -t 2000
+docker run --rm -i -v /path/to/config.json:/config.json aykhans/dodo -u https://example.com -m GET -d 10 -r 1000 -t 5s
 ```
 
 ## CLI and JSON Config Parameters
-If the Headers, Params, Cookies and Body fields have multiple values, each request will choose a random value from the list.
 
-| Parameter             | JSON config file | CLI Flag        | CLI Short Flag | Type                             | Description                                                         | Default     |
-| --------------------- | ---------------- | --------------- | -------------- | -------------------------------- | ------------------------------------------------------------------- | ----------- |
-| Config file           | -                | --config-file   | -c             | String                           | Path to the JSON config file                                        | -           |
-| Yes                   | -                | --yes           | -y             | Boolean                          | Answer yes to all questions                                         | false       |
-| URL                   | url              | --url           | -u             | String                           | URL to send the request to                                          | -           |
-| Method                | method           | --method        | -m             | String                           | HTTP method                                                         | GET         |
-| Requests              | requests         | --requests      | -r             | Integer                          | Total number of requests to send                                    | 1000        |
-| Dodos (Threads)       | dodos            | --dodos         | -d             | Integer                          | Number of dodos (threads) to send requests in parallel              | 1           |
-| Timeout               | timeout          | --timeout       | -t             | Integer                          | Timeout for canceling each request (milliseconds)                   | 10000       |
-| No Proxy Check        | no_proxy_check   | --no-proxy-check| -              | Boolean                          | Disable proxy check                                                 | false       |
-| Params                | params           | -               | -              | Key-Value {String: [String]}     | Request parameters                                                  | -           |
-| Headers               | headers          | -               | -              | Key-Value {String: [String]}     | Request headers                                                     | -           |
-| Cookies               | cookies          | -               | -              | Key-Value {String: [String]}     | Request cookies                                                     | -           |
-| Body                  | body             | -               | -              | [String]                         | Request body                                                        | -           |
-| Proxy                 | proxies          | -               | -              | List[Key-Value {string: string}] | List of proxies (will check active proxies before sending requests) | -           |
+If `Headers`, `Params`, `Cookies`, `Body`, or `Proxy` fields have multiple values, each request will choose a random value from the list.
+
+| Parameter       | JSON config file | CLI Flag     | CLI Short Flag | Type                           | Description                                                     | Default |
+| --------------- | ---------------- | ------------ | -------------- | ------------------------------ | --------------------------------------------------------------- | ------- |
+| Config file     | -                | -config-file | -f             | String                         | Path to local config file or http(s) URL of the config file     | -       |
+| Yes             | yes              | -yes         | -y             | Boolean                        | Answer yes to all questions                                     | false   |
+| URL             | url              | -url         | -u             | String                         | URL to send the request to                                      | -       |
+| Method          | method           | -method      | -m             | String                         | HTTP method                                                     | GET     |
+| Requests        | requests         | -requests    | -r             | UnsignedInteger                | Total number of requests to send                                | 1000    |
+| Dodos (Threads) | dodos            | -dodos       | -d             | UnsignedInteger                | Number of dodos (threads) to send requests in parallel          | 1       |
+| Timeout         | timeout          | -timeout     | -t             | Duration                       | Timeout for canceling each request                              | 10s     |
+| Params          | params           | -param       | -p             | [{String: String OR [String]}] | Request parameters                                              | -       |
+| Headers         | headers          | -header      | -H             | [{String: String OR [String]}] | Request headers                                                 | -       |
+| Cookies         | cookies          | -cookie      | -c             | [{String: String OR [String]}] | Request cookies                                                 | -       |
+| Body            | body             | -body        | -b             | String OR [String]             | Request body or list of request bodies                          | -       |
+| Proxy           | proxies          | -proxy       | -x             | String OR [String]             | Proxy URL or list of proxy URLs                                 | -       |

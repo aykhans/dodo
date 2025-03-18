@@ -1,27 +1,27 @@
 run:
-  go: "1.24"
-  concurrency: 8
-  timeout: 10m
+    go: "1.24"
+    concurrency: 8
+    timeout: 10m
 
 linters:
-  disable-all: true
-  enable:
-    - asasalint
-    - asciicheck
-    - gofmt
-    - goimports
-    - gomodguard
-    - goprintffuncname
-    - govet
-    - ineffassign
-    - misspell
-    - nakedret
-    - nolintlint
-    - prealloc
-    - prealloc
-    - reassign
-    - staticcheck
-    - typecheck
-    - unconvert
-    - unused
-    - whitespace
+    disable-all: true
+    enable:
+        - asasalint
+        - asciicheck
+        - errcheck
+        - gofmt
+        - goimports
+        - gomodguard
+        - goprintffuncname
+        - govet
+        - ineffassign
+        - misspell
+        - nakedret
+        - nolintlint
+        - prealloc
+        - reassign
+        - staticcheck
+        - typecheck
+        - unconvert
+        - unused
+        - whitespace

@@ -7,48 +7,33 @@ import (
 	"time"
 
 	"github.com/aykhans/dodo/config"
-	customerrors "github.com/aykhans/dodo/custom_errors"
+	"github.com/aykhans/dodo/types"
 	"github.com/aykhans/dodo/utils"
 	"github.com/valyala/fasthttp"
 )
 
 // Run executes the main logic for processing requests based on the provided configuration.
-// It first checks for an internet connection with a timeout context. If no connection is found,
-// it returns an error. Then, it initializes clients based on the request configuration and
-// releases the dodos. If the context is canceled and no responses are collected, it returns an interrupt error.
+// It initializes clients based on the request configuration and releases the dodos.
+// If the context is canceled and no responses are collected, it returns an interrupt error.
 //
 // Parameters:
 //   - ctx: The context for managing request lifecycle and cancellation.
 //   - requestConfig: The configuration for the request, including timeout, proxies, and other settings.
-//
-// Returns:
-//   - Responses: A collection of responses from the executed requests.
-//   - error: An error if the operation fails, such as no internet connection or an interrupt.
 func Run(ctx context.Context, requestConfig *config.RequestConfig) (Responses, error) {
-	checkConnectionCtx, checkConnectionCtxCancel := context.WithTimeout(ctx, 8*time.Second)
-	if !checkConnection(checkConnectionCtx) {
-		checkConnectionCtxCancel()
-		return nil, customerrors.ErrNoInternet
-	}
-	checkConnectionCtxCancel()
-
 	clients := getClients(
 		ctx,
 		requestConfig.Timeout,
 		requestConfig.Proxies,
-		requestConfig.GetValidDodosCountForProxies(),
 		requestConfig.GetMaxConns(fasthttp.DefaultMaxConnsPerHost),
-		requestConfig.Yes,
-		requestConfig.NoProxyCheck,
 		requestConfig.URL,
 	)
 	if clients == nil {
-		return nil, customerrors.ErrInterrupt
+		return nil, types.ErrInterrupt
 	}
 
 	responses := releaseDodos(ctx, requestConfig, clients)
 	if ctx.Err() != nil && len(responses) == 0 {
-		return nil, customerrors.ErrInterrupt
+		return nil, types.ErrInterrupt
 	}
 
 	return responses, nil
@@ -75,23 +60,22 @@ func releaseDodos(
 		requestCountPerDodo uint
 		dodosCount          uint = requestConfig.GetValidDodosCountForRequests()
 		dodosCountInt       int  = int(dodosCount)
-		requestCount        uint = requestConfig.RequestCount
 		responses                = make([][]*Response, dodosCount)
-		increase                 = make(chan int64, requestCount)
+		increase                 = make(chan int64, requestConfig.RequestCount)
 	)
 
 	wg.Add(dodosCountInt)
 	streamWG.Add(1)
 	streamCtx, streamCtxCancel := context.WithCancel(context.Background())
 
-	go streamProgress(streamCtx, &streamWG, int64(requestCount), "Dodos Working🔥", increase)
+	go streamProgress(streamCtx, &streamWG, int64(requestConfig.RequestCount), "Dodos Working🔥", increase)
 
 	for i := range dodosCount {
 		if i+1 == dodosCount {
-			requestCountPerDodo = requestCount - (i * requestCount / dodosCount)
+			requestCountPerDodo = requestConfig.RequestCount - (i * requestConfig.RequestCount / dodosCount)
 		} else {
-			requestCountPerDodo = ((i + 1) * requestCount / dodosCount) -
-				(i * requestCount / dodosCount)
+			requestCountPerDodo = ((i + 1) * requestConfig.RequestCount / dodosCount) -
+				(i * requestConfig.RequestCount / dodosCount)
 		}
 
 		go sendRequest(
@@ -139,7 +123,7 @@ func sendRequest(
 			}
 
 			if err != nil {
-				if err == customerrors.ErrInterrupt {
+				if err == types.ErrInterrupt {
 					return
 				}
 				*responseData = append(*responseData, &Response{
