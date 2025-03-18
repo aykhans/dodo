@@ -60,23 +60,22 @@ func releaseDodos(
 		requestCountPerDodo uint
 		dodosCount          uint = requestConfig.GetValidDodosCountForRequests()
 		dodosCountInt       int  = int(dodosCount)
-		requestCount        uint = requestConfig.RequestCount
 		responses                = make([][]*Response, dodosCount)
-		increase                 = make(chan int64, requestCount)
+		increase                 = make(chan int64, requestConfig.RequestCount)
 	)
 
 	wg.Add(dodosCountInt)
 	streamWG.Add(1)
 	streamCtx, streamCtxCancel := context.WithCancel(context.Background())
 
-	go streamProgress(streamCtx, &streamWG, int64(requestCount), "Dodos Working🔥", increase)
+	go streamProgress(streamCtx, &streamWG, int64(requestConfig.RequestCount), "Dodos Working🔥", increase)
 
 	for i := range dodosCount {
 		if i+1 == dodosCount {
-			requestCountPerDodo = requestCount - (i * requestCount / dodosCount)
+			requestCountPerDodo = requestConfig.RequestCount - (i * requestConfig.RequestCount / dodosCount)
 		} else {
-			requestCountPerDodo = ((i + 1) * requestCount / dodosCount) -
-				(i * requestCount / dodosCount)
+			requestCountPerDodo = ((i + 1) * requestConfig.RequestCount / dodosCount) -
+				(i * requestConfig.RequestCount / dodosCount)
 		}
 
 		go sendRequest(
