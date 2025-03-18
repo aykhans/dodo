@@ -1,11 +1,11 @@
-<h1 align="center">Dodo is a fast and easy-to-use HTTP benchmarking tool.</h1>
+<h1 align="center">Dodo - A Fast and Easy-to-Use HTTP Benchmarking Tool</h1>
 <p align="center">
 <img width="30%" height="30%" src="https://ftp.aykhans.me/web/client/pubshares/VzPtSHS7yPQT7ngoZzZSNU/browse?path=%2Fdodo.png">
 </p>
 
 ## Installation
 
-### With Docker (Recommended)
+### Using Docker (Recommended)
 
 Pull the Dodo image from Docker Hub:
 
@@ -13,26 +13,26 @@ Pull the Dodo image from Docker Hub:
 docker pull aykhans/dodo:latest
 ```
 
-If you use Dodo with Docker and a local config file, you must provide the config.json file as a volume to the Docker run command (not as the "-f config.json" argument).
+When using Dodo with Docker and a local config file, you must provide the config.json file as a volume to the Docker run command (not as the "-f config.json" argument):
 
 ```sh
 docker run -v /path/to/config.json:/config.json aykhans/dodo
 ```
 
-If you use it with Docker and provide config file via URL, you do not need to set a volume.
+If you're using Dodo with Docker and providing a config file via URL, you don't need to set a volume:
 
 ```sh
 docker run aykhans/dodo -f https://raw.githubusercontent.com/aykhans/dodo/main/config.json
 ```
 
-### With Binary File
+### Using Binary Files
 
-You can grab binaries in the [releases](https://github.com/aykhans/dodo/releases) section.
+You can download pre-built binaries from the [releases](https://github.com/aykhans/dodo/releases) section.
 
-### Build from Source
+### Building from Source
 
-To build Dodo from source, you need to have [Go1.24+](https://golang.org/dl/) installed. <br>
-Follow the steps below to build dodo:
+To build Dodo from source, you need to have [Go 1.24+](https://golang.org/dl/) installed.
+Follow these steps:
 
 1. **Clone the repository:**
 
@@ -56,7 +56,7 @@ This will generate an executable named `dodo` in the project directory.
 
 ## Usage
 
-You can use Dodo with CLI arguments, a JSON config file, or both. If you use both, CLI arguments will always override JSON config arguments if there is a conflict.
+You can use Dodo with CLI arguments, a JSON config file, or both. When using both, CLI arguments will override JSON config values if there's a conflict.
 
 ### 1. CLI
 
@@ -72,7 +72,7 @@ With Docker:
 docker run --rm -i aykhans/dodo -u https://example.com -m GET -d 10 -r 1000 -t 2s
 ```
 
-### 2. JSON config file
+### 2. JSON Config File
 
 Send 1000 GET requests to https://example.com with 10 parallel dodos (threads) and a timeout of 800 milliseconds:
 
@@ -152,7 +152,7 @@ docker run --rm -i -v /path/to/config.json:/config.json aykhans/dodo
 docker run --rm -i aykhans/dodo -f https://example.com/config.json
 ```
 
-### 3. Both (CLI & JSON)
+### 3. Combined (CLI & JSON)
 
 Override the config file arguments with CLI arguments:
 
@@ -168,17 +168,17 @@ docker run --rm -i -v /path/to/config.json:/config.json aykhans/dodo -u https://
 
 ## CLI and JSON Config Parameters
 
-If `Headers`, `Params`, `Cookies`, `Body`, and `Proxy` fields have multiple values, each request will choose a random value from the list.
+If `Headers`, `Params`, `Cookies`, `Body`, or `Proxy` fields have multiple values, each request will choose a random value from the list.
 
 | Parameter       | JSON config file | CLI Flag     | CLI Short Flag | Type                           | Description                                                     | Default |
 | --------------- | ---------------- | ------------ | -------------- | ------------------------------ | --------------------------------------------------------------- | ------- |
-| Config file     | -                | -config-file | -f             | String                         | Path to the local config file or http(s) URL of the config file | -       |
+| Config file     | -                | -config-file | -f             | String                         | Path to local config file or http(s) URL of the config file     | -       |
 | Yes             | yes              | -yes         | -y             | Boolean                        | Answer yes to all questions                                     | false   |
 | URL             | url              | -url         | -u             | String                         | URL to send the request to                                      | -       |
 | Method          | method           | -method      | -m             | String                         | HTTP method                                                     | GET     |
 | Requests        | requests         | -requests    | -r             | UnsignedInteger                | Total number of requests to send                                | 1000    |
 | Dodos (Threads) | dodos            | -dodos       | -d             | UnsignedInteger                | Number of dodos (threads) to send requests in parallel          | 1       |
-| Timeout         | timeout          | -timeout     | -t             | Duration                       | Timeout for canceling each request (milliseconds)               | 10000   |
+| Timeout         | timeout          | -timeout     | -t             | Duration                       | Timeout for canceling each request                              | 10s     |
 | Params          | params           | -param       | -p             | [{String: String OR [String]}] | Request parameters                                              | -       |
 | Headers         | headers          | -header      | -H             | [{String: String OR [String]}] | Request headers                                                 | -       |
 | Cookies         | cookies          | -cookie      | -c             | [{String: String OR [String]}] | Request cookies                                                 | -       |
