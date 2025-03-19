@@ -27,7 +27,7 @@ Usage with all flags:
     -u https://example.com -m POST \
     -d 10 -r 1000 -t 3s \
     -b "body1" -body "body2" \
-    -H "header1: value1" -header "header2: value2" \
+    -H "header1:value1" -header "header2:value2" \
     -p "param1=value1" -param "param2=value2" \
     -c "cookie1=value1" -cookie "cookie2=value2" \
     -x "http://proxy.example.com:8080" -proxy "socks5://proxy2.example.com:8080" \
