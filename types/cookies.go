@@ -56,6 +56,23 @@ func (cookies Cookies) String() string {
 	return string(buffer.Bytes())
 }
 
+func (cookies *Cookies) AppendByKey(key, value string) {
+	if item := cookies.GetValue(key); item != nil {
+		*item = append(*item, value)
+	} else {
+		*cookies = append(*cookies, KeyValue[string, []string]{Key: key, Value: []string{value}})
+	}
+}
+
+func (cookies Cookies) GetValue(key string) *[]string {
+	for i := range cookies {
+		if cookies[i].Key == key {
+			return &cookies[i].Value
+		}
+	}
+	return nil
+}
+
 func (cookies *Cookies) UnmarshalJSON(b []byte) error {
 	var data []map[string]any
 	if err := json.Unmarshal(b, &data); err != nil {
@@ -82,6 +99,31 @@ func (cookies *Cookies) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
+func (cookies *Cookies) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	var raw []map[string]any
+	if err := unmarshal(&raw); err != nil {
+		return err
+	}
+
+	for _, param := range raw {
+		for key, value := range param {
+			switch parsed := value.(type) {
+			case string:
+				*cookies = append(*cookies, KeyValue[string, []string]{Key: key, Value: []string{parsed}})
+			case []any:
+				var values []string
+				for _, v := range parsed {
+					if str, ok := v.(string); ok {
+						values = append(values, str)
+					}
+				}
+				*cookies = append(*cookies, KeyValue[string, []string]{Key: key, Value: values})
+			}
+		}
+	}
+	return nil
+}
+
 func (cookies *Cookies) Set(value string) error {
 	parts := strings.SplitN(value, "=", 2)
 	switch len(parts) {
@@ -93,22 +135,5 @@ func (cookies *Cookies) Set(value string) error {
 		cookies.AppendByKey(parts[0], parts[1])
 	}
 
-	return nil
-}
-
-func (cookies *Cookies) AppendByKey(key, value string) {
-	if item := cookies.GetValue(key); item != nil {
-		*item = append(*item, value)
-	} else {
-		*cookies = append(*cookies, KeyValue[string, []string]{Key: key, Value: []string{value}})
-	}
-}
-
-func (cookies Cookies) GetValue(key string) *[]string {
-	for i := range cookies {
-		if cookies[i].Key == key {
-			return &cookies[i].Value
-		}
-	}
 	return nil
 }

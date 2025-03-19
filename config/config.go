@@ -27,17 +27,17 @@ const (
 var SupportedProxySchemes []string = []string{"http", "socks5", "socks5h"}
 
 type RequestConfig struct {
-	Method       string        `json:"method"`
-	URL          url.URL       `json:"url"`
-	Timeout      time.Duration `json:"timeout"`
-	DodosCount   uint          `json:"dodos"`
-	RequestCount uint          `json:"requests"`
-	Yes          bool          `json:"yes"`
-	Params       types.Params  `json:"params"`
-	Headers      types.Headers `json:"headers"`
-	Cookies      types.Cookies `json:"cookies"`
-	Body         types.Body    `json:"body"`
-	Proxies      types.Proxies `json:"proxies"`
+	Method       string
+	URL          url.URL
+	Timeout      time.Duration
+	DodosCount   uint
+	RequestCount uint
+	Yes          bool
+	Params       types.Params
+	Headers      types.Headers
+	Cookies      types.Cookies
+	Body         types.Body
+	Proxies      types.Proxies
 }
 
 func NewRequestConfig(conf *Config) *RequestConfig {
@@ -111,17 +111,17 @@ func (rc *RequestConfig) Print() {
 }
 
 type Config struct {
-	Method       *string           `json:"method"`
-	URL          *types.RequestURL `json:"url"`
-	Timeout      *types.Timeout    `json:"timeout"`
-	DodosCount   *uint             `json:"dodos"`
-	RequestCount *uint             `json:"requests"`
-	Yes          *bool             `json:"yes"`
-	Params       types.Params      `json:"params"`
-	Headers      types.Headers     `json:"headers"`
-	Cookies      types.Cookies     `json:"cookies"`
-	Body         types.Body        `json:"body"`
-	Proxies      types.Proxies     `json:"proxy"`
+	Method       *string           `json:"method" yaml:"method"`
+	URL          *types.RequestURL `json:"url" yaml:"url"`
+	Timeout      *types.Timeout    `json:"timeout" yaml:"timeout"`
+	DodosCount   *uint             `json:"dodos" yaml:"dodos"`
+	RequestCount *uint             `json:"requests" yaml:"requests"`
+	Yes          *bool             `json:"yes" yaml:"yes"`
+	Params       types.Params      `json:"params" yaml:"params"`
+	Headers      types.Headers     `json:"headers" yaml:"headers"`
+	Cookies      types.Cookies     `json:"cookies" yaml:"cookies"`
+	Body         types.Body        `json:"body" yaml:"body"`
+	Proxies      types.Proxies     `json:"proxy" yaml:"proxy"`
 }
 
 func NewConfig() *Config {

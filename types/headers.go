@@ -56,6 +56,23 @@ func (headers Headers) String() string {
 	return string(buffer.Bytes())
 }
 
+func (headers *Headers) AppendByKey(key, value string) {
+	if item := headers.GetValue(key); item != nil {
+		*item = append(*item, value)
+	} else {
+		*headers = append(*headers, KeyValue[string, []string]{Key: key, Value: []string{value}})
+	}
+}
+
+func (headers Headers) GetValue(key string) *[]string {
+	for i := range headers {
+		if headers[i].Key == key {
+			return &headers[i].Value
+		}
+	}
+	return nil
+}
+
 func (headers *Headers) UnmarshalJSON(b []byte) error {
 	var data []map[string]any
 	if err := json.Unmarshal(b, &data); err != nil {
@@ -82,6 +99,31 @@ func (headers *Headers) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
+func (headers *Headers) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	var raw []map[string]any
+	if err := unmarshal(&raw); err != nil {
+		return err
+	}
+
+	for _, param := range raw {
+		for key, value := range param {
+			switch parsed := value.(type) {
+			case string:
+				*headers = append(*headers, KeyValue[string, []string]{Key: key, Value: []string{parsed}})
+			case []any:
+				var values []string
+				for _, v := range parsed {
+					if str, ok := v.(string); ok {
+						values = append(values, str)
+					}
+				}
+				*headers = append(*headers, KeyValue[string, []string]{Key: key, Value: values})
+			}
+		}
+	}
+	return nil
+}
+
 func (headers *Headers) Set(value string) error {
 	parts := strings.SplitN(value, ":", 2)
 	switch len(parts) {
@@ -93,22 +135,5 @@ func (headers *Headers) Set(value string) error {
 		headers.AppendByKey(parts[0], parts[1])
 	}
 
-	return nil
-}
-
-func (headers *Headers) AppendByKey(key, value string) {
-	if item := headers.GetValue(key); item != nil {
-		*item = append(*item, value)
-	} else {
-		*headers = append(*headers, KeyValue[string, []string]{Key: key, Value: []string{value}})
-	}
-}
-
-func (headers Headers) GetValue(key string) *[]string {
-	for i := range headers {
-		if headers[i].Key == key {
-			return &headers[i].Value
-		}
-	}
 	return nil
 }

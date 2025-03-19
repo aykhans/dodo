@@ -75,6 +75,36 @@ func (proxies *Proxies) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
+func (proxies *Proxies) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	var data any
+	if err := unmarshal(&data); err != nil {
+		return err
+	}
+
+	switch v := data.(type) {
+	case string:
+		parsed, err := url.Parse(v)
+		if err != nil {
+			return err
+		}
+		*proxies = []url.URL{*parsed}
+	case []any:
+		var urls []url.URL
+		for _, item := range v {
+			url, err := url.Parse(item.(string))
+			if err != nil {
+				return err
+			}
+			urls = append(urls, *url)
+		}
+		*proxies = urls
+	default:
+		return fmt.Errorf("invalid type for Body: %T (should be URL or []URL)", v)
+	}
+
+	return nil
+}
+
 func (proxies *Proxies) Set(value string) error {
 	parsedURL, err := url.Parse(value)
 	if err != nil {
