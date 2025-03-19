@@ -132,24 +132,26 @@ func (c *Config) Validate() []error {
 	var errs []error
 	if utils.IsNilOrZero(c.URL) {
 		errs = append(errs, errors.New("request URL is required"))
-	}
-	if c.URL.Scheme == "" {
-		c.URL.Scheme = "http"
-	}
-	if c.URL.Scheme != "http" && c.URL.Scheme != "https" {
-		errs = append(errs, errors.New("request URL scheme must be http or https"))
-	}
-	urlParams := types.Params{}
-	for key, values := range c.URL.Query() {
-		for _, value := range values {
-			urlParams = append(urlParams, types.KeyValue[string, []string]{
-				Key:   key,
-				Value: []string{value},
-			})
+	} else {
+		if c.URL.Scheme == "" {
+			c.URL.Scheme = "http"
 		}
+		if c.URL.Scheme != "http" && c.URL.Scheme != "https" {
+			errs = append(errs, errors.New("request URL scheme must be http or https"))
+		}
+
+		urlParams := types.Params{}
+		for key, values := range c.URL.Query() {
+			for _, value := range values {
+				urlParams = append(urlParams, types.KeyValue[string, []string]{
+					Key:   key,
+					Value: []string{value},
+				})
+			}
+		}
+		c.Params = append(urlParams, c.Params...)
+		c.URL.RawQuery = ""
 	}
-	c.Params = append(urlParams, c.Params...)
-	c.URL.RawQuery = ""
 
 	if utils.IsNilOrZero(c.Method) {
 		errs = append(errs, errors.New("request method is required"))
