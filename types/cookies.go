@@ -21,7 +21,7 @@ func (cookies Cookies) String() string {
 
 	displayLimit := 3
 
-	for i, item := range cookies {
+	for i, item := range cookies[:min(len(cookies), displayLimit)] {
 		if i > 0 {
 			buffer.WriteString(",\n")
 		}
@@ -96,18 +96,18 @@ func (cookies *Cookies) Set(value string) error {
 	return nil
 }
 
-func (cookies *Cookies) AppendByKey(key string, value string) {
-	if existingValue := cookies.GetValue(key); existingValue != nil {
-		*cookies = append(*cookies, KeyValue[string, []string]{Key: key, Value: append(existingValue, value)})
+func (cookies *Cookies) AppendByKey(key, value string) {
+	if item := cookies.GetValue(key); item != nil {
+		*item = append(*item, value)
 	} else {
 		*cookies = append(*cookies, KeyValue[string, []string]{Key: key, Value: []string{value}})
 	}
 }
 
-func (cookies *Cookies) GetValue(key string) []string {
-	for _, cookie := range *cookies {
-		if cookie.Key == key {
-			return cookie.Value
+func (cookies Cookies) GetValue(key string) *[]string {
+	for i := range cookies {
+		if cookies[i].Key == key {
+			return &cookies[i].Value
 		}
 	}
 	return nil

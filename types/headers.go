@@ -21,7 +21,7 @@ func (headers Headers) String() string {
 
 	displayLimit := 3
 
-	for i, item := range headers {
+	for i, item := range headers[:min(len(headers), displayLimit)] {
 		if i > 0 {
 			buffer.WriteString(",\n")
 		}
@@ -96,18 +96,18 @@ func (headers *Headers) Set(value string) error {
 	return nil
 }
 
-func (headers *Headers) AppendByKey(key string, value string) {
-	if existingValue := headers.GetValue(key); existingValue != nil {
-		*headers = append(*headers, KeyValue[string, []string]{Key: key, Value: append(existingValue, value)})
+func (headers *Headers) AppendByKey(key, value string) {
+	if item := headers.GetValue(key); item != nil {
+		*item = append(*item, value)
 	} else {
 		*headers = append(*headers, KeyValue[string, []string]{Key: key, Value: []string{value}})
 	}
 }
 
-func (headers *Headers) GetValue(key string) []string {
-	for _, header := range *headers {
-		if header.Key == key {
-			return header.Value
+func (headers Headers) GetValue(key string) *[]string {
+	for i := range headers {
+		if headers[i].Key == key {
+			return &headers[i].Value
 		}
 	}
 	return nil

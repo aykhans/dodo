@@ -36,6 +36,9 @@ func main() {
 		utils.PrintErrAndExit(errors.Join(errs...))
 	}
 
+	// for _, param := range conf.Params {
+	// 	fmt.Printf("%s: %v\n", param.Key, param.Value)
+	// }
 	requestConf := config.NewRequestConfig(conf)
 	requestConf.Print()
 

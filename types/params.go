@@ -21,7 +21,7 @@ func (params Params) String() string {
 
 	displayLimit := 3
 
-	for i, item := range params {
+	for i, item := range params[:min(len(params), displayLimit)] {
 		if i > 0 {
 			buffer.WriteString(",\n")
 		}
@@ -96,18 +96,18 @@ func (params *Params) Set(value string) error {
 	return nil
 }
 
-func (params *Params) AppendByKey(key string, value string) {
-	if existingValue := params.GetValue(key); existingValue != nil {
-		*params = append(*params, KeyValue[string, []string]{Key: key, Value: append(existingValue, value)})
+func (params *Params) AppendByKey(key, value string) {
+	if item := params.GetValue(key); item != nil {
+		*item = append(*item, value)
 	} else {
 		*params = append(*params, KeyValue[string, []string]{Key: key, Value: []string{value}})
 	}
 }
 
-func (params *Params) GetValue(key string) []string {
-	for _, param := range *params {
-		if param.Key == key {
-			return param.Value
+func (params Params) GetValue(key string) *[]string {
+	for i := range params {
+		if params[i].Key == key {
+			return &params[i].Value
 		}
 	}
 	return nil
