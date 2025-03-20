@@ -16,4 +16,4 @@ WORKDIR /
 COPY --from=builder /src/dodo /dodo
 COPY --from=builder /src/config.json /config.json
 
-ENTRYPOINT ["./dodo", "-f", "/config.json"]
+ENTRYPOINT ["./dodo"]
