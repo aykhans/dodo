@@ -45,27 +45,10 @@ Download the latest binaries from the [releases](https://github.com/aykhans/dodo
 
 ### Building from Source
 
-To build Dodo from source, ensure you have [Go 1.24+](https://golang.org/dl/) installed. Then follow these steps:
-
-1. **Clone the repository:**
-
-    ```sh
-    git clone https://github.com/aykhans/dodo.git
-    ```
-
-2. **Navigate to the project directory:**
-
-    ```sh
-    cd dodo
-    ```
-
-3. **Build the project:**
-
-    ```sh
-    go build -ldflags "-s -w" -o dodo
-    ```
-
-This will generate an executable named `dodo` in the project directory.
+To build Dodo from source, ensure you have [Go 1.24+](https://golang.org/dl/) installed.
+```sh
+go install -ldflags "-s -w" github.com/aykhans/dodo@latest
+```
 
 ## Usage
 
@@ -87,9 +70,9 @@ docker run --rm -i aykhans/dodo -u https://example.com -m GET -d 10 -r 1000 -t 2
 
 ### 2. Config File Usage
 
-#### 2.1 JSON Example
-
 Send 1000 GET requests to https://example.com with 10 parallel dodos (threads) and a timeout of 800 milliseconds:
+
+#### 2.1 JSON Example
 
 ```jsonc
 {
