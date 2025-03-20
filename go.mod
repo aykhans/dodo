@@ -5,6 +5,7 @@ go 1.24.0
 require (
 	github.com/jedib0t/go-pretty/v6 v6.6.7
 	github.com/valyala/fasthttp v1.59.0
+	gopkg.in/yaml.v3 v3.0.1
 )
 
 require (

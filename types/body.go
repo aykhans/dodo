@@ -66,6 +66,28 @@ func (body *Body) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
+func (body *Body) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	var data any
+	if err := unmarshal(&data); err != nil {
+		return err
+	}
+
+	switch v := data.(type) {
+	case string:
+		*body = []string{v}
+	case []any:
+		var slice []string
+		for _, item := range v {
+			slice = append(slice, fmt.Sprintf("%v", item))
+		}
+		*body = slice
+	default:
+		return fmt.Errorf("invalid type for Body: %T (should be string or []string)", v)
+	}
+
+	return nil
+}
+
 func (body *Body) Set(value string) error {
 	*body = append(*body, value)
 	return nil

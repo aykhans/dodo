@@ -1,11 +1,8 @@
-# YAML/YML config file option is not implemented yet.
-# This file is a example for future implementation.
-
 method: "GET"
 url: "https://example.com"
 yes: false
 timeout: "5s"
-dodos: 10
+dodos: 8
 requests: 1000
 
 params:
@@ -25,6 +22,7 @@ cookies:
 
 # body: "body-text"
 # OR
+# A random body value will be selected from the list for each request
 body:
     - "body-text1"
     - "body-text2"
@@ -32,6 +30,7 @@ body:
 
 # proxy: "http://example.com:8080"
 # OR
+# A random proxy will be selected from the list for each request
 proxy:
     - "http://example.com:8080"
     - "http://username:password@example.com:8080"

@@ -3,36 +3,49 @@
 <img width="30%" height="30%" src="https://ftp.aykhans.me/web/client/pubshares/VzPtSHS7yPQT7ngoZzZSNU/browse?path=%2Fdodo.png">
 </p>
 
+## Table of Contents
+
+- [Installation](#installation)
+  - [Using Docker (Recommended)](#using-docker-recommended)
+  - [Using Pre-built Binaries](#using-pre-built-binaries)
+  - [Building from Source](#building-from-source)
+- [Usage](#usage)
+  - [1. CLI Usage](#1-cli-usage)
+  - [2. Config File Usage](#2-config-file-usage)
+    - [2.1 JSON Example](#21-json-example)
+    - [2.2 YAML/YML Example](#22-yamlyml-example)
+  - [3. CLI & Config File Combination](#3-cli--config-file-combination)
+- [Config Parameters Reference](#config-parameters-reference)
+
 ## Installation
 
 ### Using Docker (Recommended)
 
-Pull the Dodo image from Docker Hub:
+Pull the latest Dodo image from Docker Hub:
 
 ```sh
 docker pull aykhans/dodo:latest
 ```
 
-When using Dodo with Docker and a local config file, you must provide the config.json file as a volume to the Docker run command (not as the "-f config.json" argument):
+To use Dodo with Docker and a local config file, mount the config file as a volume and pass it as an argument:
 
 ```sh
-docker run -v /path/to/config.json:/config.json aykhans/dodo
+docker run -v /path/to/config.json:/config.json aykhans/dodo -f /config.json
 ```
 
-If you're using Dodo with Docker and providing a config file via URL, you don't need to set a volume:
+If you're using a remote config file via URL, you don't need to mount a volume:
 
 ```sh
-docker run aykhans/dodo -f https://raw.githubusercontent.com/aykhans/dodo/main/config.json
+docker run aykhans/dodo -f https://raw.githubusercontent.com/aykhans/dodo/main/config.yaml
 ```
 
-### Using Binary Files
+### Using Pre-built Binaries
 
-You can download pre-built binaries from the [releases](https://github.com/aykhans/dodo/releases) section.
+Download the latest binaries from the [releases](https://github.com/aykhans/dodo/releases) section.
 
 ### Building from Source
 
-To build Dodo from source, you need to have [Go 1.24+](https://golang.org/dl/) installed.
-Follow these steps:
+To build Dodo from source, ensure you have [Go 1.24+](https://golang.org/dl/) installed. Then follow these steps:
 
 1. **Clone the repository:**
 
@@ -56,9 +69,9 @@ This will generate an executable named `dodo` in the project directory.
 
 ## Usage
 
-You can use Dodo with CLI arguments, a JSON config file, or both. When using both, CLI arguments will override JSON config values if there's a conflict.
+Dodo supports CLI arguments, configuration files (JSON/YAML), or a combination of both. If both are used, CLI arguments take precedence.
 
-### 1. CLI
+### 1. CLI Usage
 
 Send 1000 GET requests to https://example.com with 10 parallel dodos (threads) and a timeout of 2 seconds:
 
@@ -72,7 +85,9 @@ With Docker:
 docker run --rm -i aykhans/dodo -u https://example.com -m GET -d 10 -r 1000 -t 2s
 ```
 
-### 2. JSON Config File
+### 2. Config File Usage
+
+#### 2.1 JSON Example
 
 Send 1000 GET requests to https://example.com with 10 parallel dodos (threads) and a timeout of 800 milliseconds:
 
@@ -152,21 +167,96 @@ docker run --rm -i -v /path/to/config.json:/config.json aykhans/dodo
 docker run --rm -i aykhans/dodo -f https://example.com/config.json
 ```
 
-### 3. Combined (CLI & JSON)
+#### 2.2 YAML/YML Example
 
-Override the config file arguments with CLI arguments:
+```yaml
+method: "GET"
+url: "https://example.com"
+yes: false
+timeout: "800ms"
+dodos: 10
+requests: 1000
+
+params:
+    # A random value will be selected from the list for first "key1" param on each request
+    # And always "value" for second "key1" param on each request
+    # e.g. "?key1=value2&key1=value"
+    - key1: ["value1", "value2", "value3", "value4"]
+    - key1: "value"
+
+    # A random value will be selected from the list for param "key2" on each request
+    # e.g. "?key2=value2"
+    - key2: ["value1", "value2"]
+
+headers:
+    # A random value will be selected from the list for first "key1" header on each request
+    # And always "value" for second "key1" header on each request
+    # e.g. "key1: value3", "key1: value"
+    - key1: ["value1", "value2", "value3", "value4"]
+    - key1: "value"
+
+    # A random value will be selected from the list for header "key2" on each request
+    # e.g. "key2: value2"
+    - key2: ["value1", "value2"]
+
+cookies:
+    # A random value will be selected from the list for first "key1" cookie on each request
+    # And always "value" for second "key1" cookie on each request
+    # e.g. "key1=value4; key1=value"
+    - key1: ["value1", "value2", "value3", "value4"]
+    - key1: "value"
+
+    # A random value will be selected from the list for cookie "key2" on each request
+    # e.g. "key2=value1"
+    - key2: ["value1", "value2"]
+
+body: "body-text"
+# OR
+# A random body value will be selected from the list for each request
+body:
+    - "body-text1"
+    - "body-text2"
+    - "body-text3"
+
+proxy: "http://example.com:8080"
+# OR
+# A random proxy will be selected from the list for each request
+proxy:
+    - "http://example.com:8080"
+    - "http://username:password@example.com:8080"
+    - "socks5://example.com:8080"
+    - "socks5h://example.com:8080"
+```
 
 ```sh
-dodo -f /path/to/config.json -u https://example.com -m GET -d 10 -r 1000 -t 5s
+dodo -f /path/config.yaml
+# OR
+dodo -f https://example.com/config.yaml
 ```
 
 With Docker:
 
 ```sh
-docker run --rm -i -v /path/to/config.json:/config.json aykhans/dodo -u https://example.com -m GET -d 10 -r 1000 -t 5s
+docker run --rm -i -v /path/to/config.yaml:/config.yaml aykhans/dodo -f /config.yaml
+# OR
+docker run --rm -i aykhans/dodo -f https://example.com/config.yaml
 ```
 
-## CLI and JSON Config Parameters
+### 3. CLI & Config File Combination
+
+CLI arguments override config file values:
+
+```sh
+dodo -f /path/to/config.yaml -u https://example.com -m GET -d 10 -r 1000 -t 5s
+```
+
+With Docker:
+
+```sh
+docker run --rm -i -v /path/to/config.json:/config.json aykhans/dodo -f /config.json -u https://example.com -m GET -d 10 -r 1000 -t 5s
+```
+
+## Config Parameters Reference
 
 If `Headers`, `Params`, `Cookies`, `Body`, or `Proxy` fields have multiple values, each request will choose a random value from the list.
 

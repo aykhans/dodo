@@ -56,6 +56,23 @@ func (params Params) String() string {
 	return string(buffer.Bytes())
 }
 
+func (params *Params) AppendByKey(key, value string) {
+	if item := params.GetValue(key); item != nil {
+		*item = append(*item, value)
+	} else {
+		*params = append(*params, KeyValue[string, []string]{Key: key, Value: []string{value}})
+	}
+}
+
+func (params Params) GetValue(key string) *[]string {
+	for i := range params {
+		if params[i].Key == key {
+			return &params[i].Value
+		}
+	}
+	return nil
+}
+
 func (params *Params) UnmarshalJSON(b []byte) error {
 	var data []map[string]any
 	if err := json.Unmarshal(b, &data); err != nil {
@@ -82,6 +99,31 @@ func (params *Params) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
+func (params *Params) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	var raw []map[string]any
+	if err := unmarshal(&raw); err != nil {
+		return err
+	}
+
+	for _, param := range raw {
+		for key, value := range param {
+			switch parsed := value.(type) {
+			case string:
+				*params = append(*params, KeyValue[string, []string]{Key: key, Value: []string{parsed}})
+			case []any:
+				var values []string
+				for _, v := range parsed {
+					if str, ok := v.(string); ok {
+						values = append(values, str)
+					}
+				}
+				*params = append(*params, KeyValue[string, []string]{Key: key, Value: values})
+			}
+		}
+	}
+	return nil
+}
+
 func (params *Params) Set(value string) error {
 	parts := strings.SplitN(value, "=", 2)
 	switch len(parts) {
@@ -93,22 +135,5 @@ func (params *Params) Set(value string) error {
 		params.AppendByKey(parts[0], parts[1])
 	}
 
-	return nil
-}
-
-func (params *Params) AppendByKey(key, value string) {
-	if item := params.GetValue(key); item != nil {
-		*item = append(*item, value)
-	} else {
-		*params = append(*params, KeyValue[string, []string]{Key: key, Value: []string{value}})
-	}
-}
-
-func (params Params) GetValue(key string) *[]string {
-	for i := range params {
-		if params[i].Key == key {
-			return &params[i].Value
-		}
-	}
 	return nil
 }
