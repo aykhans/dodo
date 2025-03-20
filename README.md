@@ -1,5 +1,4 @@
-# Dodo - A Fast and Easy-to-Use HTTP Benchmarking Tool
-
+<h1 align="center">Dodo - A Fast and Easy-to-Use HTTP Benchmarking Tool</h1>
 <p align="center">
 <img width="30%" height="30%" src="https://ftp.aykhans.me/web/client/pubshares/VzPtSHS7yPQT7ngoZzZSNU/browse?path=%2Fdodo.png">
 </p>
