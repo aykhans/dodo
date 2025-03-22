@@ -233,4 +233,5 @@ func (config *Config) SetDefaults() {
 	if config.Yes == nil {
 		config.Yes = utils.ToPtr(DefaultYes)
 	}
+	config.Headers.SetIfNotExists("User-Agent", DefaultUserAgent)
 }
