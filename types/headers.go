@@ -73,6 +73,15 @@ func (headers Headers) GetValue(key string) *[]string {
 	return nil
 }
 
+func (headers Headers) Has(key string) bool {
+	for i := range headers {
+		if headers[i].Key == key {
+			return true
+		}
+	}
+	return false
+}
+
 func (headers *Headers) UnmarshalJSON(b []byte) error {
 	var data []map[string]any
 	if err := json.Unmarshal(b, &data); err != nil {
@@ -136,4 +145,12 @@ func (headers *Headers) Set(value string) error {
 	}
 
 	return nil
+}
+
+func (headers *Headers) SetIfNotExists(key string, value string) bool {
+	if headers.Has(key) {
+		return false
+	}
+	*headers = append(*headers, KeyValue[string, []string]{Key: key, Value: []string{value}})
+	return true
 }

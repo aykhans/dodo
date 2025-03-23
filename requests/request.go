@@ -166,9 +166,6 @@ func setRequestHeaders(req *fasthttp.Request, headers []types.KeyValue[string, s
 	for _, header := range headers {
 		req.Header.Add(header.Key, header.Value)
 	}
-	if req.Header.UserAgent() == nil {
-		req.Header.SetUserAgent(config.DefaultUserAgent)
-	}
 }
 
 // setRequestCookies adds the cookies of the given request with the provided key-value pairs.

@@ -45,7 +45,7 @@ Flags:
   -m, -method       string    HTTP Method for the request (default %s)
   -b, -body         [string]  Body for the request (e.g. "body text")
   -p, -param        [string]  Parameter for the request (e.g. "key1=value1")
-  -H, -header       [string]  Header for the request (e.g. "key1: value1")
+  -H, -header       [string]  Header for the request (e.g. "key1:value1")
   -c, -cookie       [string]  Cookie for the request (e.g. "key1=value1")
   -x, -proxy        [string]  Proxy for the request (e.g. "http://proxy.example.com:8080")`
 
