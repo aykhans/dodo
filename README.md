@@ -161,7 +161,7 @@ yes: false
 timeout: "800ms"
 dodos: 10
 requests: 1000
-duration: "10s"
+duration: "250s"
 
 params:
     # A random value will be selected from the list for first "key1" param on each request
