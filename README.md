@@ -6,15 +6,15 @@
 ## Table of Contents
 
 - [Installation](#installation)
-  - [Using Docker (Recommended)](#using-docker-recommended)
-  - [Using Pre-built Binaries](#using-pre-built-binaries)
-  - [Building from Source](#building-from-source)
+    - [Using Docker (Recommended)](#using-docker-recommended)
+    - [Using Pre-built Binaries](#using-pre-built-binaries)
+    - [Building from Source](#building-from-source)
 - [Usage](#usage)
-  - [1. CLI Usage](#1-cli-usage)
-  - [2. Config File Usage](#2-config-file-usage)
-    - [2.1 JSON Example](#21-json-example)
-    - [2.2 YAML/YML Example](#22-yamlyml-example)
-  - [3. CLI & Config File Combination](#3-cli--config-file-combination)
+    - [1. CLI Usage](#1-cli-usage)
+    - [2. Config File Usage](#2-config-file-usage)
+        - [2.1 JSON Example](#21-json-example)
+        - [2.2 YAML/YML Example](#22-yamlyml-example)
+    - [3. CLI & Config File Combination](#3-cli--config-file-combination)
 - [Config Parameters Reference](#config-parameters-reference)
 
 ## Installation
@@ -46,6 +46,7 @@ Download the latest binaries from the [releases](https://github.com/aykhans/dodo
 ### Building from Source
 
 To build Dodo from source, ensure you have [Go 1.24+](https://golang.org/dl/) installed.
+
 ```sh
 go install -ldflags "-s -w" github.com/aykhans/dodo@latest
 ```
@@ -56,21 +57,21 @@ Dodo supports CLI arguments, configuration files (JSON/YAML), or a combination o
 
 ### 1. CLI Usage
 
-Send 1000 GET requests to https://example.com with 10 parallel dodos (threads) and a timeout of 2 seconds:
+Send 1000 GET requests to https://example.com with 10 parallel dodos (threads), each with a timeout of 2 seconds, within a maximum duration of 1 minute:
 
 ```sh
-dodo -u https://example.com -m GET -d 10 -r 1000 -t 2s
+dodo -u https://example.com -m GET -d 10 -r 1000 -o 1m -t 2s
 ```
 
 With Docker:
 
 ```sh
-docker run --rm -i aykhans/dodo -u https://example.com -m GET -d 10 -r 1000 -t 2s
+docker run --rm -i aykhans/dodo -u https://example.com -m GET -d 10 -r 1000 -o 1m -t 2s
 ```
 
 ### 2. Config File Usage
 
-Send 1000 GET requests to https://example.com with 10 parallel dodos (threads) and a timeout of 800 milliseconds:
+Send 1000 GET requests to https://example.com with 10 parallel dodos (threads), each with a timeout of 800 milliseconds, within a maximum duration of 250 seconds:
 
 #### 2.1 JSON Example
 
@@ -82,6 +83,7 @@ Send 1000 GET requests to https://example.com with 10 parallel dodos (threads) a
     "timeout": "800ms",
     "dodos": 10,
     "requests": 1000,
+    "duration": "250s",
 
     "params": [
         // A random value will be selected from the list for first "key1" param on each request
@@ -159,6 +161,7 @@ yes: false
 timeout: "800ms"
 dodos: 10
 requests: 1000
+duration: "250s"
 
 params:
     # A random value will be selected from the list for first "key1" param on each request
@@ -230,30 +233,31 @@ docker run --rm -i aykhans/dodo -f https://example.com/config.yaml
 CLI arguments override config file values:
 
 ```sh
-dodo -f /path/to/config.yaml -u https://example.com -m GET -d 10 -r 1000 -t 5s
+dodo -f /path/to/config.yaml -u https://example.com -m GET -d 10 -r 1000 -o 1m -t 5s
 ```
 
 With Docker:
 
 ```sh
-docker run --rm -i -v /path/to/config.json:/config.json aykhans/dodo -f /config.json -u https://example.com -m GET -d 10 -r 1000 -t 5s
+docker run --rm -i -v /path/to/config.json:/config.json aykhans/dodo -f /config.json -u https://example.com -m GET -d 10 -r 1000 -o 1m -t 5s
 ```
 
 ## Config Parameters Reference
 
 If `Headers`, `Params`, `Cookies`, `Body`, or `Proxy` fields have multiple values, each request will choose a random value from the list.
 
-| Parameter       | JSON config file | CLI Flag     | CLI Short Flag | Type                           | Description                                                     | Default |
-| --------------- | ---------------- | ------------ | -------------- | ------------------------------ | --------------------------------------------------------------- | ------- |
-| Config file     | -                | -config-file | -f             | String                         | Path to local config file or http(s) URL of the config file     | -       |
-| Yes             | yes              | -yes         | -y             | Boolean                        | Answer yes to all questions                                     | false   |
-| URL             | url              | -url         | -u             | String                         | URL to send the request to                                      | -       |
-| Method          | method           | -method      | -m             | String                         | HTTP method                                                     | GET     |
-| Requests        | requests         | -requests    | -r             | UnsignedInteger                | Total number of requests to send                                | 1000    |
-| Dodos (Threads) | dodos            | -dodos       | -d             | UnsignedInteger                | Number of dodos (threads) to send requests in parallel          | 1       |
-| Timeout         | timeout          | -timeout     | -t             | Duration                       | Timeout for canceling each request                              | 10s     |
-| Params          | params           | -param       | -p             | [{String: String OR [String]}] | Request parameters                                              | -       |
-| Headers         | headers          | -header      | -H             | [{String: String OR [String]}] | Request headers                                                 | -       |
-| Cookies         | cookies          | -cookie      | -c             | [{String: String OR [String]}] | Request cookies                                                 | -       |
-| Body            | body             | -body        | -b             | String OR [String]             | Request body or list of request bodies                          | -       |
-| Proxy           | proxies          | -proxy       | -x             | String OR [String]             | Proxy URL or list of proxy URLs                                 | -       |
+| Parameter       | config file | CLI Flag     | CLI Short Flag | Type                           | Description                                                 | Default |
+| --------------- | ----------- | ------------ | -------------- | ------------------------------ | ----------------------------------------------------------- | ------- |
+| Config file     | -           | -config-file | -f             | String                         | Path to local config file or http(s) URL of the config file | -       |
+| Yes             | yes         | -yes         | -y             | Boolean                        | Answer yes to all questions                                 | false   |
+| URL             | url         | -url         | -u             | String                         | URL to send the request to                                  | -       |
+| Method          | method      | -method      | -m             | String                         | HTTP method                                                 | GET     |
+| Dodos (Threads) | dodos       | -dodos       | -d             | UnsignedInteger                | Number of dodos (threads) to send requests in parallel      | 1       |
+| Requests        | requests    | -requests    | -r             | UnsignedInteger                | Total number of requests to send                            | -       |
+| Duration        | duration    | -duration    | -o             | Time                           | Maximum duration for the test                               | -       |
+| Timeout         | timeout     | -timeout     | -t             | Time                           | Timeout for canceling each request                          | 10s     |
+| Params          | params      | -param       | -p             | [{String: String OR [String]}] | Request parameters                                          | -       |
+| Headers         | headers     | -header      | -H             | [{String: String OR [String]}] | Request headers                                             | -       |
+| Cookies         | cookies     | -cookie      | -c             | [{String: String OR [String]}] | Request cookies                                             | -       |
+| Body            | body        | -body        | -b             | String OR [String]             | Request body or list of request bodies                      | -       |
+| Proxy           | proxies     | -proxy       | -x             | String OR [String]             | Proxy URL or list of proxy URLs                             | -       |

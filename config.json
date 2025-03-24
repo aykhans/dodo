@@ -5,6 +5,7 @@
     "timeout": "5s",
     "dodos": 8,
     "requests": 1000,
+    "duration": "10s",
 
     "params": [
         { "key1": ["value1", "value2", "value3", "value4"] },

@@ -59,46 +59,59 @@ func releaseDodos(
 		streamWG            sync.WaitGroup
 		requestCountPerDodo uint
 		dodosCount          uint = requestConfig.GetValidDodosCountForRequests()
-		dodosCountInt       int  = int(dodosCount)
 		responses                = make([][]*Response, dodosCount)
 		increase                 = make(chan int64, requestConfig.RequestCount)
 	)
 
-	wg.Add(dodosCountInt)
+	wg.Add(int(dodosCount))
 	streamWG.Add(1)
 	streamCtx, streamCtxCancel := context.WithCancel(context.Background())
 
-	go streamProgress(streamCtx, &streamWG, int64(requestConfig.RequestCount), "Dodos Working🔥", increase)
+	go streamProgress(streamCtx, &streamWG, requestConfig.RequestCount, "Dodos Working🔥", increase)
 
-	for i := range dodosCount {
-		if i+1 == dodosCount {
-			requestCountPerDodo = requestConfig.RequestCount - (i * requestConfig.RequestCount / dodosCount)
-		} else {
-			requestCountPerDodo = ((i + 1) * requestConfig.RequestCount / dodosCount) -
-				(i * requestConfig.RequestCount / dodosCount)
+	if requestConfig.RequestCount == 0 {
+		for i := range dodosCount {
+			go sendRequest(
+				ctx,
+				newRequest(*requestConfig, clients, int64(i)),
+				requestConfig.Timeout,
+				&responses[i],
+				increase,
+				&wg,
+			)
 		}
+	} else {
+		for i := range dodosCount {
+			if i+1 == dodosCount {
+				requestCountPerDodo = requestConfig.RequestCount - (i * requestConfig.RequestCount / dodosCount)
+			} else {
+				requestCountPerDodo = ((i + 1) * requestConfig.RequestCount / dodosCount) -
+					(i * requestConfig.RequestCount / dodosCount)
+			}
 
-		go sendRequest(
-			ctx,
-			newRequest(*requestConfig, clients, int64(i)),
-			requestConfig.Timeout,
-			requestCountPerDodo,
-			&responses[i],
-			increase,
-			&wg,
-		)
+			go sendRequestByCount(
+				ctx,
+				newRequest(*requestConfig, clients, int64(i)),
+				requestConfig.Timeout,
+				requestCountPerDodo,
+				&responses[i],
+				increase,
+				&wg,
+			)
+		}
 	}
+
 	wg.Wait()
 	streamCtxCancel()
 	streamWG.Wait()
 	return utils.Flatten(responses)
 }
 
-// sendRequest sends a specified number of HTTP requests concurrently with a given timeout.
+// sendRequestByCount sends a specified number of HTTP requests concurrently with a given timeout.
 // It appends the responses to the provided responseData slice and sends the count of completed requests
 // to the increase channel. The function terminates early if the context is canceled or if a custom
 // interrupt error is encountered.
-func sendRequest(
+func sendRequestByCount(
 	ctx context.Context,
 	request *Request,
 	timeout time.Duration,
@@ -110,6 +123,53 @@ func sendRequest(
 	defer wg.Done()
 
 	for range requestCount {
+		if ctx.Err() != nil {
+			return
+		}
+
+		func() {
+			startTime := time.Now()
+			response, err := request.Send(ctx, timeout)
+			completedTime := time.Since(startTime)
+			if response != nil {
+				defer fasthttp.ReleaseResponse(response)
+			}
+
+			if err != nil {
+				if err == types.ErrInterrupt {
+					return
+				}
+				*responseData = append(*responseData, &Response{
+					Response: err.Error(),
+					Time:     completedTime,
+				})
+				increase <- 1
+				return
+			}
+
+			*responseData = append(*responseData, &Response{
+				Response: strconv.Itoa(response.StatusCode()),
+				Time:     completedTime,
+			})
+			increase <- 1
+		}()
+	}
+}
+
+// sendRequest continuously sends HTTP requests until the context is canceled.
+// It records the response status code or error message along with the response time,
+// and signals each completed request through the increase channel.
+func sendRequest(
+	ctx context.Context,
+	request *Request,
+	timeout time.Duration,
+	responseData *[]*Response,
+	increase chan<- int64,
+	wg *sync.WaitGroup,
+) {
+	defer wg.Done()
+
+	for {
 		if ctx.Err() != nil {
 			return
 		}

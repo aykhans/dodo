@@ -17,7 +17,7 @@ import (
 func streamProgress(
 	ctx context.Context,
 	wg *sync.WaitGroup,
-	total int64,
+	total uint,
 	message string,
 	increase <-chan int64,
 ) {
@@ -27,21 +27,26 @@ func streamProgress(
 	pw.SetStyle(progress.StyleBlocks)
 	pw.SetTrackerLength(40)
 	pw.SetUpdateFrequency(time.Millisecond * 250)
+	if total == 0 {
+		pw.Style().Visibility.Percentage = false
+	}
 	go pw.Render()
 	dodosTracker := progress.Tracker{
 		Message: message,
-		Total:   total,
+		Total:   int64(total),
 	}
 	pw.AppendTracker(&dodosTracker)
+
 	for {
 		select {
 		case <-ctx.Done():
-			if ctx.Err() != context.Canceled {
+			if err := ctx.Err(); err == context.Canceled || err == context.DeadlineExceeded {
+				dodosTracker.MarkAsDone()
+			} else {
 				dodosTracker.MarkAsErrored()
 			}
+			time.Sleep(time.Millisecond * 300)
 			fmt.Printf("\r")
-			time.Sleep(time.Millisecond * 500)
-			pw.Stop()
 			return
 
 		case value := <-increase:
