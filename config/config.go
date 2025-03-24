@@ -20,7 +20,8 @@ const (
 	DefaultMethod       string        = "GET"
 	DefaultTimeout      time.Duration = time.Second * 10
 	DefaultDodosCount   uint          = 1
-	DefaultRequestCount uint          = 1
+	DefaultRequestCount uint          = 0
+	DefaultDuration     time.Duration = 0
 	DefaultYes          bool          = false
 )
 
@@ -32,6 +33,7 @@ type RequestConfig struct {
 	Timeout      time.Duration
 	DodosCount   uint
 	RequestCount uint
+	Duration     time.Duration
 	Yes          bool
 	Params       types.Params
 	Headers      types.Headers
@@ -47,6 +49,7 @@ func NewRequestConfig(conf *Config) *RequestConfig {
 		Timeout:      conf.Timeout.Duration,
 		DodosCount:   *conf.DodosCount,
 		RequestCount: *conf.RequestCount,
+		Duration:     conf.Duration.Duration,
 		Yes:          *conf.Yes,
 		Params:       conf.Params,
 		Headers:      conf.Headers,
@@ -57,6 +60,9 @@ func NewRequestConfig(conf *Config) *RequestConfig {
 }
 
 func (rc *RequestConfig) GetValidDodosCountForRequests() uint {
+	if rc.RequestCount == 0 {
+		return rc.DodosCount
+	}
 	return min(rc.DodosCount, rc.RequestCount)
 }
 
@@ -95,7 +101,17 @@ func (rc *RequestConfig) Print() {
 	t.AppendSeparator()
 	t.AppendRow(table.Row{"Dodos", rc.DodosCount})
 	t.AppendSeparator()
-	t.AppendRow(table.Row{"Requests", rc.RequestCount})
+	if rc.RequestCount > 0 {
+		t.AppendRow(table.Row{"Requests", rc.RequestCount})
+	} else {
+		t.AppendRow(table.Row{"Requests"})
+	}
+	t.AppendSeparator()
+	if rc.Duration > 0 {
+		t.AppendRow(table.Row{"Duration", rc.Duration})
+	} else {
+		t.AppendRow(table.Row{"Duration"})
+	}
 	t.AppendSeparator()
 	t.AppendRow(table.Row{"Params", rc.Params.String()})
 	t.AppendSeparator()
@@ -116,6 +132,7 @@ type Config struct {
 	Timeout      *types.Timeout    `json:"timeout" yaml:"timeout"`
 	DodosCount   *uint             `json:"dodos" yaml:"dodos"`
 	RequestCount *uint             `json:"requests" yaml:"requests"`
+	Duration     *types.Duration   `json:"duration" yaml:"duration"`
 	Yes          *bool             `json:"yes" yaml:"yes"`
 	Params       types.Params      `json:"params" yaml:"params"`
 	Headers      types.Headers     `json:"headers" yaml:"headers"`
@@ -162,8 +179,8 @@ func (c *Config) Validate() []error {
 	if utils.IsNilOrZero(c.DodosCount) {
 		errs = append(errs, errors.New("dodos count must be greater than 0"))
 	}
-	if utils.IsNilOrZero(c.RequestCount) {
-		errs = append(errs, errors.New("request count must be greater than 0"))
+	if utils.IsNilOrZero(c.Duration) && utils.IsNilOrZero(c.RequestCount) {
+		errs = append(errs, errors.New("you should provide at least one of duration or request count"))
 	}
 
 	for i, proxy := range c.Proxies {
@@ -197,6 +214,9 @@ func (config *Config) MergeConfig(newConfig *Config) {
 	if newConfig.RequestCount != nil {
 		config.RequestCount = newConfig.RequestCount
 	}
+	if newConfig.Duration != nil {
+		config.Duration = newConfig.Duration
+	}
 	if newConfig.Yes != nil {
 		config.Yes = newConfig.Yes
 	}
@@ -229,6 +249,9 @@ func (config *Config) SetDefaults() {
 	}
 	if config.RequestCount == nil {
 		config.RequestCount = utils.ToPtr(DefaultRequestCount)
+	}
+	if config.Duration == nil {
+		config.Duration = &types.Duration{Duration: DefaultDuration}
 	}
 	if config.Yes == nil {
 		config.Yes = utils.ToPtr(DefaultYes)

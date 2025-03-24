@@ -16,8 +16,8 @@ const cliUsageText = `Usage:
 
 Examples:
 
-Simple usage only with URL:
-  dodo -u https://example.com
+Simple usage:
+  dodo -u https://example.com -o 1m
 
 Usage with config file:
   dodo -f /path/to/config/file/config.json
@@ -25,7 +25,7 @@ Usage with config file:
 Usage with all flags:
   dodo -f /path/to/config/file/config.json \
     -u https://example.com -m POST \
-    -d 10 -r 1000 -t 3s \
+    -d 10 -r 1000 -o 3m -t 3s \
     -b "body1" -body "body2" \
     -H "header1:value1" -header "header2:value2" \
     -p "param1=value1" -param "param2=value2" \
@@ -39,8 +39,9 @@ Flags:
   -y, -yes          bool      Answer yes to all questions (default %v)
   -f, -config-file  string    Path to the local config file or http(s) URL of the config file
   -d, -dodos        uint      Number of dodos(threads) (default %d)
-  -r, -requests     uint      Number of total requests (default %d)
-  -t, -timeout      Duration  Timeout for each request (e.g. 400ms, 15s, 1m10s) (default %v)
+  -r, -requests     uint      Number of total requests
+	  -o, -duration     Time      Maximum duration for the test (e.g. 30s, 1m, 5h)
+  -t, -timeout      Time      Timeout for each request (e.g. 400ms, 15s, 1m10s) (default %v)
   -u, -url          string    URL for stress testing
   -m, -method       string    HTTP Method for the request (default %s)
   -b, -body         [string]  Body for the request (e.g. "body text")
@@ -55,7 +56,6 @@ func (config *Config) ReadCLI() (types.ConfigFile, error) {
 			cliUsageText+"\n",
 			DefaultYes,
 			DefaultDodosCount,
-			DefaultRequestCount,
 			DefaultTimeout,
 			DefaultMethod,
 		)
@@ -70,6 +70,7 @@ func (config *Config) ReadCLI() (types.ConfigFile, error) {
 		dodosCount   = uint(0)
 		requestCount = uint(0)
 		timeout      time.Duration
+		duration     time.Duration
 	)
 
 	{
@@ -93,6 +94,9 @@ func (config *Config) ReadCLI() (types.ConfigFile, error) {
 
 		flag.UintVar(&requestCount, "requests", 0, "Number of total requests")
 		flag.UintVar(&requestCount, "r", 0, "Number of total requests")
+
+		flag.DurationVar(&duration, "duration", 0, "Maximum duration of the test")
+		flag.DurationVar(&duration, "o", 0, "Maximum duration of the test")
 
 		flag.DurationVar(&timeout, "timeout", 0, "Timeout for each request (e.g. 400ms, 15s, 1m10s)")
 		flag.DurationVar(&timeout, "t", 0, "Timeout for each request (e.g. 400ms, 15s, 1m10s)")
@@ -139,6 +143,8 @@ func (config *Config) ReadCLI() (types.ConfigFile, error) {
 			config.DodosCount = utils.ToPtr(dodosCount)
 		case "requests", "r":
 			config.RequestCount = utils.ToPtr(requestCount)
+		case "duration", "o":
+			config.Duration = &types.Duration{Duration: duration}
 		case "timeout", "t":
 			config.Timeout = &types.Timeout{Duration: timeout}
 		case "yes", "y":
