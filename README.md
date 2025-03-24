@@ -57,21 +57,21 @@ Dodo supports CLI arguments, configuration files (JSON/YAML), or a combination o
 
 ### 1. CLI Usage
 
-Send 1000 GET requests to https://example.com with 10 parallel dodos (threads) and a timeout of 2 seconds:
+Send 1000 GET requests to https://example.com with 10 parallel dodos (threads), each with a timeout of 2 seconds, within a maximum duration of 1 minute:
 
 ```sh
-dodo -u https://example.com -m GET -d 10 -r 1000 -t 2s
+dodo -u https://example.com -m GET -d 10 -r 1000 -o 1m -t 2s
 ```
 
 With Docker:
 
 ```sh
-docker run --rm -i aykhans/dodo -u https://example.com -m GET -d 10 -r 1000 -t 2s
+docker run --rm -i aykhans/dodo -u https://example.com -m GET -d 10 -r 1000 -o 1m -t 2s
 ```
 
 ### 2. Config File Usage
 
-Send 1000 GET requests to https://example.com with 10 parallel dodos (threads) and a timeout of 800 milliseconds:
+Send 1000 GET requests to https://example.com with 10 parallel dodos (threads), each with a timeout of 800 milliseconds, within a maximum duration of 250 seconds:
 
 #### 2.1 JSON Example
 
@@ -83,7 +83,7 @@ Send 1000 GET requests to https://example.com with 10 parallel dodos (threads) a
     "timeout": "800ms",
     "dodos": 10,
     "requests": 1000,
-    "duration": "10s",
+    "duration": "250s",
 
     "params": [
         // A random value will be selected from the list for first "key1" param on each request
@@ -233,13 +233,13 @@ docker run --rm -i aykhans/dodo -f https://example.com/config.yaml
 CLI arguments override config file values:
 
 ```sh
-dodo -f /path/to/config.yaml -u https://example.com -m GET -d 10 -r 1000 -t 5s
+dodo -f /path/to/config.yaml -u https://example.com -m GET -d 10 -r 1000 -o 1m -t 5s
 ```
 
 With Docker:
 
 ```sh
-docker run --rm -i -v /path/to/config.json:/config.json aykhans/dodo -f /config.json -u https://example.com -m GET -d 10 -r 1000 -t 5s
+docker run --rm -i -v /path/to/config.json:/config.json aykhans/dodo -f /config.json -u https://example.com -m GET -d 10 -r 1000 -o 1m -t 5s
 ```
 
 ## Config Parameters Reference

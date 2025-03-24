@@ -40,7 +40,7 @@ Flags:
   -f, -config-file  string    Path to the local config file or http(s) URL of the config file
   -d, -dodos        uint      Number of dodos(threads) (default %d)
   -r, -requests     uint      Number of total requests
-	  -o, -duration     Time      Maximum duration for the test (e.g. 30s, 1m, 5h)
+  -o, -duration     Time      Maximum duration for the test (e.g. 30s, 1m, 5h)
   -t, -timeout      Time      Timeout for each request (e.g. 400ms, 15s, 1m10s) (default %v)
   -u, -url          string    URL for stress testing
   -m, -method       string    HTTP Method for the request (default %s)
