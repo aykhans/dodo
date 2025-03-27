@@ -1,0 +1,40 @@
+# https://taskfile.dev
+
+version: "3"
+
+vars:
+    PLATFORMS:
+        - os: darwin
+          archs: [amd64, arm64]
+        - os: freebsd
+          archs: [386, amd64, arm]
+        - os: linux
+          archs: [386, amd64, arm, arm64]
+        - os: netbsd
+          archs: [386, amd64, arm]
+        - os: openbsd
+          archs: [386, amd64, arm, arm64]
+        - os: windows
+          archs: [386, amd64, arm64]
+
+tasks:
+    lint: golangci-lint run
+
+    build: go build -ldflags "-s -w" -o "dodo"
+
+    build-all:
+        silent: true
+        cmds:
+            - rm -rf binaries
+            - for: { var: PLATFORMS, as: PLATFORM }
+              cmd: |
+                  {{ $ext := "" }}
+
+                  {{ if eq $.PLATFORM.os "windows" }}
+                      {{ $ext = ".exe" }}
+                  {{ end }}
+
+                  {{range $arch := $.PLATFORM.archs}}
+                    echo "Building for {{$.PLATFORM.os}}/{{$arch}}"
+                    GOOS={{$.PLATFORM.os}} GOARCH={{$arch}} go build -ldflags "-s -w" -o "./binaries/dodo-{{$.PLATFORM.os}}-{{$arch}}{{$ext}}"
+                  {{end}}
