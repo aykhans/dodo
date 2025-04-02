@@ -1,10 +1,12 @@
+version: "2"
+
 run:
     go: "1.24"
     concurrency: 8
     timeout: 10m
 
 linters:
-    disable-all: true
+    default: none
     enable:
         - asasalint
         - asciicheck
