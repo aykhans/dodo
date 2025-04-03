@@ -11,8 +11,6 @@ linters:
         - asasalint
         - asciicheck
         - errcheck
-        - gofmt
-        - goimports
         - gomodguard
         - goprintffuncname
         - govet
@@ -23,7 +21,13 @@ linters:
         - prealloc
         - reassign
         - staticcheck
-        - typecheck
         - unconvert
         - unused
         - whitespace
+
+    settings:
+        staticcheck:
+            checks:
+                - "all"
+                - "-S1002"
+                - "-ST1000"

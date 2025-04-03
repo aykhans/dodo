@@ -14,7 +14,7 @@ type Params []KeyValue[string, []string]
 func (params Params) String() string {
 	var buffer bytes.Buffer
 	if len(params) == 0 {
-		return string(buffer.Bytes())
+		return buffer.String()
 	}
 
 	indent := "  "
@@ -53,7 +53,7 @@ func (params Params) String() string {
 		buffer.WriteString(",\n" + text.FgGreen.Sprintf("+%d params", remainingPairs))
 	}
 
-	return string(buffer.Bytes())
+	return buffer.String()
 }
 
 func (params *Params) AppendByKey(key, value string) {

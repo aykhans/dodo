@@ -32,7 +32,7 @@ func (timeout *Timeout) UnmarshalJSON(b []byte) error {
 }
 
 func (timeout Timeout) MarshalJSON() ([]byte, error) {
-	return json.Marshal(timeout.Duration.String())
+	return json.Marshal(timeout.String())
 }
 
 func (timeout *Timeout) UnmarshalYAML(unmarshal func(interface{}) error) error {

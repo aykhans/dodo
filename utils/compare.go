@@ -6,9 +6,5 @@ func IsNilOrZero[T comparable](value *T) bool {
 	}
 
 	var zero T
-	if *value == zero {
-		return true
-	}
-
-	return false
+	return *value == zero
 }

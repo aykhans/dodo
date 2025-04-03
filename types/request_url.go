@@ -18,7 +18,7 @@ func (requestURL *RequestURL) UnmarshalJSON(data []byte) error {
 
 	parsedURL, err := url.Parse(urlStr)
 	if err != nil {
-		return errors.New("Request URL is invalid")
+		return errors.New("request URL is invalid")
 	}
 
 	requestURL.URL = *parsedURL
@@ -33,7 +33,7 @@ func (requestURL *RequestURL) UnmarshalYAML(unmarshal func(interface{}) error) e
 
 	parsedURL, err := url.Parse(urlStr)
 	if err != nil {
-		return errors.New("Request URL is invalid")
+		return errors.New("request URL is invalid")
 	}
 
 	requestURL.URL = *parsedURL

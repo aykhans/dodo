@@ -18,6 +18,10 @@ vars:
           archs: [386, amd64, arm64]
 
 tasks:
+    run: go run main.go
+
+    fmt: gofmt -w -d .
+
     lint: golangci-lint run
 
     build: go build -ldflags "-s -w" -o "dodo"

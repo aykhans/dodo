@@ -32,7 +32,7 @@ func (duration *Duration) UnmarshalJSON(b []byte) error {
 }
 
 func (duration Duration) MarshalJSON() ([]byte, error) {
-	return json.Marshal(duration.Duration.String())
+	return json.Marshal(duration.String())
 }
 
 func (duration *Duration) UnmarshalYAML(unmarshal func(interface{}) error) error {

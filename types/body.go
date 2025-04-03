@@ -13,12 +13,12 @@ type Body []string
 func (body Body) String() string {
 	var buffer bytes.Buffer
 	if len(body) == 0 {
-		return string(buffer.Bytes())
+		return buffer.String()
 	}
 
 	if len(body) == 1 {
 		buffer.WriteString(body[0])
-		return string(buffer.Bytes())
+		return buffer.String()
 	}
 
 	buffer.WriteString(text.FgBlue.Sprint("Random") + "[\n")
@@ -41,7 +41,7 @@ func (body Body) String() string {
 	}
 
 	buffer.WriteString("\n]")
-	return string(buffer.Bytes())
+	return buffer.String()
 }
 
 func (body *Body) UnmarshalJSON(b []byte) error {
