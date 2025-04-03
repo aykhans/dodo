@@ -72,11 +72,12 @@ func getClients(
 func getDialFunc(proxy *url.URL, timeout time.Duration) (fasthttp.DialFunc, error) {
 	var dialer fasthttp.DialFunc
 
-	if proxy.Scheme == "socks5" || proxy.Scheme == "socks5h" {
+	switch proxy.Scheme {
+	case "socks5", "socks5h":
 		dialer = fasthttpproxy.FasthttpSocksDialerDualStack(proxy.String())
-	} else if proxy.Scheme == "http" {
+	case "http":
 		dialer = fasthttpproxy.FasthttpHTTPDialerDualStackTimeout(proxy.String(), timeout)
-	} else {
+	default:
 		return nil, errors.New("unsupported proxy scheme")
 	}
 	return dialer, nil

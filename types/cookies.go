@@ -14,7 +14,7 @@ type Cookies []KeyValue[string, []string]
 func (cookies Cookies) String() string {
 	var buffer bytes.Buffer
 	if len(cookies) == 0 {
-		return string(buffer.Bytes())
+		return buffer.String()
 	}
 
 	indent := "  "
@@ -53,7 +53,7 @@ func (cookies Cookies) String() string {
 		buffer.WriteString(",\n" + text.FgGreen.Sprintf("+%d cookies", remainingPairs))
 	}
 
-	return string(buffer.Bytes())
+	return buffer.String()
 }
 
 func (cookies *Cookies) AppendByKey(key, value string) {

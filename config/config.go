@@ -145,20 +145,20 @@ func NewConfig() *Config {
 	return &Config{}
 }
 
-func (c *Config) Validate() []error {
+func (config *Config) Validate() []error {
 	var errs []error
-	if utils.IsNilOrZero(c.URL) {
+	if utils.IsNilOrZero(config.URL) {
 		errs = append(errs, errors.New("request URL is required"))
 	} else {
-		if c.URL.Scheme == "" {
-			c.URL.Scheme = "http"
+		if config.URL.Scheme == "" {
+			config.URL.Scheme = "http"
 		}
-		if c.URL.Scheme != "http" && c.URL.Scheme != "https" {
+		if config.URL.Scheme != "http" && config.URL.Scheme != "https" {
 			errs = append(errs, errors.New("request URL scheme must be http or https"))
 		}
 
 		urlParams := types.Params{}
-		for key, values := range c.URL.Query() {
+		for key, values := range config.URL.Query() {
 			for _, value := range values {
 				urlParams = append(urlParams, types.KeyValue[string, []string]{
 					Key:   key,
@@ -166,24 +166,24 @@ func (c *Config) Validate() []error {
 				})
 			}
 		}
-		c.Params = append(urlParams, c.Params...)
-		c.URL.RawQuery = ""
+		config.Params = append(urlParams, config.Params...)
+		config.URL.RawQuery = ""
 	}
 
-	if utils.IsNilOrZero(c.Method) {
+	if utils.IsNilOrZero(config.Method) {
 		errs = append(errs, errors.New("request method is required"))
 	}
-	if utils.IsNilOrZero(c.Timeout) {
+	if utils.IsNilOrZero(config.Timeout) {
 		errs = append(errs, errors.New("request timeout must be greater than 0"))
 	}
-	if utils.IsNilOrZero(c.DodosCount) {
+	if utils.IsNilOrZero(config.DodosCount) {
 		errs = append(errs, errors.New("dodos count must be greater than 0"))
 	}
-	if utils.IsNilOrZero(c.Duration) && utils.IsNilOrZero(c.RequestCount) {
+	if utils.IsNilOrZero(config.Duration) && utils.IsNilOrZero(config.RequestCount) {
 		errs = append(errs, errors.New("you should provide at least one of duration or request count"))
 	}
 
-	for i, proxy := range c.Proxies {
+	for i, proxy := range config.Proxies {
 		if proxy.String() == "" {
 			errs = append(errs, fmt.Errorf("proxies[%d]: proxy cannot be empty", i))
 		} else if schema := proxy.Scheme; !slices.Contains(SupportedProxySchemes, schema) {

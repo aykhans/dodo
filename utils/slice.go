@@ -20,9 +20,9 @@ func Flatten[T any](nested [][]*T) []*T {
 // The returned function isn't thread-safe and should be used in a single-threaded context.
 func RandomValueCycle[Value any](values []Value, localRand *rand.Rand) func() Value {
 	var (
-		clientsCount int = len(values)
-		currentIndex int = localRand.Intn(clientsCount)
-		stopIndex    int = currentIndex
+		clientsCount = len(values)
+		currentIndex = localRand.Intn(clientsCount)
+		stopIndex    = currentIndex
 	)
 
 	return func() Value {

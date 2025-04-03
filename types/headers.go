@@ -14,7 +14,7 @@ type Headers []KeyValue[string, []string]
 func (headers Headers) String() string {
 	var buffer bytes.Buffer
 	if len(headers) == 0 {
-		return string(buffer.Bytes())
+		return buffer.String()
 	}
 
 	indent := "  "
@@ -53,7 +53,7 @@ func (headers Headers) String() string {
 		buffer.WriteString(",\n" + text.FgGreen.Sprintf("+%d headers", remainingPairs))
 	}
 
-	return string(buffer.Bytes())
+	return buffer.String()
 }
 
 func (headers *Headers) AppendByKey(key, value string) {

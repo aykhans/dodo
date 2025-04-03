@@ -65,9 +65,9 @@ func releaseDodos(
 		wg                  sync.WaitGroup
 		streamWG            sync.WaitGroup
 		requestCountPerDodo uint
-		dodosCount          uint = requestConfig.GetValidDodosCountForRequests()
-		responses                = make([][]*Response, dodosCount)
-		increase                 = make(chan int64, requestConfig.RequestCount)
+		dodosCount          = requestConfig.GetValidDodosCountForRequests()
+		responses           = make([][]*Response, dodosCount)
+		increase            = make(chan int64, requestConfig.RequestCount)
 	)
 
 	wg.Add(int(dodosCount))

@@ -20,25 +20,26 @@ vars:
 tasks:
     run: go run main.go
 
+    fmt: gofmt -w -d .
+
     lint: golangci-lint run
 
     build: go build -ldflags "-s -w" -o "dodo"
-
-    fmt: gofmt -w -d .
 
     build-all:
         silent: true
         cmds:
             - rm -rf binaries
-            - for: { var: PLATFORMS, as: PLATFORM }
-              cmd: |
-                  {{ $ext := "" }}
+            - |
+                {{ $ext := "" }}
+                {{- range $platform := .PLATFORMS }}
+                    {{- if eq $platform.os "windows" }}
+                        {{ $ext = ".exe" }}
+                    {{- end }}
 
-                  {{ if eq $.PLATFORM.os "windows" }}
-                      {{ $ext = ".exe" }}
-                  {{ end }}
-
-                  {{range $arch := $.PLATFORM.archs}}
-                    echo "Building for {{$.PLATFORM.os}}/{{$arch}}"
-                    GOOS={{$.PLATFORM.os}} GOARCH={{$arch}} go build -ldflags "-s -w" -o "./binaries/dodo-{{$.PLATFORM.os}}-{{$arch}}{{$ext}}"
-                  {{end}}
+                    {{- range $arch := $platform.archs }}
+                        echo "Building for {{$platform.os}}/{{$arch}}"
+                        GOOS={{$platform.os}} GOARCH={{$arch}} go build -ldflags "-s -w" -o "./binaries/dodo-{{$platform.os}}-{{$arch}}{{$ext}}"
+                    {{- end }}
+                {{- end }}
+            - echo -e "\033[32m*** Build completed ***\033[0m"

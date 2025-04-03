@@ -34,7 +34,7 @@ func (config *Config) ReadFile(filePath types.ConfigFile) error {
 			if err != nil {
 				return fmt.Errorf("failed to fetch config file from %s", filePath)
 			}
-			defer resp.Body.Close()
+			defer func() { _ = resp.Body.Close() }()
 
 			data, err = io.ReadAll(io.Reader(resp.Body))
 			if err != nil {
@@ -47,9 +47,10 @@ func (config *Config) ReadFile(filePath types.ConfigFile) error {
 			}
 		}
 
-		if fileExt == "json" {
+		switch fileExt {
+		case "json":
 			return parseJSONConfig(data, config)
-		} else if fileExt == "yml" || fileExt == "yaml" {
+		case "yml", "yaml":
 			return parseYAMLConfig(data, config)
 		}
 	}

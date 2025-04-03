@@ -14,12 +14,12 @@ type Proxies []url.URL
 func (proxies Proxies) String() string {
 	var buffer bytes.Buffer
 	if len(proxies) == 0 {
-		return string(buffer.Bytes())
+		return buffer.String()
 	}
 
 	if len(proxies) == 1 {
 		buffer.WriteString(proxies[0].String())
-		return string(buffer.Bytes())
+		return buffer.String()
 	}
 
 	buffer.WriteString(text.FgBlue.Sprint("Random") + "[\n")
@@ -42,7 +42,7 @@ func (proxies Proxies) String() string {
 	}
 
 	buffer.WriteString("\n]")
-	return string(buffer.Bytes())
+	return buffer.String()
 }
 
 func (proxies *Proxies) UnmarshalJSON(b []byte) error {
