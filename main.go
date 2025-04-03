@@ -7,7 +7,6 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
-	"time"
 
 	"github.com/aykhans/dodo/config"
 	"github.com/aykhans/dodo/requests"
@@ -49,10 +48,6 @@ func main() {
 
 	ctx, cancel := context.WithCancel(context.Background())
 	go listenForTermination(func() { cancel() })
-
-	if requestConf.Duration > 0 {
-		time.AfterFunc(requestConf.Duration, func() { cancel() })
-	}
 
 	responses, err := requests.Run(ctx, requestConf)
 	if err != nil {
