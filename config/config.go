@@ -15,7 +15,7 @@ import (
 )
 
 const (
-	VERSION             string        = "0.6.2"
+	VERSION             string        = "0.6.3"
 	DefaultUserAgent    string        = "Dodo/" + VERSION
 	DefaultMethod       string        = "GET"
 	DefaultTimeout      time.Duration = time.Second * 10
