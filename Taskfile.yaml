@@ -24,6 +24,8 @@ tasks:
 
     lint: golangci-lint run
 
+    test: go test ./...
+
     build: go build -ldflags "-s -w" -o "dodo"
 
     build-all:
