@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/aykhans/dodo/types"
+	"github.com/aykhans/dodo/utils"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -42,13 +43,13 @@ func TestReadCLI(t *testing.T) {
 			expectFile:  "/path/to/config.json",
 			expectError: false,
 			expectedConfig: &Config{
-				Method:       toPtr("POST"),
+				Method:       utils.ToPtr("POST"),
 				URL:          &types.RequestURL{},
-				DodosCount:   toPtr[uint](10),
-				RequestCount: toPtr[uint](1000),
+				DodosCount:   utils.ToPtr[uint](10),
+				RequestCount: utils.ToPtr[uint](1000),
 				Duration:     &types.Duration{Duration: 3 * time.Minute},
 				Timeout:      &types.Timeout{Duration: 3 * time.Second},
-				Yes:          toPtr(true),
+				Yes:          utils.ToPtr(true),
 			},
 		},
 		{
@@ -155,9 +156,4 @@ func TestCLIYesOrNoReaderBasic(t *testing.T) {
 
 	// Default value should be returned
 	assert.True(t, result)
-}
-
-// Helper types and functions for testing
-func toPtr[T any](value T) *T {
-	return &value
 }

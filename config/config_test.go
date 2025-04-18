@@ -3,6 +3,7 @@ package config
 import (
 	"net/url"
 	"os"
+	"slices"
 	"testing"
 	"time"
 
@@ -415,11 +416,11 @@ func TestMergeConfig(t *testing.T) {
 				RequestCount: utils.ToPtr(*baseConfig.RequestCount),
 				Duration:     &types.Duration{Duration: baseConfig.Duration.Duration},
 				Yes:          utils.ToPtr(*baseConfig.Yes),
-				Params:       append(types.Params{}, baseConfig.Params...),
-				Headers:      append(types.Headers{}, baseConfig.Headers...),
-				Cookies:      append(types.Cookies{}, baseConfig.Cookies...),
-				Body:         append(types.Body{}, baseConfig.Body...),
-				Proxies:      append(types.Proxies{}, baseConfig.Proxies...),
+				Params:       slices.Clone(baseConfig.Params),
+				Headers:      slices.Clone(baseConfig.Headers),
+				Cookies:      slices.Clone(baseConfig.Cookies),
+				Body:         slices.Clone(baseConfig.Body),
+				Proxies:      slices.Clone(baseConfig.Proxies),
 			}
 
 			// Call the function being tested
