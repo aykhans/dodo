@@ -20,8 +20,11 @@ import (
 //   - ctx: The context for managing request lifecycle and cancellation.
 //   - requestConfig: The configuration for the request, including timeout, proxies, and other settings.
 func Run(ctx context.Context, requestConfig *config.RequestConfig) (Responses, error) {
-	ctx, cancel := context.WithCancel(ctx)
-	defer cancel()
+	if requestConfig.Duration > 0 {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(ctx, requestConfig.Duration)
+		defer cancel()
+	}
 
 	clients := getClients(
 		ctx,
@@ -32,10 +35,6 @@ func Run(ctx context.Context, requestConfig *config.RequestConfig) (Responses, e
 	)
 	if clients == nil {
 		return nil, types.ErrInterrupt
-	}
-
-	if requestConfig.Duration > 0 {
-		time.AfterFunc(requestConfig.Duration, func() { cancel() })
 	}
 
 	responses := releaseDodos(ctx, requestConfig, clients)
