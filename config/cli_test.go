@@ -42,13 +42,13 @@ func TestReadCLI(t *testing.T) {
 			expectFile:  "/path/to/config.json",
 			expectError: false,
 			expectedConfig: &Config{
-				Method:       stringPtr("POST"),
+				Method:       toPtr("POST"),
 				URL:          &types.RequestURL{},
-				DodosCount:   uintPtr(10),
-				RequestCount: uintPtr(1000),
+				DodosCount:   toPtr[uint](10),
+				RequestCount: toPtr[uint](1000),
 				Duration:     &types.Duration{Duration: 3 * time.Minute},
 				Timeout:      &types.Timeout{Duration: 3 * time.Second},
-				Yes:          boolPtr(true),
+				Yes:          toPtr(true),
 			},
 		},
 		{
@@ -59,10 +59,6 @@ func TestReadCLI(t *testing.T) {
 			expectedConfig: &Config{},
 		},
 	}
-
-	// Save original command-line arguments
-	origArgs := os.Args
-	origFlagCommandLine := flag.CommandLine
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -84,9 +80,6 @@ func TestReadCLI(t *testing.T) {
 
 			// Call the function being tested
 			file, err := config.ReadCLI()
-
-			// Reset os.Args after test
-			os.Args = origArgs
 
 			// Assert expected results
 			assert.Equal(t, tt.expectFile, file)
@@ -126,9 +119,6 @@ func TestReadCLI(t *testing.T) {
 			}
 		})
 	}
-
-	// Restore original flag.CommandLine
-	flag.CommandLine = origFlagCommandLine
 }
 
 // Skip the prompt tests as they require interactive input/output handling
@@ -168,14 +158,6 @@ func TestCLIYesOrNoReaderBasic(t *testing.T) {
 }
 
 // Helper types and functions for testing
-func stringPtr(s string) *string {
-	return &s
-}
-
-func uintPtr(u uint) *uint {
-	return &u
-}
-
-func boolPtr(b bool) *bool {
-	return &b
+func toPtr[T any](value T) *T {
+	return &value
 }
