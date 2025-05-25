@@ -2,6 +2,7 @@ package requests
 
 import (
 	"context"
+	"crypto/tls"
 	"errors"
 	"math/rand"
 	"net/url"
@@ -39,8 +40,11 @@ func getClients(
 			}
 
 			clients = append(clients, &fasthttp.HostClient{
-				MaxConns:            int(maxConns),
-				IsTLS:               isTLS,
+				MaxConns: int(maxConns),
+				IsTLS:    isTLS,
+				TLSConfig: &tls.Config{
+					InsecureSkipVerify: true,
+				},
 				Addr:                addr,
 				Dial:                dialFunc,
 				MaxIdleConnDuration: timeout,
@@ -56,6 +60,9 @@ func getClients(
 	client := &fasthttp.HostClient{
 		MaxConns:            int(maxConns),
 		IsTLS:               isTLS,
+		TLSConfig: &tls.Config{
+			InsecureSkipVerify: true,
+		},
 		Addr:                URL.Host,
 		MaxIdleConnDuration: timeout,
 		MaxConnDuration:     timeout,
