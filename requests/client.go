@@ -18,11 +18,12 @@ type ClientGeneratorFunc func() *fasthttp.HostClient
 // getClients initializes and returns a slice of fasthttp.HostClient based on the provided parameters.
 // It can either return clients with proxies or a single client without proxies.
 func getClients(
-	ctx context.Context,
+	_ context.Context,
 	timeout time.Duration,
 	proxies []url.URL,
 	maxConns uint,
 	URL url.URL,
+	skipVerify bool,
 ) []*fasthttp.HostClient {
 	isTLS := URL.Scheme == "https"
 
@@ -43,7 +44,7 @@ func getClients(
 				MaxConns: int(maxConns),
 				IsTLS:    isTLS,
 				TLSConfig: &tls.Config{
-					InsecureSkipVerify: true,
+					InsecureSkipVerify: skipVerify,
 				},
 				Addr:                addr,
 				Dial:                dialFunc,
@@ -61,7 +62,7 @@ func getClients(
 		MaxConns: int(maxConns),
 		IsTLS:    isTLS,
 		TLSConfig: &tls.Config{
-			InsecureSkipVerify: true,
+			InsecureSkipVerify: skipVerify,
 		},
 		Addr:                URL.Host,
 		MaxIdleConnDuration: timeout,
@@ -87,6 +88,11 @@ func getDialFunc(proxy *url.URL, timeout time.Duration) (fasthttp.DialFunc, erro
 	default:
 		return nil, errors.New("unsupported proxy scheme")
 	}
+
+	if dialer == nil {
+		return nil, errors.New("internal error: proxy dialer is nil")
+	}
+
 	return dialer, nil
 }
 

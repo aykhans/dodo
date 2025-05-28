@@ -15,7 +15,7 @@ import (
 )
 
 const (
-	VERSION             string        = "0.6.4"
+	VERSION             string        = "0.6.5"
 	DefaultUserAgent    string        = "Dodo/" + VERSION
 	DefaultMethod       string        = "GET"
 	DefaultTimeout      time.Duration = time.Second * 10
@@ -23,6 +23,7 @@ const (
 	DefaultRequestCount uint          = 0
 	DefaultDuration     time.Duration = 0
 	DefaultYes          bool          = false
+	DefaultSkipVerify   bool          = false
 )
 
 var SupportedProxySchemes []string = []string{"http", "socks5", "socks5h"}
@@ -35,6 +36,7 @@ type RequestConfig struct {
 	RequestCount uint
 	Duration     time.Duration
 	Yes          bool
+	SkipVerify   bool
 	Params       types.Params
 	Headers      types.Headers
 	Cookies      types.Cookies
@@ -51,6 +53,7 @@ func NewRequestConfig(conf *Config) *RequestConfig {
 		RequestCount: *conf.RequestCount,
 		Duration:     conf.Duration.Duration,
 		Yes:          *conf.Yes,
+		SkipVerify:   *conf.SkipVerify,
 		Params:       conf.Params,
 		Headers:      conf.Headers,
 		Cookies:      conf.Cookies,
@@ -122,6 +125,8 @@ func (rc *RequestConfig) Print() {
 	t.AppendRow(table.Row{"Proxy", rc.Proxies.String()})
 	t.AppendSeparator()
 	t.AppendRow(table.Row{"Body", rc.Body.String()})
+	t.AppendSeparator()
+	t.AppendRow(table.Row{"Skip Verify", rc.SkipVerify})
 
 	t.Render()
 }
@@ -134,6 +139,7 @@ type Config struct {
 	RequestCount *uint             `json:"requests" yaml:"requests"`
 	Duration     *types.Duration   `json:"duration" yaml:"duration"`
 	Yes          *bool             `json:"yes" yaml:"yes"`
+	SkipVerify   *bool             `json:"skip_verify" yaml:"skip_verify"`
 	Params       types.Params      `json:"params" yaml:"params"`
 	Headers      types.Headers     `json:"headers" yaml:"headers"`
 	Cookies      types.Cookies     `json:"cookies" yaml:"cookies"`
@@ -220,6 +226,9 @@ func (config *Config) MergeConfig(newConfig *Config) {
 	if newConfig.Yes != nil {
 		config.Yes = newConfig.Yes
 	}
+	if newConfig.SkipVerify != nil {
+		config.SkipVerify = newConfig.SkipVerify
+	}
 	if len(newConfig.Params) != 0 {
 		config.Params = newConfig.Params
 	}
@@ -255,6 +264,9 @@ func (config *Config) SetDefaults() {
 	}
 	if config.Yes == nil {
 		config.Yes = utils.ToPtr(DefaultYes)
+	}
+	if config.SkipVerify == nil {
+		config.SkipVerify = utils.ToPtr(DefaultSkipVerify)
 	}
 	config.Headers.SetIfNotExists("User-Agent", DefaultUserAgent)
 }

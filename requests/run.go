@@ -32,6 +32,7 @@ func Run(ctx context.Context, requestConfig *config.RequestConfig) (Responses, e
 		requestConfig.Proxies,
 		requestConfig.GetMaxConns(fasthttp.DefaultMaxConnsPerHost),
 		requestConfig.URL,
+		requestConfig.SkipVerify,
 	)
 	if clients == nil {
 		return nil, types.ErrInterrupt
