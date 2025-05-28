@@ -35,7 +35,7 @@ func (timeout Timeout) MarshalJSON() ([]byte, error) {
 	return json.Marshal(timeout.String())
 }
 
-func (timeout *Timeout) UnmarshalYAML(unmarshal func(interface{}) error) error {
+func (timeout *Timeout) UnmarshalYAML(unmarshal func(any) error) error {
 	var v any
 	if err := unmarshal(&v); err != nil {
 		return err

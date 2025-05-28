@@ -35,7 +35,7 @@ func (duration Duration) MarshalJSON() ([]byte, error) {
 	return json.Marshal(duration.String())
 }
 
-func (duration *Duration) UnmarshalYAML(unmarshal func(interface{}) error) error {
+func (duration *Duration) UnmarshalYAML(unmarshal func(any) error) error {
 	var v any
 	if err := unmarshal(&v); err != nil {
 		return err

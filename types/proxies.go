@@ -75,7 +75,7 @@ func (proxies *Proxies) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
-func (proxies *Proxies) UnmarshalYAML(unmarshal func(interface{}) error) error {
+func (proxies *Proxies) UnmarshalYAML(unmarshal func(any) error) error {
 	var data any
 	if err := unmarshal(&data); err != nil {
 		return err

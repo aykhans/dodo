@@ -66,7 +66,7 @@ func (body *Body) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
-func (body *Body) UnmarshalYAML(unmarshal func(interface{}) error) error {
+func (body *Body) UnmarshalYAML(unmarshal func(any) error) error {
 	var data any
 	if err := unmarshal(&data); err != nil {
 		return err

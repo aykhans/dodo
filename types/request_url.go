@@ -25,7 +25,7 @@ func (requestURL *RequestURL) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (requestURL *RequestURL) UnmarshalYAML(unmarshal func(interface{}) error) error {
+func (requestURL *RequestURL) UnmarshalYAML(unmarshal func(any) error) error {
 	var urlStr string
 	if err := unmarshal(&urlStr); err != nil {
 		return err

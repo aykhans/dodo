@@ -108,7 +108,7 @@ func (headers *Headers) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
-func (headers *Headers) UnmarshalYAML(unmarshal func(interface{}) error) error {
+func (headers *Headers) UnmarshalYAML(unmarshal func(any) error) error {
 	var raw []map[string]any
 	if err := unmarshal(&raw); err != nil {
 		return err

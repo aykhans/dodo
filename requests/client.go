@@ -58,8 +58,8 @@ func getClients(
 	}
 
 	client := &fasthttp.HostClient{
-		MaxConns:            int(maxConns),
-		IsTLS:               isTLS,
+		MaxConns: int(maxConns),
+		IsTLS:    isTLS,
 		TLSConfig: &tls.Config{
 			InsecureSkipVerify: true,
 		},
