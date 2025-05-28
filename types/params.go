@@ -99,7 +99,7 @@ func (params *Params) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
-func (params *Params) UnmarshalYAML(unmarshal func(interface{}) error) error {
+func (params *Params) UnmarshalYAML(unmarshal func(any) error) error {
 	var raw []map[string]any
 	if err := unmarshal(&raw); err != nil {
 		return err

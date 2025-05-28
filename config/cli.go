@@ -31,7 +31,7 @@ Usage with all flags:
     -p "param1=value1" -param "param2=value2" \
     -c "cookie1=value1" -cookie "cookie2=value2" \
     -x "http://proxy.example.com:8080" -proxy "socks5://proxy2.example.com:8080" \
-    -y
+    -skip-verify -y
 
 Flags:
   -h, -help                   help for dodo
@@ -48,7 +48,8 @@ Flags:
   -p, -param        [string]  Parameter for the request (e.g. "key1=value1")
   -H, -header       [string]  Header for the request (e.g. "key1:value1")
   -c, -cookie       [string]  Cookie for the request (e.g. "key1=value1")
-  -x, -proxy        [string]  Proxy for the request (e.g. "http://proxy.example.com:8080")`
+  -x, -proxy        [string]  Proxy for the request (e.g. "http://proxy.example.com:8080")
+  -skip-verify      bool      Skip SSL/TLS certificate verification (default %v)`
 
 func (config *Config) ReadCLI() (types.ConfigFile, error) {
 	flag.Usage = func() {
@@ -58,6 +59,7 @@ func (config *Config) ReadCLI() (types.ConfigFile, error) {
 			DefaultDodosCount,
 			DefaultTimeout,
 			DefaultMethod,
+			DefaultSkipVerify,
 		)
 	}
 
@@ -65,6 +67,7 @@ func (config *Config) ReadCLI() (types.ConfigFile, error) {
 		version      = false
 		configFile   = ""
 		yes          = false
+		skipVerify   = false
 		method       = ""
 		url          types.RequestURL
 		dodosCount   = uint(0)
@@ -82,6 +85,8 @@ func (config *Config) ReadCLI() (types.ConfigFile, error) {
 
 		flag.BoolVar(&yes, "yes", false, "Answer yes to all questions")
 		flag.BoolVar(&yes, "y", false, "Answer yes to all questions")
+
+		flag.BoolVar(&skipVerify, "skip-verify", false, "Skip SSL/TLS certificate verification")
 
 		flag.StringVar(&method, "method", "", "HTTP Method")
 		flag.StringVar(&method, "m", "", "HTTP Method")
@@ -149,6 +154,8 @@ func (config *Config) ReadCLI() (types.ConfigFile, error) {
 			config.Timeout = &types.Timeout{Duration: timeout}
 		case "yes", "y":
 			config.Yes = utils.ToPtr(yes)
+		case "skip-verify":
+			config.SkipVerify = utils.ToPtr(skipVerify)
 		}
 	})
 

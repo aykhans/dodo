@@ -84,6 +84,7 @@ Send 1000 GET requests to https://example.com with 10 parallel dodos (threads), 
     "dodos": 10,
     "requests": 1000,
     "duration": "250s",
+    "skip_verify": false,
 
     "params": [
         // A random value will be selected from the list for first "key1" param on each request
@@ -162,6 +163,7 @@ timeout: "800ms"
 dodos: 10
 requests: 1000
 duration: "250s"
+skip_verify: false
 
 params:
     # A random value will be selected from the list for first "key1" param on each request
@@ -248,7 +250,7 @@ If `Headers`, `Params`, `Cookies`, `Body`, or `Proxy` fields have multiple value
 
 | Parameter       | config file | CLI Flag     | CLI Short Flag | Type                           | Description                                                 | Default |
 | --------------- | ----------- | ------------ | -------------- | ------------------------------ | ----------------------------------------------------------- | ------- |
-| Config file     | -           | -config-file | -f             | String                         | Path to local config file or http(s) URL of the config file | -       |
+| Config file     |             | -config-file | -f             | String                         | Path to local config file or http(s) URL of the config file | -       |
 | Yes             | yes         | -yes         | -y             | Boolean                        | Answer yes to all questions                                 | false   |
 | URL             | url         | -url         | -u             | String                         | URL to send the request to                                  | -       |
 | Method          | method      | -method      | -m             | String                         | HTTP method                                                 | GET     |
@@ -261,3 +263,4 @@ If `Headers`, `Params`, `Cookies`, `Body`, or `Proxy` fields have multiple value
 | Cookies         | cookies     | -cookie      | -c             | [{String: String OR [String]}] | Request cookies                                             | -       |
 | Body            | body        | -body        | -b             | String OR [String]             | Request body or list of request bodies                      | -       |
 | Proxy           | proxies     | -proxy       | -x             | String OR [String]             | Proxy URL or list of proxy URLs                             | -       |
+| Skip Verify     | skip_verify | -skip-verify |                | Boolean                        | Skip SSL/TLS certificate verification                       | false   |

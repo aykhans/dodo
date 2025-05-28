@@ -20,7 +20,15 @@ vars:
 tasks:
     run: go run main.go
 
+    ftl:
+        cmds:
+            - task: fmt
+            - task: tidy
+            - task: lint
+
     fmt: gofmt -w -d .
+
+    tidy: go mod tidy
 
     lint: golangci-lint run
 
