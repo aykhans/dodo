@@ -18,24 +18,32 @@ func Flatten[T any](nested [][]*T) []*T {
 // have been returned at least once. After all values have been returned, the function will
 // reset and start cycling through the values in a random order again.
 // The returned function isn't thread-safe and should be used in a single-threaded context.
-func RandomValueCycle[Value any](values []Value, localRand *rand.Rand) func() Value {
+func RandomValueCycle[T any](values []T, localRand *rand.Rand) func() T {
 	var (
-		clientsCount = len(values)
-		currentIndex = localRand.Intn(clientsCount)
+		valuesLen    = len(values)
+		currentIndex = localRand.Intn(valuesLen)
 		stopIndex    = currentIndex
 	)
 
-	return func() Value {
-		client := values[currentIndex]
-		currentIndex++
-		if currentIndex == clientsCount {
-			currentIndex = 0
-		}
-		if currentIndex == stopIndex {
-			currentIndex = localRand.Intn(clientsCount)
-			stopIndex = currentIndex
-		}
+	switch valuesLen {
+	case 0:
+		var zero T
+		return func() T { return zero }
+	case 1:
+		return func() T { return values[0] }
+	default:
+		return func() T {
+			value := values[currentIndex]
+			currentIndex++
+			if currentIndex == valuesLen {
+				currentIndex = 0
+			}
+			if currentIndex == stopIndex {
+				currentIndex = localRand.Intn(valuesLen)
+				stopIndex = currentIndex
+			}
 
-		return client
+			return value
+		}
 	}
 }
