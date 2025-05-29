@@ -203,19 +203,15 @@ func getKeyValueGeneratorFunc[
 	isRandom := false
 
 	for _, kv := range keyValueSlice {
-		valuesLen := len(kv.Value)
-
-		getValueFunc := func() string { return "" }
-		if valuesLen == 1 {
-			getValueFunc = func() string { return kv.Value[0] }
-		} else if valuesLen > 1 {
-			getValueFunc = utils.RandomValueCycle(kv.Value, localRand)
+		if valuesLen := len(kv.Value); valuesLen > 1 {
 			isRandom = true
 		}
 
 		getKeyValueSlice = append(
 			getKeyValueSlice,
-			map[string]func() string{kv.Key: getValueFunc},
+			map[string]func() string{
+				kv.Key: utils.RandomValueCycle(kv.Value, localRand),
+			},
 		)
 	}
 
