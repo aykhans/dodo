@@ -314,4 +314,4 @@ In JSON config:
 }
 ```
 
-For the full list of template functions over 200 functions, refer to the `newFuncMap` function in `requests/request.go`.
+For the full list of template functions over 200 functions, refer to the `NewFuncMap` function in `utils/templates.go`.
