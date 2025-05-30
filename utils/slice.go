@@ -10,28 +10,21 @@ func Flatten[T any](nested [][]*T) []*T {
 	return flattened
 }
 
-// RandomValueCycle returns a function that cycles through the provided slice of values
-// in a random order. Each call to the returned function will yield a value from the slice.
-// The order of values is determined by the provided random number generator.
-//
-// The returned function will cycle through the values in a random order until all values
-// have been returned at least once. After all values have been returned, the function will
-// reset and start cycling through the values in a random order again.
-// The returned function isn't thread-safe and should be used in a single-threaded context.
+// RandomValueCycle returns a function that cycles through the provided values in a pseudo-random order.
+// Each value in the input slice will be returned before any value is repeated.
+// If the input slice is empty, the returned function will always return the zero value of type T.
+// If the input slice contains only one element, that element is always returned.
+// This function is not thread-safe and should not be called concurrently.
 func RandomValueCycle[T any](values []T, localRand *rand.Rand) func() T {
-	var (
-		valuesLen    = len(values)
-		currentIndex = localRand.Intn(valuesLen)
-		stopIndex    = currentIndex
-	)
-
-	switch valuesLen {
+	switch valuesLen := len(values); valuesLen {
 	case 0:
 		var zero T
 		return func() T { return zero }
 	case 1:
 		return func() T { return values[0] }
 	default:
+		currentIndex := localRand.Intn(valuesLen)
+		stopIndex := currentIndex
 		return func() T {
 			value := values[currentIndex]
 			currentIndex++

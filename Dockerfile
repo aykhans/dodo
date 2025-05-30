@@ -6,7 +6,7 @@ COPY go.mod go.sum ./
 RUN go mod download
 COPY . .
 
-RUN go build -ldflags "-s -w" -o dodo
+RUN CGO_ENABLED=0 go build -ldflags "-s -w" -o dodo
 
 FROM gcr.io/distroless/static-debian12:latest
 
