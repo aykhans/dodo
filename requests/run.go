@@ -72,7 +72,7 @@ func releaseDodos(
 
 	wg.Add(int(dodosCount))
 	streamWG.Add(1)
-	streamCtx, streamCtxCancel := context.WithCancel(context.Background())
+	streamCtx, streamCtxCancel := context.WithCancel(ctx)
 
 	go streamProgress(streamCtx, &streamWG, requestConfig.RequestCount, "Dodos Working🔥", increase)
 
