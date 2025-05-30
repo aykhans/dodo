@@ -5,14 +5,12 @@ import (
 	"context"
 	"math/rand"
 	"net/url"
-	"strings"
 	"text/template"
 	"time"
 
 	"github.com/aykhans/dodo/config"
 	"github.com/aykhans/dodo/types"
 	"github.com/aykhans/dodo/utils"
-	"github.com/brianvoe/gofakeit/v7"
 	"github.com/valyala/fasthttp"
 )
 
@@ -113,7 +111,7 @@ func getRequestGeneratorFunc(
 	getParams := getKeyValueGeneratorFunc(params, localRand)
 	getHeaders := getKeyValueGeneratorFunc(headers, localRand)
 	getCookies := getKeyValueGeneratorFunc(cookies, localRand)
-	getBody := getValueFunc(bodies, newFuncMap(localRand), localRand)
+	getBody := getValueFunc(bodies, utils.NewFuncMap(localRand), localRand)
 
 	return func() *fasthttp.Request {
 		return newFasthttpRequest(
@@ -203,7 +201,7 @@ func getKeyValueGeneratorFunc[
 ) func() T {
 	keyValueGenerators := make([]keyValueGenerator, len(keyValueSlice))
 
-	funcMap := newFuncMap(localRand)
+	funcMap := utils.NewFuncMap(localRand)
 
 	for i, kv := range keyValueSlice {
 		keyValueGenerators[i] = keyValueGenerator{
@@ -224,10 +222,18 @@ func getKeyValueGeneratorFunc[
 	}
 }
 
+// getKeyFunc creates a function that processes a key string through Go's template engine.
+// It takes a key string and a template.FuncMap containing the available template functions.
+//
+// The returned function, when called, will execute the template with the given key and return
+// the processed string result. If template parsing fails, the returned function will always
+// return an empty string.
+//
+// This enables dynamic generation of keys that can include template directives and functions.
 func getKeyFunc(key string, funcMap template.FuncMap) func() string {
 	t, err := template.New("default").Funcs(funcMap).Parse(key)
 	if err != nil {
-		panic(err)
+		return func() string { return "" }
 	}
 
 	return func() string {
@@ -237,6 +243,21 @@ func getKeyFunc(key string, funcMap template.FuncMap) func() string {
 	}
 }
 
+// getValueFunc creates a function that randomly selects and processes a value from a slice of strings
+// through Go's template engine.
+//
+// Parameters:
+//   - values: A slice of string templates that can contain template directives
+//   - funcMap: A template.FuncMap containing all available template functions
+//   - localRand: A random number generator for consistent randomization
+//
+// The returned function, when called, will:
+//  1. Select a random template from the values slice
+//  2. Execute the selected template
+//  3. Return the processed string result
+//
+// If a selected template is nil (due to earlier parsing failure), the function will return an empty string.
+// This enables dynamic generation of values with randomized selection from multiple templates.
 func getValueFunc(
 	values []string,
 	funcMap template.FuncMap,
@@ -247,7 +268,7 @@ func getValueFunc(
 	for i, value := range values {
 		t, err := template.New("default").Funcs(funcMap).Parse(value)
 		if err != nil {
-			panic(err)
+			templates[i] = nil
 		}
 		templates[i] = t
 	}
@@ -262,14 +283,5 @@ func getValueFunc(
 			_ = tmpl.Execute(&buf, nil)
 			return buf.String()
 		}
-	}
-}
-
-func newFuncMap(localRand *rand.Rand) template.FuncMap {
-	localFaker := gofakeit.NewFaker(localRand, false)
-
-	return template.FuncMap{
-		"upper":       strings.ToUpper,
-		"fakeit_Name": localFaker.Name,
 	}
 }

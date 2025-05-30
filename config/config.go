@@ -1,12 +1,15 @@
 package config
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
+	"math/rand"
 	"net/url"
 	"os"
 	"slices"
 	"strings"
+	"text/template"
 	"time"
 
 	"github.com/aykhans/dodo/types"
@@ -198,6 +201,92 @@ func (config *Config) Validate() []error {
 					i, proxy.String(), strings.Join(SupportedProxySchemes, ", "),
 				),
 			)
+		}
+	}
+
+	funcMap := utils.NewFuncMap(rand.New(rand.NewSource(time.Now().UnixNano())))
+
+	for _, header := range config.Headers {
+		t, err := template.New("default").Funcs(funcMap).Parse(header.Key)
+		if err != nil {
+			errs = append(errs, fmt.Errorf("header key (%s) parse error: %v", header.Key, err))
+		} else {
+			var buf bytes.Buffer
+			if err = t.Execute(&buf, nil); err != nil {
+				errs = append(errs, fmt.Errorf("header key (%s) parse error: %v", header.Key, err))
+			}
+		}
+
+		for _, value := range header.Value {
+			t, err := template.New("default").Funcs(funcMap).Parse(value)
+			if err != nil {
+				errs = append(errs, fmt.Errorf("header value (%s) parse error: %v", value, err))
+			} else {
+				var buf bytes.Buffer
+				if err = t.Execute(&buf, nil); err != nil {
+					errs = append(errs, fmt.Errorf("header value (%s) parse error: %v", value, err))
+				}
+			}
+		}
+	}
+
+	for _, cookie := range config.Cookies {
+		t, err := template.New("default").Funcs(funcMap).Parse(cookie.Key)
+		if err != nil {
+			errs = append(errs, fmt.Errorf("cookie key (%s) parse error: %v", cookie.Key, err))
+		} else {
+			var buf bytes.Buffer
+			if err = t.Execute(&buf, nil); err != nil {
+				errs = append(errs, fmt.Errorf("cookie key (%s) parse error: %v", cookie.Key, err))
+			}
+		}
+
+		for _, value := range cookie.Value {
+			t, err := template.New("default").Funcs(funcMap).Parse(value)
+			if err != nil {
+				errs = append(errs, fmt.Errorf("cookie value (%s) parse error: %v", value, err))
+			} else {
+				var buf bytes.Buffer
+				if err = t.Execute(&buf, nil); err != nil {
+					errs = append(errs, fmt.Errorf("cookie value (%s) parse error: %v", value, err))
+				}
+			}
+		}
+	}
+
+	for _, param := range config.Params {
+		t, err := template.New("default").Funcs(funcMap).Parse(param.Key)
+		if err != nil {
+			errs = append(errs, fmt.Errorf("param key (%s) parse error: %v", param.Key, err))
+		} else {
+			var buf bytes.Buffer
+			if err = t.Execute(&buf, nil); err != nil {
+				errs = append(errs, fmt.Errorf("param key (%s) parse error: %v", param.Key, err))
+			}
+		}
+
+		for _, value := range param.Value {
+			t, err := template.New("default").Funcs(funcMap).Parse(value)
+			if err != nil {
+				errs = append(errs, fmt.Errorf("param value (%s) parse error: %v", value, err))
+			} else {
+				var buf bytes.Buffer
+				if err = t.Execute(&buf, nil); err != nil {
+					errs = append(errs, fmt.Errorf("param value (%s) parse error: %v", value, err))
+				}
+			}
+		}
+	}
+
+	for _, body := range config.Body {
+		t, err := template.New("default").Funcs(funcMap).Parse(body)
+		if err != nil {
+			errs = append(errs, fmt.Errorf("body (%s) parse error: %v", body, err))
+		} else {
+			var buf bytes.Buffer
+			if err = t.Execute(&buf, nil); err != nil {
+				errs = append(errs, fmt.Errorf("body (%s) parse error: %v", body, err))
+			}
 		}
 	}
 

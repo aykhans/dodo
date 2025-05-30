@@ -16,6 +16,7 @@
         - [2.2 YAML/YML Example](#22-yamlyml-example)
     - [3. CLI & Config File Combination](#3-cli--config-file-combination)
 - [Config Parameters Reference](#config-parameters-reference)
+- [Template Functions](#template-functions)
 
 ## Installation
 
@@ -264,3 +265,53 @@ If `Headers`, `Params`, `Cookies`, `Body`, or `Proxy` fields have multiple value
 | Body            | body        | -body        | -b             | String OR [String]             | Request body or list of request bodies                      | -       |
 | Proxy           | proxies     | -proxy       | -x             | String OR [String]             | Proxy URL or list of proxy URLs                             | -       |
 | Skip Verify     | skip_verify | -skip-verify |                | Boolean                        | Skip SSL/TLS certificate verification                       | false   |
+
+## Template Functions
+
+Dodo supports template functions in `Headers`, `Params`, `Cookies`, and `Body` fields. These functions allow you to generate dynamic values for each request.
+
+You can use Go template syntax to include dynamic values in your requests. Here's how to use template functions:
+
+In CLI config:
+
+```sh
+dodo -u https://example.com -r 1 \
+    -header "User-Agent:{{ fakeit_UserAgent }}" \ # e.g. "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko)"
+    -param "username={{ fakeit_Username }}" \ # e.g. "username=John Bob"
+    -cookie "token={{ fakeit_Password true true true true true 10 }}" \ # e.g. token=1234567890abcdef1234567890abcdef
+    -body '{"email":"{{ fakeit_Email }}", "password":"{{ fakeit_Password true true true true true 10 }}"}' # e.g. {"email":"john.doe@example.com", "password":"12rw4d-78d"}
+```
+
+In YAML/YML config:
+
+```yaml
+headers:
+    - User-Agent: "{{ fakeit_UserAgent }}" # e.g. "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko)"
+    - "Random-Header-{{fakeit_FirstName}}": "static_value" # e.g. "Random-Header-John: static_value"
+
+cookies:
+    - token: "Bearer {{ fakeit_UUID }}" # e.g. "token=Bearer 1234567890abcdef1234567890abcdef"
+
+params:
+    - id: "{{ fakeit_Uint }}" # e.g. "id=1234567890"
+    - username: "{{ fakeit_Username }}" # e.g. "username=John Doe"
+
+body:
+    - '{ "username": "{{ fakeit_Username }}", "password": "{{ fakeit_Password }}" }' # e.g. { "username": "john.doe", "password": "password123" }
+    - '{ "email": "{{ fakeit_Email }}", "phone": "{{ fakeit_Phone }}" }' # e.g. { "email": "john.doe@example.com", "phone": "+1234567890" }
+```
+
+In JSON config:
+
+```jsonc
+{
+    "headers": [
+        { "User-Agent": "{{ fakeit_UserAgent }}" }, // e.g. "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko)"
+    ],
+    "body": [
+        "{ \"username\": \"{{ fakeit_Username }}\", \"password\": \"{{ fakeit_Password }}\" }", // e.g. { "username": "john.doe", "password": "password123" }
+    ],
+}
+```
+
+For the full list of template functions over 200 functions, refer to the `newFuncMap` function in `requests/request.go`.

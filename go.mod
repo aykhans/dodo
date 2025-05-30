@@ -3,9 +3,9 @@ module github.com/aykhans/dodo
 go 1.24.2
 
 require (
+	github.com/brianvoe/gofakeit/v7 v7.2.1
 	github.com/jedib0t/go-pretty/v6 v6.6.7
 	github.com/valyala/fasthttp v1.62.0
-	github.com/brianvoe/gofakeit/v7 v7.2.1
 	gopkg.in/yaml.v3 v3.0.1
 )
 
