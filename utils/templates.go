@@ -34,6 +34,26 @@ func NewFuncMap(localRand *rand.Rand) template.FuncMap {
 			}
 			return date
 		},
+		"strings_First": func(s string, n int) string {
+			if n >= len(s) {
+				return s
+			}
+			return s[:n]
+		},
+		"strings_Last": func(s string, n int) string {
+			if n >= len(s) {
+				return s
+			}
+			return s[len(s)-n:]
+		},
+		"strings_Truncate": func(s string, n int) string {
+			if n >= len(s) {
+				return s
+			}
+			return s[:n] + "..."
+		},
+		"strings_TrimPrefix": strings.TrimPrefix,
+		"strings_TrimSuffix": strings.TrimSuffix,
 
 		// FakeIt / Product
 		"fakeit_ProductName":        localFaker.ProductName,
