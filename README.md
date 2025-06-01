@@ -277,7 +277,7 @@ In CLI config:
 ```sh
 dodo -u https://example.com -r 1 \
     -header "User-Agent:{{ fakeit_UserAgent }}" \ # e.g. "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko)"
-    -param "username={{ fakeit_Username }}" \ # e.g. "username=John Bob"
+    -param "username={{ strings_ToUpper fakeit_Username }}" \ # e.g. "username=JOHN BOB"
     -cookie "token={{ fakeit_Password true true true true true 10 }}" \ # e.g. token=1234567890abcdef1234567890abcdef
     -body '{"email":"{{ fakeit_Email }}", "password":"{{ fakeit_Password true true true true true 10 }}"}' # e.g. {"email":"john.doe@example.com", "password":"12rw4d-78d"}
 ```
@@ -298,7 +298,7 @@ params:
 
 body:
     - '{ "username": "{{ fakeit_Username }}", "password": "{{ fakeit_Password }}" }' # e.g. { "username": "john.doe", "password": "password123" }
-    - '{ "email": "{{ fakeit_Email }}", "phone": "{{ fakeit_Phone }}" }' # e.g. { "email": "john.doe@example.com", "phone": "+1234567890" }
+    - '{ "email": "{{ fakeit_Email }}", "phone": "{{ fakeit_Phone }}" }' # e.g. { "email": "john.doe@example.com", "phone": "1234567890" }
 ```
 
 In JSON config:
@@ -309,7 +309,7 @@ In JSON config:
         { "User-Agent": "{{ fakeit_UserAgent }}" }, // e.g. "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko)"
     ],
     "body": [
-        "{ \"username\": \"{{ fakeit_Username }}\", \"password\": \"{{ fakeit_Password }}\" }", // e.g. { "username": "john.doe", "password": "password123" }
+        "{ \"username\": \"{{ strings_RemoveSpaces fakeit_Username }}\", \"password\": \"{{ fakeit_Password }}\" }", // e.g. { "username": "johndoe", "password": "password123" }
     ],
 }
 ```
