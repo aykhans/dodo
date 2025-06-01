@@ -204,7 +204,13 @@ func (config *Config) Validate() []error {
 		}
 	}
 
-	funcMap := utils.NewFuncMap(rand.New(rand.NewSource(time.Now().UnixNano())))
+	funcMap := *utils.NewFuncMapGenerator(
+		rand.New(
+			rand.NewSource(
+				time.Now().UnixNano(),
+			),
+		),
+	).GetFuncMap()
 
 	for _, header := range config.Headers {
 		t, err := template.New("default").Funcs(funcMap).Parse(header.Key)

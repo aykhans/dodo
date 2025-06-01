@@ -111,16 +111,25 @@ func getRequestGeneratorFunc(
 	getParams := getKeyValueGeneratorFunc(params, localRand)
 	getHeaders := getKeyValueGeneratorFunc(headers, localRand)
 	getCookies := getKeyValueGeneratorFunc(cookies, localRand)
-	getBody := getValueFunc(bodies, utils.NewFuncMap(localRand), localRand)
+	getBody := getBodyValueFunc(bodies, utils.NewFuncMapGenerator(localRand), localRand)
 
 	return func() *fasthttp.Request {
+		body, contentType := getBody()
+		headers := getHeaders()
+		if contentType != "" {
+			headers = append(headers, types.KeyValue[string, string]{
+				Key:   "Content-Type",
+				Value: contentType,
+			})
+		}
+
 		return newFasthttpRequest(
 			URL,
 			getParams(),
-			getHeaders(),
+			headers,
 			getCookies(),
 			method,
-			getBody(),
+			body,
 		)
 	}
 }
@@ -201,7 +210,7 @@ func getKeyValueGeneratorFunc[
 ) func() T {
 	keyValueGenerators := make([]keyValueGenerator, len(keyValueSlice))
 
-	funcMap := utils.NewFuncMap(localRand)
+	funcMap := *utils.NewFuncMapGenerator(localRand).GetFuncMap()
 
 	for i, kv := range keyValueSlice {
 		keyValueGenerators[i] = keyValueGenerator{
@@ -282,6 +291,51 @@ func getValueFunc(
 			var buf bytes.Buffer
 			_ = tmpl.Execute(&buf, nil)
 			return buf.String()
+		}
+	}
+}
+
+// getBodyValueFunc creates a function that randomly selects and processes a request body from a slice of templates.
+// It returns a closure that generates both the body content and the appropriate Content-Type header value.
+//
+// Parameters:
+//   - values: A slice of string templates that can contain template directives for request bodies
+//   - funcMapGenerator: Provides template functions and content type information
+//   - localRand: A random number generator for consistent randomization
+//
+// The returned function, when called, will:
+//  1. Select a random body template from the values slice
+//  2. Execute the selected template with available template functions
+//  3. Return both the processed body string and the appropriate Content-Type header value
+//
+// If the selected template is nil (due to earlier parsing failure), the function will return
+// empty strings for both the body and Content-Type.
+//
+// This enables dynamic generation of request bodies with proper content type headers.
+func getBodyValueFunc(
+	values []string,
+	funcMapGenerator *utils.FuncMapGenerator,
+	localRand *rand.Rand,
+) func() (string, string) {
+	templates := make([]*template.Template, len(values))
+
+	for i, value := range values {
+		t, err := template.New("default").Funcs(*funcMapGenerator.GetFuncMap()).Parse(value)
+		if err != nil {
+			templates[i] = nil
+		}
+		templates[i] = t
+	}
+
+	randomTemplateFunc := utils.RandomValueCycle(templates, localRand)
+
+	return func() (string, string) {
+		if tmpl := randomTemplateFunc(); tmpl == nil {
+			return "", ""
+		} else {
+			var buf bytes.Buffer
+			_ = tmpl.Execute(&buf, nil)
+			return buf.String(), funcMapGenerator.GetBodyDataHeader()
 		}
 	}
 }

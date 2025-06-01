@@ -1,13 +1,40 @@
 package utils
 
 import (
+	"bytes"
 	"math/rand"
+	"mime/multipart"
 	"strings"
 	"text/template"
 	"time"
 
 	"github.com/brianvoe/gofakeit/v7"
 )
+
+type FuncMapGenerator struct {
+	bodyDataHeader string
+	localFaker     *gofakeit.Faker
+	funcMap        *template.FuncMap
+}
+
+func NewFuncMapGenerator(localRand *rand.Rand) *FuncMapGenerator {
+	f := &FuncMapGenerator{
+		localFaker: gofakeit.NewFaker(localRand, false),
+	}
+	f.funcMap = f.newFuncMap()
+
+	return f
+}
+
+func (g *FuncMapGenerator) GetBodyDataHeader() string {
+	tempHeader := g.bodyDataHeader
+	g.bodyDataHeader = ""
+	return tempHeader
+}
+
+func (g *FuncMapGenerator) GetFuncMap() *template.FuncMap {
+	return g.funcMap
+}
 
 // NewFuncMap creates a template.FuncMap populated with string manipulation functions
 // and data generation functions from gofakeit.
@@ -17,11 +44,11 @@ import (
 //
 // All functions are prefixed to avoid naming conflicts:
 //   - String functions: "strings_*"
+//   - Dict functions: "dict_*"
+//   - Body functions: "body_*"
 //   - Data generation functions: "fakeit_*"
-func NewFuncMap(localRand *rand.Rand) template.FuncMap {
-	localFaker := gofakeit.NewFaker(localRand, false)
-
-	return template.FuncMap{
+func (g *FuncMapGenerator) newFuncMap() *template.FuncMap {
+	return &template.FuncMap{
 		// Strings
 		"strings_ToUpper":      strings.ToUpper,
 		"strings_ToLower":      strings.ToLower,
@@ -55,61 +82,89 @@ func NewFuncMap(localRand *rand.Rand) template.FuncMap {
 		"strings_TrimPrefix": strings.TrimPrefix,
 		"strings_TrimSuffix": strings.TrimSuffix,
 
+		// Dict
+		"dict_Str": func(values ...any) map[string]string {
+			dict := make(map[string]string)
+			for i := 0; i < len(values); i += 2 {
+				if i+1 < len(values) {
+					key := values[i].(string)
+					value := values[i+1].(string)
+					dict[key] = value
+				}
+			}
+			return dict
+		},
+
+		// Body
+		"body_FormData": func(kv map[string]string) string {
+			var data bytes.Buffer
+			writer := multipart.NewWriter(&data)
+
+			for k, v := range kv {
+				_ = writer.WriteField(k, v)
+			}
+
+			_ = writer.Close()
+			g.bodyDataHeader = writer.FormDataContentType()
+
+			return data.String()
+		},
+
 		// FakeIt / Product
-		"fakeit_ProductName":        localFaker.ProductName,
-		"fakeit_ProductDescription": localFaker.ProductDescription,
-		"fakeit_ProductCategory":    localFaker.ProductCategory,
-		"fakeit_ProductFeature":     localFaker.ProductFeature,
-		"fakeit_ProductMaterial":    localFaker.ProductMaterial,
-		"fakeit_ProductUPC":         localFaker.ProductUPC,
-		"fakeit_ProductAudience":    localFaker.ProductAudience,
-		"fakeit_ProductDimension":   localFaker.ProductDimension,
-		"fakeit_ProductUseCase":     localFaker.ProductUseCase,
-		"fakeit_ProductBenefit":     localFaker.ProductBenefit,
-		"fakeit_ProductSuffix":      localFaker.ProductSuffix,
+		"fakeit_ProductName":        g.localFaker.ProductName,
+		"fakeit_ProductDescription": g.localFaker.ProductDescription,
+		"fakeit_ProductCategory":    g.localFaker.ProductCategory,
+		"fakeit_ProductFeature":     g.localFaker.ProductFeature,
+		"fakeit_ProductMaterial":    g.localFaker.ProductMaterial,
+		"fakeit_ProductUPC":         g.localFaker.ProductUPC,
+		"fakeit_ProductAudience":    g.localFaker.ProductAudience,
+		"fakeit_ProductDimension":   g.localFaker.ProductDimension,
+		"fakeit_ProductUseCase":     g.localFaker.ProductUseCase,
+		"fakeit_ProductBenefit":     g.localFaker.ProductBenefit,
+		"fakeit_ProductSuffix":      g.localFaker.ProductSuffix,
 
 		// FakeIt / Person
-		"fakeit_Name":           localFaker.Name,
-		"fakeit_NamePrefix":     localFaker.NamePrefix,
-		"fakeit_NameSuffix":     localFaker.NameSuffix,
-		"fakeit_FirstName":      localFaker.FirstName,
-		"fakeit_MiddleName":     localFaker.MiddleName,
-		"fakeit_LastName":       localFaker.LastName,
-		"fakeit_Gender":         localFaker.Gender,
-		"fakeit_SSN":            localFaker.SSN,
-		"fakeit_Hobby":          localFaker.Hobby,
-		"fakeit_Email":          localFaker.Email,
-		"fakeit_Phone":          localFaker.Phone,
-		"fakeit_PhoneFormatted": localFaker.PhoneFormatted,
+		"fakeit_Name":           g.localFaker.Name,
+		"fakeit_NamePrefix":     g.localFaker.NamePrefix,
+		"fakeit_NameSuffix":     g.localFaker.NameSuffix,
+		"fakeit_FirstName":      g.localFaker.FirstName,
+		"fakeit_MiddleName":     g.localFaker.MiddleName,
+		"fakeit_LastName":       g.localFaker.LastName,
+		"fakeit_Gender":         g.localFaker.Gender,
+		"fakeit_SSN":            g.localFaker.SSN,
+		"fakeit_Hobby":          g.localFaker.Hobby,
+		"fakeit_Email":          g.localFaker.Email,
+		"fakeit_Phone":          g.localFaker.Phone,
+		"fakeit_PhoneFormatted": g.localFaker.PhoneFormatted,
 
 		// FakeIt / Auth
-		"fakeit_Username": localFaker.Username,
-		"fakeit_Password": localFaker.Password,
+		"fakeit_Username": g.localFaker.Username,
+		"fakeit_Password": g.localFaker.Password,
 
 		// FakeIt / Address
-		"fakeit_City":         localFaker.City,
-		"fakeit_Country":      localFaker.Country,
-		"fakeit_CountryAbr":   localFaker.CountryAbr,
-		"fakeit_State":        localFaker.State,
-		"fakeit_StateAbr":     localFaker.StateAbr,
-		"fakeit_Street":       localFaker.Street,
-		"fakeit_StreetName":   localFaker.StreetName,
-		"fakeit_StreetNumber": localFaker.StreetNumber,
-		"fakeit_StreetPrefix": localFaker.StreetPrefix,
-		"fakeit_StreetSuffix": localFaker.StreetSuffix,
-		"fakeit_Zip":          localFaker.Zip,
-		"fakeit_Latitude":     localFaker.Latitude,
+		"fakeit_City":         g.localFaker.City,
+		"fakeit_Country":      g.localFaker.Country,
+		"fakeit_CountryAbr":   g.localFaker.CountryAbr,
+		"fakeit_State":        g.localFaker.State,
+		"fakeit_StateAbr":     g.localFaker.StateAbr,
+		"fakeit_Street":       g.localFaker.Street,
+		"fakeit_StreetName":   g.localFaker.StreetName,
+		"fakeit_StreetNumber": g.localFaker.StreetNumber,
+		"fakeit_StreetPrefix": g.localFaker.StreetPrefix,
+		"fakeit_StreetSuffix": g.localFaker.StreetSuffix,
+		"fakeit_Zip":          g.localFaker.Zip,
+		"fakeit_Latitude":     g.localFaker.Latitude,
 		"fakeit_LatitudeInRange": func(min, max float64) float64 {
-			value, err := localFaker.LatitudeInRange(min, max)
+			value, err := g.localFaker.LatitudeInRange(min, max)
 			if err != nil {
 				var zero float64
 				return zero
 			}
 			return value
 		},
-		"fakeit_Longitude": localFaker.Longitude,
+		"fakeit_Longitude": g.localFaker.Longitude,
 		"fakeit_LongitudeInRange": func(min, max float64) float64 {
-			value, err := localFaker.LongitudeInRange(min, max)
+			value, err := g.localFaker.LongitudeInRange(min, max)
 			if err != nil {
 				var zero float64
 				return zero
@@ -118,289 +173,289 @@ func NewFuncMap(localRand *rand.Rand) template.FuncMap {
 		},
 
 		// FakeIt / Game
-		"fakeit_Gamertag": localFaker.Gamertag,
+		"fakeit_Gamertag": g.localFaker.Gamertag,
 
 		// FakeIt / Beer
-		"fakeit_BeerAlcohol": localFaker.BeerAlcohol,
-		"fakeit_BeerBlg":     localFaker.BeerBlg,
-		"fakeit_BeerHop":     localFaker.BeerHop,
-		"fakeit_BeerIbu":     localFaker.BeerIbu,
-		"fakeit_BeerMalt":    localFaker.BeerMalt,
-		"fakeit_BeerName":    localFaker.BeerName,
-		"fakeit_BeerStyle":   localFaker.BeerStyle,
-		"fakeit_BeerYeast":   localFaker.BeerYeast,
+		"fakeit_BeerAlcohol": g.localFaker.BeerAlcohol,
+		"fakeit_BeerBlg":     g.localFaker.BeerBlg,
+		"fakeit_BeerHop":     g.localFaker.BeerHop,
+		"fakeit_BeerIbu":     g.localFaker.BeerIbu,
+		"fakeit_BeerMalt":    g.localFaker.BeerMalt,
+		"fakeit_BeerName":    g.localFaker.BeerName,
+		"fakeit_BeerStyle":   g.localFaker.BeerStyle,
+		"fakeit_BeerYeast":   g.localFaker.BeerYeast,
 
 		// FakeIt / Car
-		"fakeit_CarMaker":            localFaker.CarMaker,
-		"fakeit_CarModel":            localFaker.CarModel,
-		"fakeit_CarType":             localFaker.CarType,
-		"fakeit_CarFuelType":         localFaker.CarFuelType,
-		"fakeit_CarTransmissionType": localFaker.CarTransmissionType,
+		"fakeit_CarMaker":            g.localFaker.CarMaker,
+		"fakeit_CarModel":            g.localFaker.CarModel,
+		"fakeit_CarType":             g.localFaker.CarType,
+		"fakeit_CarFuelType":         g.localFaker.CarFuelType,
+		"fakeit_CarTransmissionType": g.localFaker.CarTransmissionType,
 
 		// FakeIt / Words
-		"fakeit_Noun":                      localFaker.Noun,
-		"fakeit_NounCommon":                localFaker.NounCommon,
-		"fakeit_NounConcrete":              localFaker.NounConcrete,
-		"fakeit_NounAbstract":              localFaker.NounAbstract,
-		"fakeit_NounCollectivePeople":      localFaker.NounCollectivePeople,
-		"fakeit_NounCollectiveAnimal":      localFaker.NounCollectiveAnimal,
-		"fakeit_NounCollectiveThing":       localFaker.NounCollectiveThing,
-		"fakeit_NounCountable":             localFaker.NounCountable,
-		"fakeit_NounUncountable":           localFaker.NounUncountable,
-		"fakeit_Verb":                      localFaker.Verb,
-		"fakeit_VerbAction":                localFaker.VerbAction,
-		"fakeit_VerbLinking":               localFaker.VerbLinking,
-		"fakeit_VerbHelping":               localFaker.VerbHelping,
-		"fakeit_Adverb":                    localFaker.Adverb,
-		"fakeit_AdverbManner":              localFaker.AdverbManner,
-		"fakeit_AdverbDegree":              localFaker.AdverbDegree,
-		"fakeit_AdverbPlace":               localFaker.AdverbPlace,
-		"fakeit_AdverbTimeDefinite":        localFaker.AdverbTimeDefinite,
-		"fakeit_AdverbTimeIndefinite":      localFaker.AdverbTimeIndefinite,
-		"fakeit_AdverbFrequencyDefinite":   localFaker.AdverbFrequencyDefinite,
-		"fakeit_AdverbFrequencyIndefinite": localFaker.AdverbFrequencyIndefinite,
-		"fakeit_Preposition":               localFaker.Preposition,
-		"fakeit_PrepositionSimple":         localFaker.PrepositionSimple,
-		"fakeit_PrepositionDouble":         localFaker.PrepositionDouble,
-		"fakeit_PrepositionCompound":       localFaker.PrepositionCompound,
-		"fakeit_Adjective":                 localFaker.Adjective,
-		"fakeit_AdjectiveDescriptive":      localFaker.AdjectiveDescriptive,
-		"fakeit_AdjectiveQuantitative":     localFaker.AdjectiveQuantitative,
-		"fakeit_AdjectiveProper":           localFaker.AdjectiveProper,
-		"fakeit_AdjectiveDemonstrative":    localFaker.AdjectiveDemonstrative,
-		"fakeit_AdjectivePossessive":       localFaker.AdjectivePossessive,
-		"fakeit_AdjectiveInterrogative":    localFaker.AdjectiveInterrogative,
-		"fakeit_AdjectiveIndefinite":       localFaker.AdjectiveIndefinite,
-		"fakeit_Pronoun":                   localFaker.Pronoun,
-		"fakeit_PronounPersonal":           localFaker.PronounPersonal,
-		"fakeit_PronounObject":             localFaker.PronounObject,
-		"fakeit_PronounPossessive":         localFaker.PronounPossessive,
-		"fakeit_PronounReflective":         localFaker.PronounReflective,
-		"fakeit_PronounDemonstrative":      localFaker.PronounDemonstrative,
-		"fakeit_PronounInterrogative":      localFaker.PronounInterrogative,
-		"fakeit_PronounRelative":           localFaker.PronounRelative,
-		"fakeit_Connective":                localFaker.Connective,
-		"fakeit_ConnectiveTime":            localFaker.ConnectiveTime,
-		"fakeit_ConnectiveComparative":     localFaker.ConnectiveComparative,
-		"fakeit_ConnectiveComplaint":       localFaker.ConnectiveComplaint,
-		"fakeit_ConnectiveListing":         localFaker.ConnectiveListing,
-		"fakeit_ConnectiveCasual":          localFaker.ConnectiveCasual,
-		"fakeit_ConnectiveExamplify":       localFaker.ConnectiveExamplify,
-		"fakeit_Word":                      localFaker.Word,
-		"fakeit_Sentence":                  localFaker.Sentence,
-		"fakeit_Paragraph":                 localFaker.Paragraph,
-		"fakeit_LoremIpsumWord":            localFaker.LoremIpsumWord,
-		"fakeit_LoremIpsumSentence":        localFaker.LoremIpsumSentence,
-		"fakeit_LoremIpsumParagraph":       localFaker.LoremIpsumParagraph,
-		"fakeit_Question":                  localFaker.Question,
-		"fakeit_Quote":                     localFaker.Quote,
-		"fakeit_Phrase":                    localFaker.Phrase,
+		"fakeit_Noun":                      g.localFaker.Noun,
+		"fakeit_NounCommon":                g.localFaker.NounCommon,
+		"fakeit_NounConcrete":              g.localFaker.NounConcrete,
+		"fakeit_NounAbstract":              g.localFaker.NounAbstract,
+		"fakeit_NounCollectivePeople":      g.localFaker.NounCollectivePeople,
+		"fakeit_NounCollectiveAnimal":      g.localFaker.NounCollectiveAnimal,
+		"fakeit_NounCollectiveThing":       g.localFaker.NounCollectiveThing,
+		"fakeit_NounCountable":             g.localFaker.NounCountable,
+		"fakeit_NounUncountable":           g.localFaker.NounUncountable,
+		"fakeit_Verb":                      g.localFaker.Verb,
+		"fakeit_VerbAction":                g.localFaker.VerbAction,
+		"fakeit_VerbLinking":               g.localFaker.VerbLinking,
+		"fakeit_VerbHelping":               g.localFaker.VerbHelping,
+		"fakeit_Adverb":                    g.localFaker.Adverb,
+		"fakeit_AdverbManner":              g.localFaker.AdverbManner,
+		"fakeit_AdverbDegree":              g.localFaker.AdverbDegree,
+		"fakeit_AdverbPlace":               g.localFaker.AdverbPlace,
+		"fakeit_AdverbTimeDefinite":        g.localFaker.AdverbTimeDefinite,
+		"fakeit_AdverbTimeIndefinite":      g.localFaker.AdverbTimeIndefinite,
+		"fakeit_AdverbFrequencyDefinite":   g.localFaker.AdverbFrequencyDefinite,
+		"fakeit_AdverbFrequencyIndefinite": g.localFaker.AdverbFrequencyIndefinite,
+		"fakeit_Preposition":               g.localFaker.Preposition,
+		"fakeit_PrepositionSimple":         g.localFaker.PrepositionSimple,
+		"fakeit_PrepositionDouble":         g.localFaker.PrepositionDouble,
+		"fakeit_PrepositionCompound":       g.localFaker.PrepositionCompound,
+		"fakeit_Adjective":                 g.localFaker.Adjective,
+		"fakeit_AdjectiveDescriptive":      g.localFaker.AdjectiveDescriptive,
+		"fakeit_AdjectiveQuantitative":     g.localFaker.AdjectiveQuantitative,
+		"fakeit_AdjectiveProper":           g.localFaker.AdjectiveProper,
+		"fakeit_AdjectiveDemonstrative":    g.localFaker.AdjectiveDemonstrative,
+		"fakeit_AdjectivePossessive":       g.localFaker.AdjectivePossessive,
+		"fakeit_AdjectiveInterrogative":    g.localFaker.AdjectiveInterrogative,
+		"fakeit_AdjectiveIndefinite":       g.localFaker.AdjectiveIndefinite,
+		"fakeit_Pronoun":                   g.localFaker.Pronoun,
+		"fakeit_PronounPersonal":           g.localFaker.PronounPersonal,
+		"fakeit_PronounObject":             g.localFaker.PronounObject,
+		"fakeit_PronounPossessive":         g.localFaker.PronounPossessive,
+		"fakeit_PronounReflective":         g.localFaker.PronounReflective,
+		"fakeit_PronounDemonstrative":      g.localFaker.PronounDemonstrative,
+		"fakeit_PronounInterrogative":      g.localFaker.PronounInterrogative,
+		"fakeit_PronounRelative":           g.localFaker.PronounRelative,
+		"fakeit_Connective":                g.localFaker.Connective,
+		"fakeit_ConnectiveTime":            g.localFaker.ConnectiveTime,
+		"fakeit_ConnectiveComparative":     g.localFaker.ConnectiveComparative,
+		"fakeit_ConnectiveComplaint":       g.localFaker.ConnectiveComplaint,
+		"fakeit_ConnectiveListing":         g.localFaker.ConnectiveListing,
+		"fakeit_ConnectiveCasual":          g.localFaker.ConnectiveCasual,
+		"fakeit_ConnectiveExamplify":       g.localFaker.ConnectiveExamplify,
+		"fakeit_Word":                      g.localFaker.Word,
+		"fakeit_Sentence":                  g.localFaker.Sentence,
+		"fakeit_Paragraph":                 g.localFaker.Paragraph,
+		"fakeit_LoremIpsumWord":            g.localFaker.LoremIpsumWord,
+		"fakeit_LoremIpsumSentence":        g.localFaker.LoremIpsumSentence,
+		"fakeit_LoremIpsumParagraph":       g.localFaker.LoremIpsumParagraph,
+		"fakeit_Question":                  g.localFaker.Question,
+		"fakeit_Quote":                     g.localFaker.Quote,
+		"fakeit_Phrase":                    g.localFaker.Phrase,
 
 		// FakeIt / Foods
-		"fakeit_Fruit":     localFaker.Fruit,
-		"fakeit_Vegetable": localFaker.Vegetable,
-		"fakeit_Breakfast": localFaker.Breakfast,
-		"fakeit_Lunch":     localFaker.Lunch,
-		"fakeit_Dinner":    localFaker.Dinner,
-		"fakeit_Snack":     localFaker.Snack,
-		"fakeit_Dessert":   localFaker.Dessert,
+		"fakeit_Fruit":     g.localFaker.Fruit,
+		"fakeit_Vegetable": g.localFaker.Vegetable,
+		"fakeit_Breakfast": g.localFaker.Breakfast,
+		"fakeit_Lunch":     g.localFaker.Lunch,
+		"fakeit_Dinner":    g.localFaker.Dinner,
+		"fakeit_Snack":     g.localFaker.Snack,
+		"fakeit_Dessert":   g.localFaker.Dessert,
 
 		// FakeIt / Misc
-		"fakeit_Bool":      localFaker.Bool,
-		"fakeit_UUID":      localFaker.UUID,
-		"fakeit_FlipACoin": localFaker.FlipACoin,
+		"fakeit_Bool":      g.localFaker.Bool,
+		"fakeit_UUID":      g.localFaker.UUID,
+		"fakeit_FlipACoin": g.localFaker.FlipACoin,
 
 		// FakeIt / Colors
-		"fakeit_Color":      localFaker.Color,
-		"fakeit_HexColor":   localFaker.HexColor,
-		"fakeit_RGBColor":   localFaker.RGBColor,
-		"fakeit_SafeColor":  localFaker.SafeColor,
-		"fakeit_NiceColors": localFaker.NiceColors,
+		"fakeit_Color":      g.localFaker.Color,
+		"fakeit_HexColor":   g.localFaker.HexColor,
+		"fakeit_RGBColor":   g.localFaker.RGBColor,
+		"fakeit_SafeColor":  g.localFaker.SafeColor,
+		"fakeit_NiceColors": g.localFaker.NiceColors,
 
 		// FakeIt / Internet
-		"fakeit_URL":                  localFaker.URL,
-		"fakeit_DomainName":           localFaker.DomainName,
-		"fakeit_DomainSuffix":         localFaker.DomainSuffix,
-		"fakeit_IPv4Address":          localFaker.IPv4Address,
-		"fakeit_IPv6Address":          localFaker.IPv6Address,
-		"fakeit_MacAddress":           localFaker.MacAddress,
-		"fakeit_HTTPStatusCode":       localFaker.HTTPStatusCode,
-		"fakeit_HTTPStatusCodeSimple": localFaker.HTTPStatusCodeSimple,
-		"fakeit_LogLevel":             localFaker.LogLevel,
-		"fakeit_HTTPMethod":           localFaker.HTTPMethod,
-		"fakeit_HTTPVersion":          localFaker.HTTPVersion,
-		"fakeit_UserAgent":            localFaker.UserAgent,
-		"fakeit_ChromeUserAgent":      localFaker.ChromeUserAgent,
-		"fakeit_FirefoxUserAgent":     localFaker.FirefoxUserAgent,
-		"fakeit_OperaUserAgent":       localFaker.OperaUserAgent,
-		"fakeit_SafariUserAgent":      localFaker.SafariUserAgent,
+		"fakeit_URL":                  g.localFaker.URL,
+		"fakeit_DomainName":           g.localFaker.DomainName,
+		"fakeit_DomainSuffix":         g.localFaker.DomainSuffix,
+		"fakeit_IPv4Address":          g.localFaker.IPv4Address,
+		"fakeit_IPv6Address":          g.localFaker.IPv6Address,
+		"fakeit_MacAddress":           g.localFaker.MacAddress,
+		"fakeit_HTTPStatusCode":       g.localFaker.HTTPStatusCode,
+		"fakeit_HTTPStatusCodeSimple": g.localFaker.HTTPStatusCodeSimple,
+		"fakeit_LogLevel":             g.localFaker.LogLevel,
+		"fakeit_HTTPMethod":           g.localFaker.HTTPMethod,
+		"fakeit_HTTPVersion":          g.localFaker.HTTPVersion,
+		"fakeit_UserAgent":            g.localFaker.UserAgent,
+		"fakeit_ChromeUserAgent":      g.localFaker.ChromeUserAgent,
+		"fakeit_FirefoxUserAgent":     g.localFaker.FirefoxUserAgent,
+		"fakeit_OperaUserAgent":       g.localFaker.OperaUserAgent,
+		"fakeit_SafariUserAgent":      g.localFaker.SafariUserAgent,
 
 		// FakeIt / HTML
-		"fakeit_InputName": localFaker.InputName,
+		"fakeit_InputName": g.localFaker.InputName,
 
 		// FakeIt / Date/Time
-		"fakeit_Date":           localFaker.Date,
-		"fakeit_PastDate":       localFaker.PastDate,
-		"fakeit_FutureDate":     localFaker.FutureDate,
-		"fakeit_DateRange":      localFaker.DateRange,
-		"fakeit_NanoSecond":     localFaker.NanoSecond,
-		"fakeit_Second":         localFaker.Second,
-		"fakeit_Minute":         localFaker.Minute,
-		"fakeit_Hour":           localFaker.Hour,
-		"fakeit_Month":          localFaker.Month,
-		"fakeit_MonthString":    localFaker.MonthString,
-		"fakeit_Day":            localFaker.Day,
-		"fakeit_WeekDay":        localFaker.WeekDay,
-		"fakeit_Year":           localFaker.Year,
-		"fakeit_TimeZone":       localFaker.TimeZone,
-		"fakeit_TimeZoneAbv":    localFaker.TimeZoneAbv,
-		"fakeit_TimeZoneFull":   localFaker.TimeZoneFull,
-		"fakeit_TimeZoneOffset": localFaker.TimeZoneOffset,
-		"fakeit_TimeZoneRegion": localFaker.TimeZoneRegion,
+		"fakeit_Date":           g.localFaker.Date,
+		"fakeit_PastDate":       g.localFaker.PastDate,
+		"fakeit_FutureDate":     g.localFaker.FutureDate,
+		"fakeit_DateRange":      g.localFaker.DateRange,
+		"fakeit_NanoSecond":     g.localFaker.NanoSecond,
+		"fakeit_Second":         g.localFaker.Second,
+		"fakeit_Minute":         g.localFaker.Minute,
+		"fakeit_Hour":           g.localFaker.Hour,
+		"fakeit_Month":          g.localFaker.Month,
+		"fakeit_MonthString":    g.localFaker.MonthString,
+		"fakeit_Day":            g.localFaker.Day,
+		"fakeit_WeekDay":        g.localFaker.WeekDay,
+		"fakeit_Year":           g.localFaker.Year,
+		"fakeit_TimeZone":       g.localFaker.TimeZone,
+		"fakeit_TimeZoneAbv":    g.localFaker.TimeZoneAbv,
+		"fakeit_TimeZoneFull":   g.localFaker.TimeZoneFull,
+		"fakeit_TimeZoneOffset": g.localFaker.TimeZoneOffset,
+		"fakeit_TimeZoneRegion": g.localFaker.TimeZoneRegion,
 
 		// FakeIt / Payment
-		"fakeit_Price":             localFaker.Price,
-		"fakeit_CreditCardCvv":     localFaker.CreditCardCvv,
-		"fakeit_CreditCardExp":     localFaker.CreditCardExp,
-		"fakeit_CreditCardNumber":  localFaker.CreditCardNumber,
-		"fakeit_CreditCardType":    localFaker.CreditCardType,
-		"fakeit_CurrencyLong":      localFaker.CurrencyLong,
-		"fakeit_CurrencyShort":     localFaker.CurrencyShort,
-		"fakeit_AchRouting":        localFaker.AchRouting,
-		"fakeit_AchAccount":        localFaker.AchAccount,
-		"fakeit_BitcoinAddress":    localFaker.BitcoinAddress,
-		"fakeit_BitcoinPrivateKey": localFaker.BitcoinPrivateKey,
+		"fakeit_Price":             g.localFaker.Price,
+		"fakeit_CreditCardCvv":     g.localFaker.CreditCardCvv,
+		"fakeit_CreditCardExp":     g.localFaker.CreditCardExp,
+		"fakeit_CreditCardNumber":  g.localFaker.CreditCardNumber,
+		"fakeit_CreditCardType":    g.localFaker.CreditCardType,
+		"fakeit_CurrencyLong":      g.localFaker.CurrencyLong,
+		"fakeit_CurrencyShort":     g.localFaker.CurrencyShort,
+		"fakeit_AchRouting":        g.localFaker.AchRouting,
+		"fakeit_AchAccount":        g.localFaker.AchAccount,
+		"fakeit_BitcoinAddress":    g.localFaker.BitcoinAddress,
+		"fakeit_BitcoinPrivateKey": g.localFaker.BitcoinPrivateKey,
 
 		// FakeIt / Finance
-		"fakeit_Cusip": localFaker.Cusip,
-		"fakeit_Isin":  localFaker.Isin,
+		"fakeit_Cusip": g.localFaker.Cusip,
+		"fakeit_Isin":  g.localFaker.Isin,
 
 		// FakeIt / Company
-		"fakeit_BS":            localFaker.BS,
-		"fakeit_Blurb":         localFaker.Blurb,
-		"fakeit_BuzzWord":      localFaker.BuzzWord,
-		"fakeit_Company":       localFaker.Company,
-		"fakeit_CompanySuffix": localFaker.CompanySuffix,
-		"fakeit_JobDescriptor": localFaker.JobDescriptor,
-		"fakeit_JobLevel":      localFaker.JobLevel,
-		"fakeit_JobTitle":      localFaker.JobTitle,
-		"fakeit_Slogan":        localFaker.Slogan,
+		"fakeit_BS":            g.localFaker.BS,
+		"fakeit_Blurb":         g.localFaker.Blurb,
+		"fakeit_BuzzWord":      g.localFaker.BuzzWord,
+		"fakeit_Company":       g.localFaker.Company,
+		"fakeit_CompanySuffix": g.localFaker.CompanySuffix,
+		"fakeit_JobDescriptor": g.localFaker.JobDescriptor,
+		"fakeit_JobLevel":      g.localFaker.JobLevel,
+		"fakeit_JobTitle":      g.localFaker.JobTitle,
+		"fakeit_Slogan":        g.localFaker.Slogan,
 
 		// FakeIt / Hacker
-		"fakeit_HackerAbbreviation": localFaker.HackerAbbreviation,
-		"fakeit_HackerAdjective":    localFaker.HackerAdjective,
-		"fakeit_HackerNoun":         localFaker.HackerNoun,
-		"fakeit_HackerPhrase":       localFaker.HackerPhrase,
-		"fakeit_HackerVerb":         localFaker.HackerVerb,
+		"fakeit_HackerAbbreviation": g.localFaker.HackerAbbreviation,
+		"fakeit_HackerAdjective":    g.localFaker.HackerAdjective,
+		"fakeit_HackerNoun":         g.localFaker.HackerNoun,
+		"fakeit_HackerPhrase":       g.localFaker.HackerPhrase,
+		"fakeit_HackerVerb":         g.localFaker.HackerVerb,
 
 		// FakeIt / Hipster
-		"fakeit_HipsterWord":      localFaker.HipsterWord,
-		"fakeit_HipsterSentence":  localFaker.HipsterSentence,
-		"fakeit_HipsterParagraph": localFaker.HipsterParagraph,
+		"fakeit_HipsterWord":      g.localFaker.HipsterWord,
+		"fakeit_HipsterSentence":  g.localFaker.HipsterSentence,
+		"fakeit_HipsterParagraph": g.localFaker.HipsterParagraph,
 
 		// FakeIt / App
-		"fakeit_AppName":    localFaker.AppName,
-		"fakeit_AppVersion": localFaker.AppVersion,
-		"fakeit_AppAuthor":  localFaker.AppAuthor,
+		"fakeit_AppName":    g.localFaker.AppName,
+		"fakeit_AppVersion": g.localFaker.AppVersion,
+		"fakeit_AppAuthor":  g.localFaker.AppAuthor,
 
 		// FakeIt / Animal
-		"fakeit_PetName":    localFaker.PetName,
-		"fakeit_Animal":     localFaker.Animal,
-		"fakeit_AnimalType": localFaker.AnimalType,
-		"fakeit_FarmAnimal": localFaker.FarmAnimal,
-		"fakeit_Cat":        localFaker.Cat,
-		"fakeit_Dog":        localFaker.Dog,
-		"fakeit_Bird":       localFaker.Bird,
+		"fakeit_PetName":    g.localFaker.PetName,
+		"fakeit_Animal":     g.localFaker.Animal,
+		"fakeit_AnimalType": g.localFaker.AnimalType,
+		"fakeit_FarmAnimal": g.localFaker.FarmAnimal,
+		"fakeit_Cat":        g.localFaker.Cat,
+		"fakeit_Dog":        g.localFaker.Dog,
+		"fakeit_Bird":       g.localFaker.Bird,
 
 		// FakeIt / Emoji
-		"fakeit_Emoji":            localFaker.Emoji,
-		"fakeit_EmojiDescription": localFaker.EmojiDescription,
-		"fakeit_EmojiCategory":    localFaker.EmojiCategory,
-		"fakeit_EmojiAlias":       localFaker.EmojiAlias,
-		"fakeit_EmojiTag":         localFaker.EmojiTag,
+		"fakeit_Emoji":            g.localFaker.Emoji,
+		"fakeit_EmojiDescription": g.localFaker.EmojiDescription,
+		"fakeit_EmojiCategory":    g.localFaker.EmojiCategory,
+		"fakeit_EmojiAlias":       g.localFaker.EmojiAlias,
+		"fakeit_EmojiTag":         g.localFaker.EmojiTag,
 
 		// FakeIt / Language
-		"fakeit_Language":             localFaker.Language,
-		"fakeit_LanguageAbbreviation": localFaker.LanguageAbbreviation,
-		"fakeit_ProgrammingLanguage":  localFaker.ProgrammingLanguage,
+		"fakeit_Language":             g.localFaker.Language,
+		"fakeit_LanguageAbbreviation": g.localFaker.LanguageAbbreviation,
+		"fakeit_ProgrammingLanguage":  g.localFaker.ProgrammingLanguage,
 
 		// FakeIt / Number
-		"fakeit_Number":       localFaker.Number,
-		"fakeit_Int":          localFaker.Int,
-		"fakeit_IntN":         localFaker.IntN,
-		"fakeit_Int8":         localFaker.Int8,
-		"fakeit_Int16":        localFaker.Int16,
-		"fakeit_Int32":        localFaker.Int32,
-		"fakeit_Int64":        localFaker.Int64,
-		"fakeit_Uint":         localFaker.Uint,
-		"fakeit_UintN":        localFaker.UintN,
-		"fakeit_Uint8":        localFaker.Uint8,
-		"fakeit_Uint16":       localFaker.Uint16,
-		"fakeit_Uint32":       localFaker.Uint32,
-		"fakeit_Uint64":       localFaker.Uint64,
-		"fakeit_Float32":      localFaker.Float32,
-		"fakeit_Float32Range": localFaker.Float32Range,
-		"fakeit_Float64":      localFaker.Float64,
-		"fakeit_Float64Range": localFaker.Float64Range,
-		"fakeit_HexUint":      localFaker.HexUint,
+		"fakeit_Number":       g.localFaker.Number,
+		"fakeit_Int":          g.localFaker.Int,
+		"fakeit_IntN":         g.localFaker.IntN,
+		"fakeit_Int8":         g.localFaker.Int8,
+		"fakeit_Int16":        g.localFaker.Int16,
+		"fakeit_Int32":        g.localFaker.Int32,
+		"fakeit_Int64":        g.localFaker.Int64,
+		"fakeit_Uint":         g.localFaker.Uint,
+		"fakeit_UintN":        g.localFaker.UintN,
+		"fakeit_Uint8":        g.localFaker.Uint8,
+		"fakeit_Uint16":       g.localFaker.Uint16,
+		"fakeit_Uint32":       g.localFaker.Uint32,
+		"fakeit_Uint64":       g.localFaker.Uint64,
+		"fakeit_Float32":      g.localFaker.Float32,
+		"fakeit_Float32Range": g.localFaker.Float32Range,
+		"fakeit_Float64":      g.localFaker.Float64,
+		"fakeit_Float64Range": g.localFaker.Float64Range,
+		"fakeit_HexUint":      g.localFaker.HexUint,
 
 		// FakeIt / String
-		"fakeit_Digit":    localFaker.Digit,
-		"fakeit_DigitN":   localFaker.DigitN,
-		"fakeit_Letter":   localFaker.Letter,
-		"fakeit_LetterN":  localFaker.LetterN,
-		"fakeit_Lexify":   localFaker.Lexify,
-		"fakeit_Numerify": localFaker.Numerify,
+		"fakeit_Digit":    g.localFaker.Digit,
+		"fakeit_DigitN":   g.localFaker.DigitN,
+		"fakeit_Letter":   g.localFaker.Letter,
+		"fakeit_LetterN":  g.localFaker.LetterN,
+		"fakeit_Lexify":   g.localFaker.Lexify,
+		"fakeit_Numerify": g.localFaker.Numerify,
 
 		// FakeIt / Celebrity
-		"fakeit_CelebrityActor":    localFaker.CelebrityActor,
-		"fakeit_CelebrityBusiness": localFaker.CelebrityBusiness,
-		"fakeit_CelebritySport":    localFaker.CelebritySport,
+		"fakeit_CelebrityActor":    g.localFaker.CelebrityActor,
+		"fakeit_CelebrityBusiness": g.localFaker.CelebrityBusiness,
+		"fakeit_CelebritySport":    g.localFaker.CelebritySport,
 
 		// FakeIt / Minecraft
-		"fakeit_MinecraftOre":             localFaker.MinecraftOre,
-		"fakeit_MinecraftWood":            localFaker.MinecraftWood,
-		"fakeit_MinecraftArmorTier":       localFaker.MinecraftArmorTier,
-		"fakeit_MinecraftArmorPart":       localFaker.MinecraftArmorPart,
-		"fakeit_MinecraftWeapon":          localFaker.MinecraftWeapon,
-		"fakeit_MinecraftTool":            localFaker.MinecraftTool,
-		"fakeit_MinecraftDye":             localFaker.MinecraftDye,
-		"fakeit_MinecraftFood":            localFaker.MinecraftFood,
-		"fakeit_MinecraftAnimal":          localFaker.MinecraftAnimal,
-		"fakeit_MinecraftVillagerJob":     localFaker.MinecraftVillagerJob,
-		"fakeit_MinecraftVillagerStation": localFaker.MinecraftVillagerStation,
-		"fakeit_MinecraftVillagerLevel":   localFaker.MinecraftVillagerLevel,
-		"fakeit_MinecraftMobPassive":      localFaker.MinecraftMobPassive,
-		"fakeit_MinecraftMobNeutral":      localFaker.MinecraftMobNeutral,
-		"fakeit_MinecraftMobHostile":      localFaker.MinecraftMobHostile,
-		"fakeit_MinecraftMobBoss":         localFaker.MinecraftMobBoss,
-		"fakeit_MinecraftBiome":           localFaker.MinecraftBiome,
-		"fakeit_MinecraftWeather":         localFaker.MinecraftWeather,
+		"fakeit_MinecraftOre":             g.localFaker.MinecraftOre,
+		"fakeit_MinecraftWood":            g.localFaker.MinecraftWood,
+		"fakeit_MinecraftArmorTier":       g.localFaker.MinecraftArmorTier,
+		"fakeit_MinecraftArmorPart":       g.localFaker.MinecraftArmorPart,
+		"fakeit_MinecraftWeapon":          g.localFaker.MinecraftWeapon,
+		"fakeit_MinecraftTool":            g.localFaker.MinecraftTool,
+		"fakeit_MinecraftDye":             g.localFaker.MinecraftDye,
+		"fakeit_MinecraftFood":            g.localFaker.MinecraftFood,
+		"fakeit_MinecraftAnimal":          g.localFaker.MinecraftAnimal,
+		"fakeit_MinecraftVillagerJob":     g.localFaker.MinecraftVillagerJob,
+		"fakeit_MinecraftVillagerStation": g.localFaker.MinecraftVillagerStation,
+		"fakeit_MinecraftVillagerLevel":   g.localFaker.MinecraftVillagerLevel,
+		"fakeit_MinecraftMobPassive":      g.localFaker.MinecraftMobPassive,
+		"fakeit_MinecraftMobNeutral":      g.localFaker.MinecraftMobNeutral,
+		"fakeit_MinecraftMobHostile":      g.localFaker.MinecraftMobHostile,
+		"fakeit_MinecraftMobBoss":         g.localFaker.MinecraftMobBoss,
+		"fakeit_MinecraftBiome":           g.localFaker.MinecraftBiome,
+		"fakeit_MinecraftWeather":         g.localFaker.MinecraftWeather,
 
 		// FakeIt / Book
-		"fakeit_BookTitle":  localFaker.BookTitle,
-		"fakeit_BookAuthor": localFaker.BookAuthor,
-		"fakeit_BookGenre":  localFaker.BookGenre,
+		"fakeit_BookTitle":  g.localFaker.BookTitle,
+		"fakeit_BookAuthor": g.localFaker.BookAuthor,
+		"fakeit_BookGenre":  g.localFaker.BookGenre,
 
 		// FakeIt / Movie
-		"fakeit_MovieName":  localFaker.MovieName,
-		"fakeit_MovieGenre": localFaker.MovieGenre,
+		"fakeit_MovieName":  g.localFaker.MovieName,
+		"fakeit_MovieGenre": g.localFaker.MovieGenre,
 
 		// FakeIt / Error
-		"fakeit_Error":           localFaker.Error,
-		"fakeit_ErrorDatabase":   localFaker.ErrorDatabase,
-		"fakeit_ErrorGRPC":       localFaker.ErrorGRPC,
-		"fakeit_ErrorHTTP":       localFaker.ErrorHTTP,
-		"fakeit_ErrorHTTPClient": localFaker.ErrorHTTPClient,
-		"fakeit_ErrorHTTPServer": localFaker.ErrorHTTPServer,
-		"fakeit_ErrorRuntime":    localFaker.ErrorRuntime,
+		"fakeit_Error":           g.localFaker.Error,
+		"fakeit_ErrorDatabase":   g.localFaker.ErrorDatabase,
+		"fakeit_ErrorGRPC":       g.localFaker.ErrorGRPC,
+		"fakeit_ErrorHTTP":       g.localFaker.ErrorHTTP,
+		"fakeit_ErrorHTTPClient": g.localFaker.ErrorHTTPClient,
+		"fakeit_ErrorHTTPServer": g.localFaker.ErrorHTTPServer,
+		"fakeit_ErrorRuntime":    g.localFaker.ErrorRuntime,
 
 		// FakeIt / School
-		"fakeit_School": localFaker.School,
+		"fakeit_School": g.localFaker.School,
 
 		// FakeIt / Song
-		"fakeit_SongName":   localFaker.SongName,
-		"fakeit_SongArtist": localFaker.SongArtist,
-		"fakeit_SongGenre":  localFaker.SongGenre,
+		"fakeit_SongName":   g.localFaker.SongName,
+		"fakeit_SongArtist": g.localFaker.SongArtist,
+		"fakeit_SongGenre":  g.localFaker.SongGenre,
 	}
 }
