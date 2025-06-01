@@ -1,9 +1,11 @@
 package requests
 
 import (
+	"bytes"
 	"context"
 	"math/rand"
 	"net/url"
+	"text/template"
 	"time"
 
 	"github.com/aykhans/dodo/config"
@@ -19,6 +21,11 @@ type RequestGeneratorFunc func() *fasthttp.Request
 type Request struct {
 	getClient  ClientGeneratorFunc
 	getRequest RequestGeneratorFunc
+}
+
+type keyValueGenerator struct {
+	key   func() string
+	value func() string
 }
 
 // Send sends the HTTP request using the fasthttp client with a specified timeout.
@@ -101,26 +108,28 @@ func getRequestGeneratorFunc(
 	bodies []string,
 	localRand *rand.Rand,
 ) RequestGeneratorFunc {
-	bodiesLen := len(bodies)
-	getBody := func() string { return "" }
-	if bodiesLen == 1 {
-		getBody = func() string { return bodies[0] }
-	} else if bodiesLen > 1 {
-		getBody = utils.RandomValueCycle(bodies, localRand)
-	}
-
 	getParams := getKeyValueGeneratorFunc(params, localRand)
 	getHeaders := getKeyValueGeneratorFunc(headers, localRand)
 	getCookies := getKeyValueGeneratorFunc(cookies, localRand)
+	getBody := getBodyValueFunc(bodies, utils.NewFuncMapGenerator(localRand), localRand)
 
 	return func() *fasthttp.Request {
+		body, contentType := getBody()
+		headers := getHeaders()
+		if contentType != "" {
+			headers = append(headers, types.KeyValue[string, string]{
+				Key:   "Content-Type",
+				Value: contentType,
+			})
+		}
+
 		return newFasthttpRequest(
 			URL,
 			getParams(),
-			getHeaders(),
+			headers,
 			getCookies(),
 			method,
-			getBody(),
+			body,
 		)
 	}
 }
@@ -199,45 +208,134 @@ func getKeyValueGeneratorFunc[
 	keyValueSlice []types.KeyValue[string, []string],
 	localRand *rand.Rand,
 ) func() T {
-	getKeyValueSlice := []map[string]func() string{}
-	isRandom := false
+	keyValueGenerators := make([]keyValueGenerator, len(keyValueSlice))
 
-	for _, kv := range keyValueSlice {
-		if valuesLen := len(kv.Value); valuesLen > 1 {
-			isRandom = true
+	funcMap := *utils.NewFuncMapGenerator(localRand).GetFuncMap()
+
+	for i, kv := range keyValueSlice {
+		keyValueGenerators[i] = keyValueGenerator{
+			key:   getKeyFunc(kv.Key, funcMap),
+			value: getValueFunc(kv.Value, funcMap, localRand),
 		}
-
-		getKeyValueSlice = append(
-			getKeyValueSlice,
-			map[string]func() string{
-				kv.Key: utils.RandomValueCycle(kv.Value, localRand),
-			},
-		)
 	}
 
-	if isRandom {
-		return func() T {
-			keyValues := make(T, len(getKeyValueSlice))
-			for i, keyValue := range getKeyValueSlice {
-				for key, value := range keyValue {
-					keyValues[i] = types.KeyValue[string, string]{
-						Key:   key,
-						Value: value(),
-					}
-				}
-			}
-			return keyValues
-		}
-	} else {
-		keyValues := make(T, len(getKeyValueSlice))
-		for i, keyValue := range getKeyValueSlice {
-			for key, value := range keyValue {
-				keyValues[i] = types.KeyValue[string, string]{
-					Key:   key,
-					Value: value(),
-				}
+	return func() T {
+		keyValues := make(T, len(keyValueGenerators))
+		for i, keyValue := range keyValueGenerators {
+			keyValues[i] = types.KeyValue[string, string]{
+				Key:   keyValue.key(),
+				Value: keyValue.value(),
 			}
 		}
-		return func() T { return keyValues }
+		return keyValues
+	}
+}
+
+// getKeyFunc creates a function that processes a key string through Go's template engine.
+// It takes a key string and a template.FuncMap containing the available template functions.
+//
+// The returned function, when called, will execute the template with the given key and return
+// the processed string result. If template parsing fails, the returned function will always
+// return an empty string.
+//
+// This enables dynamic generation of keys that can include template directives and functions.
+func getKeyFunc(key string, funcMap template.FuncMap) func() string {
+	t, err := template.New("default").Funcs(funcMap).Parse(key)
+	if err != nil {
+		return func() string { return "" }
+	}
+
+	return func() string {
+		var buf bytes.Buffer
+		_ = t.Execute(&buf, nil)
+		return buf.String()
+	}
+}
+
+// getValueFunc creates a function that randomly selects and processes a value from a slice of strings
+// through Go's template engine.
+//
+// Parameters:
+//   - values: A slice of string templates that can contain template directives
+//   - funcMap: A template.FuncMap containing all available template functions
+//   - localRand: A random number generator for consistent randomization
+//
+// The returned function, when called, will:
+//  1. Select a random template from the values slice
+//  2. Execute the selected template
+//  3. Return the processed string result
+//
+// If a selected template is nil (due to earlier parsing failure), the function will return an empty string.
+// This enables dynamic generation of values with randomized selection from multiple templates.
+func getValueFunc(
+	values []string,
+	funcMap template.FuncMap,
+	localRand *rand.Rand,
+) func() string {
+	templates := make([]*template.Template, len(values))
+
+	for i, value := range values {
+		t, err := template.New("default").Funcs(funcMap).Parse(value)
+		if err != nil {
+			templates[i] = nil
+		}
+		templates[i] = t
+	}
+
+	randomTemplateFunc := utils.RandomValueCycle(templates, localRand)
+
+	return func() string {
+		if tmpl := randomTemplateFunc(); tmpl == nil {
+			return ""
+		} else {
+			var buf bytes.Buffer
+			_ = tmpl.Execute(&buf, nil)
+			return buf.String()
+		}
+	}
+}
+
+// getBodyValueFunc creates a function that randomly selects and processes a request body from a slice of templates.
+// It returns a closure that generates both the body content and the appropriate Content-Type header value.
+//
+// Parameters:
+//   - values: A slice of string templates that can contain template directives for request bodies
+//   - funcMapGenerator: Provides template functions and content type information
+//   - localRand: A random number generator for consistent randomization
+//
+// The returned function, when called, will:
+//  1. Select a random body template from the values slice
+//  2. Execute the selected template with available template functions
+//  3. Return both the processed body string and the appropriate Content-Type header value
+//
+// If the selected template is nil (due to earlier parsing failure), the function will return
+// empty strings for both the body and Content-Type.
+//
+// This enables dynamic generation of request bodies with proper content type headers.
+func getBodyValueFunc(
+	values []string,
+	funcMapGenerator *utils.FuncMapGenerator,
+	localRand *rand.Rand,
+) func() (string, string) {
+	templates := make([]*template.Template, len(values))
+
+	for i, value := range values {
+		t, err := template.New("default").Funcs(*funcMapGenerator.GetFuncMap()).Parse(value)
+		if err != nil {
+			templates[i] = nil
+		}
+		templates[i] = t
+	}
+
+	randomTemplateFunc := utils.RandomValueCycle(templates, localRand)
+
+	return func() (string, string) {
+		if tmpl := randomTemplateFunc(); tmpl == nil {
+			return "", ""
+		} else {
+			var buf bytes.Buffer
+			_ = tmpl.Execute(&buf, nil)
+			return buf.String(), funcMapGenerator.GetBodyDataHeader()
+		}
 	}
 }

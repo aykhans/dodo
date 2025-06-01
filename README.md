@@ -12,10 +12,11 @@
 - [Usage](#usage)
     - [1. CLI Usage](#1-cli-usage)
     - [2. Config File Usage](#2-config-file-usage)
-        - [2.1 JSON Example](#21-json-example)
-        - [2.2 YAML/YML Example](#22-yamlyml-example)
+        - [2.1 YAML/YML Example](#21-yamlyml-example)
+        - [2.2 JSON Example](#22-json-example)
     - [3. CLI & Config File Combination](#3-cli--config-file-combination)
 - [Config Parameters Reference](#config-parameters-reference)
+- [Template Functions](#template-functions)
 
 ## Installation
 
@@ -73,7 +74,84 @@ docker run --rm -i aykhans/dodo -u https://example.com -m GET -d 10 -r 1000 -o 1
 
 Send 1000 GET requests to https://example.com with 10 parallel dodos (threads), each with a timeout of 800 milliseconds, within a maximum duration of 250 seconds:
 
-#### 2.1 JSON Example
+#### 2.1 YAML/YML Example
+
+```yaml
+method: "GET"
+url: "https://example.com"
+yes: false
+timeout: "800ms"
+dodos: 10
+requests: 1000
+duration: "250s"
+skip_verify: false
+
+params:
+    # A random value will be selected from the list for first "key1" param on each request
+    # And always "value" for second "key1" param on each request
+    # e.g. "?key1=value2&key1=value"
+    - key1: ["value1", "value2", "value3", "value4"]
+    - key1: "value"
+
+    # A random value will be selected from the list for param "key2" on each request
+    # e.g. "?key2=value2"
+    - key2: ["value1", "value2"]
+
+headers:
+    # A random value will be selected from the list for first "key1" header on each request
+    # And always "value" for second "key1" header on each request
+    # e.g. "key1: value3", "key1: value"
+    - key1: ["value1", "value2", "value3", "value4"]
+    - key1: "value"
+
+    # A random value will be selected from the list for header "key2" on each request
+    # e.g. "key2: value2"
+    - key2: ["value1", "value2"]
+
+cookies:
+    # A random value will be selected from the list for first "key1" cookie on each request
+    # And always "value" for second "key1" cookie on each request
+    # e.g. "key1=value4; key1=value"
+    - key1: ["value1", "value2", "value3", "value4"]
+    - key1: "value"
+
+    # A random value will be selected from the list for cookie "key2" on each request
+    # e.g. "key2=value1"
+    - key2: ["value1", "value2"]
+
+body: "body-text"
+# OR
+# A random body value will be selected from the list for each request
+body:
+    - "body-text1"
+    - "body-text2"
+    - "body-text3"
+
+proxy: "http://example.com:8080"
+# OR
+# A random proxy will be selected from the list for each request
+proxy:
+    - "http://example.com:8080"
+    - "http://username:password@example.com:8080"
+    - "socks5://example.com:8080"
+    - "socks5h://example.com:8080"
+```
+
+```sh
+dodo -f /path/config.yaml
+# OR
+dodo -f https://example.com/config.yaml
+```
+
+With Docker:
+
+```sh
+docker run --rm -i -v /path/to/config.yaml:/config.yaml aykhans/dodo -f /config.yaml
+# OR
+docker run --rm -i aykhans/dodo -f https://example.com/config.yaml
+```
+
+#### 2.2 JSON Example
 
 ```jsonc
 {
@@ -153,83 +231,6 @@ docker run --rm -i -v /path/to/config.json:/config.json aykhans/dodo
 docker run --rm -i aykhans/dodo -f https://example.com/config.json
 ```
 
-#### 2.2 YAML/YML Example
-
-```yaml
-method: "GET"
-url: "https://example.com"
-yes: false
-timeout: "800ms"
-dodos: 10
-requests: 1000
-duration: "250s"
-skip_verify: false
-
-params:
-    # A random value will be selected from the list for first "key1" param on each request
-    # And always "value" for second "key1" param on each request
-    # e.g. "?key1=value2&key1=value"
-    - key1: ["value1", "value2", "value3", "value4"]
-    - key1: "value"
-
-    # A random value will be selected from the list for param "key2" on each request
-    # e.g. "?key2=value2"
-    - key2: ["value1", "value2"]
-
-headers:
-    # A random value will be selected from the list for first "key1" header on each request
-    # And always "value" for second "key1" header on each request
-    # e.g. "key1: value3", "key1: value"
-    - key1: ["value1", "value2", "value3", "value4"]
-    - key1: "value"
-
-    # A random value will be selected from the list for header "key2" on each request
-    # e.g. "key2: value2"
-    - key2: ["value1", "value2"]
-
-cookies:
-    # A random value will be selected from the list for first "key1" cookie on each request
-    # And always "value" for second "key1" cookie on each request
-    # e.g. "key1=value4; key1=value"
-    - key1: ["value1", "value2", "value3", "value4"]
-    - key1: "value"
-
-    # A random value will be selected from the list for cookie "key2" on each request
-    # e.g. "key2=value1"
-    - key2: ["value1", "value2"]
-
-body: "body-text"
-# OR
-# A random body value will be selected from the list for each request
-body:
-    - "body-text1"
-    - "body-text2"
-    - "body-text3"
-
-proxy: "http://example.com:8080"
-# OR
-# A random proxy will be selected from the list for each request
-proxy:
-    - "http://example.com:8080"
-    - "http://username:password@example.com:8080"
-    - "socks5://example.com:8080"
-    - "socks5h://example.com:8080"
-```
-
-```sh
-dodo -f /path/config.yaml
-# OR
-dodo -f https://example.com/config.yaml
-```
-
-With Docker:
-
-```sh
-docker run --rm -i -v /path/to/config.yaml:/config.yaml aykhans/dodo -f /config.yaml
-# OR
-docker run --rm -i aykhans/dodo -f https://example.com/config.yaml
-```
-
 ### 3. CLI & Config File Combination
 
 CLI arguments override config file values:
@@ -264,3 +265,55 @@ If `Headers`, `Params`, `Cookies`, `Body`, or `Proxy` fields have multiple value
 | Body            | body        | -body        | -b             | String OR [String]             | Request body or list of request bodies                      | -       |
 | Proxy           | proxies     | -proxy       | -x             | String OR [String]             | Proxy URL or list of proxy URLs                             | -       |
 | Skip Verify     | skip_verify | -skip-verify |                | Boolean                        | Skip SSL/TLS certificate verification                       | false   |
+
+## Template Functions
+
+Dodo supports template functions in `Headers`, `Params`, `Cookies`, and `Body` fields. These functions allow you to generate dynamic values for each request.
+
+You can use Go template syntax to include dynamic values in your requests. Here's how to use template functions:
+
+In CLI config:
+
+```sh
+dodo -u https://example.com -r 1 \
+    -header "User-Agent:{{ fakeit_UserAgent }}" \ # e.g. "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko)"
+    -param "username={{ strings_ToUpper fakeit_Username }}" \ # e.g. "username=JOHN BOB"
+    -cookie "token={{ fakeit_Password true true true true true 10 }}" \ # e.g. token=1234567890abcdef1234567890abcdef
+    -body '{"email":"{{ fakeit_Email }}", "password":"{{ fakeit_Password true true true true true 10 }}"}' # e.g. {"email":"john.doe@example.com", "password":"12rw4d-78d"}
+```
+
+In YAML/YML config:
+
+```yaml
+headers:
+    - User-Agent: "{{ fakeit_UserAgent }}" # e.g. "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko)"
+    - "Random-Header-{{fakeit_FirstName}}": "static_value" # e.g. "Random-Header-John: static_value"
+
+cookies:
+    - token: "Bearer {{ fakeit_UUID }}" # e.g. "token=Bearer 1234567890abcdef1234567890abcdef"
+
+params:
+    - id: "{{ fakeit_Uint }}" # e.g. "id=1234567890"
+    - username: "{{ fakeit_Username }}" # e.g. "username=John Doe"
+
+body:
+    - '{ "username": "{{ fakeit_Username }}", "password": "{{ fakeit_Password }}" }' # e.g. { "username": "john.doe", "password": "password123" }
+    - '{ "email": "{{ fakeit_Email }}", "phone": "{{ fakeit_Phone }}" }' # e.g. { "email": "john.doe@example.com", "phone": "1234567890" }
+    - '{{ body_FormData (dict_Str "username" fakeit_Username "password" "secret123") }}' # Creates multipart form data for form submissions, automatically sets the appropriate Content-Type header.
+```
+
+In JSON config:
+
+```jsonc
+{
+    "headers": [
+        { "User-Agent": "{{ fakeit_UserAgent }}" }, // e.g. "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko)"
+    ],
+    "body": [
+        "{ \"username\": \"{{ strings_RemoveSpaces fakeit_Username }}\", \"password\": \"{{ fakeit_Password }}\" }", // e.g. { "username": "johndoe", "password": "password123" }
+        "{{ body_FormData (dict_Str \"username\" fakeit_Username \"password\" \"12345\") }}", // Creates multipart form data for form submissions, automatically sets the appropriate Content-Type header.
+    ],
+}
+```
+
+For the full list of template functions over 200 functions, refer to the `NewFuncMap` function in `utils/templates.go`.
