@@ -3,6 +3,26 @@
 <img width="30%" height="30%" src="https://ftp.aykhans.me/web/client/pubshares/VzPtSHS7yPQT7ngoZzZSNU/browse?path=%2Fdodo.png">
 </p>
 
+<div align="center">
+  <h4>
+      <a href="./EXAMPLES.md">
+          Examples
+      </a>
+      <span> | </span>
+      <a href="#installation">
+          Install
+      </a>
+      <span> | </span>
+      <a href="https://hub.docker.com/r/aykhans/dodo">
+          Docker
+      </a>
+  </h4>
+  <br>
+    <a href="https://coff.ee/aykhan">
+        <img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" style="height: 40px !important;width: 150px !important;">
+    </a>
+</div>
+
 ## Table of Contents
 
 - [Installation](#installation)
@@ -244,6 +264,8 @@ With Docker:
 ```sh
 docker run --rm -i -v /path/to/config.json:/config.json aykhans/dodo -f /config.json -u https://example.com -m GET -d 10 -r 1000 -o 1m -t 5s
 ```
+
+You can find more usage examples in the [EXAMPLES.md](./EXAMPLES.md) file.
 
 ## Config Parameters Reference
 

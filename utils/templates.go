@@ -81,19 +81,27 @@ func (g *FuncMapGenerator) newFuncMap() *template.FuncMap {
 		},
 		"strings_TrimPrefix": strings.TrimPrefix,
 		"strings_TrimSuffix": strings.TrimSuffix,
+		"strings_Join": func(sep string, values ...string) string {
+			return strings.Join(values, sep)
+		},
 
 		// Dict
-		"dict_Str": func(values ...any) map[string]string {
+		"dict_Str": func(values ...string) map[string]string {
 			dict := make(map[string]string)
 			for i := 0; i < len(values); i += 2 {
 				if i+1 < len(values) {
-					key := values[i].(string)
-					value := values[i+1].(string)
+					key := values[i]
+					value := values[i+1]
 					dict[key] = value
 				}
 			}
 			return dict
 		},
+
+		// Slice
+		"slice_Str":  func(values ...string) []string { return values },
+		"slice_Int":  func(values ...int) []int { return values },
+		"slice_Uint": func(values ...uint) []uint { return values },
 
 		// Body
 		"body_FormData": func(kv map[string]string) string {
@@ -383,12 +391,16 @@ func (g *FuncMapGenerator) newFuncMap() *template.FuncMap {
 		"fakeit_Number":       g.localFaker.Number,
 		"fakeit_Int":          g.localFaker.Int,
 		"fakeit_IntN":         g.localFaker.IntN,
+		"fakeit_IntRange":     g.localFaker.IntRange,
+		"fakeit_RandomInt":    g.localFaker.RandomInt,
 		"fakeit_Int8":         g.localFaker.Int8,
 		"fakeit_Int16":        g.localFaker.Int16,
 		"fakeit_Int32":        g.localFaker.Int32,
 		"fakeit_Int64":        g.localFaker.Int64,
 		"fakeit_Uint":         g.localFaker.Uint,
 		"fakeit_UintN":        g.localFaker.UintN,
+		"fakeit_UintRange":    g.localFaker.UintRange,
+		"fakeit_RandomUint":   g.localFaker.RandomUint,
 		"fakeit_Uint8":        g.localFaker.Uint8,
 		"fakeit_Uint16":       g.localFaker.Uint16,
 		"fakeit_Uint32":       g.localFaker.Uint32,
@@ -400,12 +412,18 @@ func (g *FuncMapGenerator) newFuncMap() *template.FuncMap {
 		"fakeit_HexUint":      g.localFaker.HexUint,
 
 		// FakeIt / String
-		"fakeit_Digit":    g.localFaker.Digit,
-		"fakeit_DigitN":   g.localFaker.DigitN,
-		"fakeit_Letter":   g.localFaker.Letter,
-		"fakeit_LetterN":  g.localFaker.LetterN,
+		"fakeit_Digit":   g.localFaker.Digit,
+		"fakeit_DigitN":  g.localFaker.DigitN,
+		"fakeit_Letter":  g.localFaker.Letter,
+		"fakeit_LetterN": g.localFaker.LetterN,
+		"fakeit_LetterNN": func(min, max uint) string {
+			return g.localFaker.LetterN(g.localFaker.UintRange(min, max))
+		},
 		"fakeit_Lexify":   g.localFaker.Lexify,
 		"fakeit_Numerify": g.localFaker.Numerify,
+		"fakeit_RandomString": func(values ...string) string {
+			return g.localFaker.RandomString(values)
+		},
 
 		// FakeIt / Celebrity
 		"fakeit_CelebrityActor":    g.localFaker.CelebrityActor,
