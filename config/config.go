@@ -159,9 +159,6 @@ func (config *Config) Validate() []error {
 	if utils.IsNilOrZero(config.URL) {
 		errs = append(errs, errors.New("request URL is required"))
 	} else {
-		if config.URL.Scheme == "" {
-			config.URL.Scheme = "http"
-		}
 		if config.URL.Scheme != "http" && config.URL.Scheme != "https" {
 			errs = append(errs, errors.New("request URL scheme must be http or https"))
 		}
