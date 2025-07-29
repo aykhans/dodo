@@ -4,7 +4,7 @@ go 1.24.2
 
 require (
 	github.com/brianvoe/gofakeit/v7 v7.3.0
-	github.com/jedib0t/go-pretty/v6 v6.6.7
+	github.com/jedib0t/go-pretty/v6 v6.6.8
 	github.com/valyala/fasthttp v1.64.0
 	gopkg.in/yaml.v3 v3.0.1
 )
