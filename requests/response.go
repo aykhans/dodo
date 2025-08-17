@@ -14,47 +14,30 @@ type Response struct {
 	Time     time.Duration
 }
 
-type Responses []*Response
+type Responses []Response
 
 // Print prints the responses in a tabular format, including information such as
 // response count, minimum time, maximum time, average time, and latency percentiles.
 func (responses Responses) Print() {
-	total := struct {
-		Count int
-		Min   time.Duration
-		Max   time.Duration
-		Sum   time.Duration
-		P90   time.Duration
-		P95   time.Duration
-		P99   time.Duration
-	}{
-		Count: len(responses),
-		Min:   responses[0].Time,
-		Max:   responses[0].Time,
+	if len(responses) == 0 {
+		return
 	}
-	mergedResponses := make(map[string]types.Durations)
-	var allDurations types.Durations
 
-	for _, response := range responses {
-		if response.Time < total.Min {
-			total.Min = response.Time
-		}
-		if response.Time > total.Max {
-			total.Max = response.Time
-		}
-		total.Sum += response.Time
+	mergedResponses := make(map[string]types.Durations)
+
+	totalDurations := make(types.Durations, len(responses))
+	var totalSum time.Duration
+	totalCount := len(responses)
+
+	for i, response := range responses {
+		totalSum += response.Time
+		totalDurations[i] = response.Time
 
 		mergedResponses[response.Response] = append(
 			mergedResponses[response.Response],
 			response.Time,
 		)
-		allDurations = append(allDurations, response.Time)
 	}
-	allDurations.Sort()
-	allDurationsLenAsFloat := float64(len(allDurations) - 1)
-	total.P90 = allDurations[int(0.90*allDurationsLenAsFloat)]
-	total.P95 = allDurations[int(0.95*allDurationsLenAsFloat)]
-	total.P99 = allDurations[int(0.99*allDurationsLenAsFloat)]
 
 	t := table.NewWriter()
 	t.SetOutputMirror(os.Stdout)
@@ -93,15 +76,18 @@ func (responses Responses) Print() {
 	}
 
 	if len(mergedResponses) > 1 {
+		totalDurations.Sort()
+		allDurationsLenAsFloat := float64(len(totalDurations) - 1)
+
 		t.AppendRow(table.Row{
 			"Total",
-			total.Count,
-			utils.DurationRoundBy(total.Min, roundPrecision),
-			utils.DurationRoundBy(total.Max, roundPrecision),
-			utils.DurationRoundBy(total.Sum/time.Duration(total.Count), roundPrecision), // Average
-			utils.DurationRoundBy(total.P90, roundPrecision),
-			utils.DurationRoundBy(total.P95, roundPrecision),
-			utils.DurationRoundBy(total.P99, roundPrecision),
+			totalCount,
+			utils.DurationRoundBy(totalDurations[0], roundPrecision),
+			utils.DurationRoundBy(totalDurations[len(totalDurations)-1], roundPrecision),
+			utils.DurationRoundBy(totalSum/time.Duration(totalCount), roundPrecision), // Average
+			utils.DurationRoundBy(totalDurations[int(0.90*allDurationsLenAsFloat)], roundPrecision),
+			utils.DurationRoundBy(totalDurations[int(0.95*allDurationsLenAsFloat)], roundPrecision),
+			utils.DurationRoundBy(totalDurations[int(0.99*allDurationsLenAsFloat)], roundPrecision),
 		})
 	}
 	t.Render()

@@ -1,6 +1,7 @@
 package types
 
 import (
+	"slices"
 	"sort"
 	"time"
 )
@@ -14,9 +15,7 @@ func (d Durations) Sort(ascending ...bool) {
 			return d[i] > d[j]
 		})
 	} else { // Otherwise, sort in ascending order
-		sort.Slice(d, func(i, j int) bool {
-			return d[i] < d[j]
-		})
+		slices.Sort(d)
 	}
 }
 
