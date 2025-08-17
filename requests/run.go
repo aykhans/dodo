@@ -66,7 +66,7 @@ func releaseDodos(
 		streamWG            sync.WaitGroup
 		requestCountPerDodo uint
 		dodosCount          = requestConfig.GetValidDodosCountForRequests()
-		responses           = make([][]*Response, dodosCount)
+		responses           = make([][]Response, dodosCount)
 		increase            = make(chan int64, requestConfig.RequestCount)
 	)
 
@@ -123,7 +123,7 @@ func sendRequestByCount(
 	request *Request,
 	timeout time.Duration,
 	requestCount uint,
-	responseData *[]*Response,
+	responseData *[]Response,
 	increase chan<- int64,
 	wg *sync.WaitGroup,
 ) {
@@ -146,7 +146,7 @@ func sendRequestByCount(
 				if err == types.ErrInterrupt {
 					return
 				}
-				*responseData = append(*responseData, &Response{
+				*responseData = append(*responseData, Response{
 					Response: err.Error(),
 					Time:     completedTime,
 				})
@@ -154,7 +154,7 @@ func sendRequestByCount(
 				return
 			}
 
-			*responseData = append(*responseData, &Response{
+			*responseData = append(*responseData, Response{
 				Response: strconv.Itoa(response.StatusCode()),
 				Time:     completedTime,
 			})
@@ -170,7 +170,7 @@ func sendRequest(
 	ctx context.Context,
 	request *Request,
 	timeout time.Duration,
-	responseData *[]*Response,
+	responseData *[]Response,
 	increase chan<- int64,
 	wg *sync.WaitGroup,
 ) {
@@ -193,7 +193,7 @@ func sendRequest(
 				if err == types.ErrInterrupt {
 					return
 				}
-				*responseData = append(*responseData, &Response{
+				*responseData = append(*responseData, Response{
 					Response: err.Error(),
 					Time:     completedTime,
 				})
@@ -201,7 +201,7 @@ func sendRequest(
 				return
 			}
 
-			*responseData = append(*responseData, &Response{
+			*responseData = append(*responseData, Response{
 				Response: strconv.Itoa(response.StatusCode()),
 				Time:     completedTime,
 			})
