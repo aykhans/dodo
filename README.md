@@ -1,5 +1,7 @@
 <h1 align="center">Dodo - A Fast and Easy-to-Use HTTP Benchmarking Tool</h1>
 
+![Usage](https://ftp.aykhans.me/web/client/pubshares/VzPtSHS7yPQT7ngoZzZSNU/browse?path=/dodo_demonstrate.gif)
+
 <div align="center">
   <h4>
       <a href="./EXAMPLES.md">
