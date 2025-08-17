@@ -1,6 +1,6 @@
 module github.com/aykhans/dodo
 
-go 1.24.2
+go 1.25
 
 require (
 	github.com/brianvoe/gofakeit/v7 v7.3.0
