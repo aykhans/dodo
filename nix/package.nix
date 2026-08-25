@@ -1,3 +1,4 @@
+# test marker: remove with the branch
 { lib
 , buildGoModule
 , go_1_26
