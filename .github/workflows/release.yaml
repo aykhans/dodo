@@ -24,6 +24,9 @@ jobs:
   nix:
     name: Verify Nix package
     uses: ./.github/workflows/nix.yaml
+    permissions:
+      contents: read
+      pull-requests: write
     with:
       ref: ${{ inputs.tag || github.ref }}
 
