@@ -29,7 +29,6 @@
     ldflags+=("-X 'go.aykhans.me/sarin/internal/version.GoVersion=$(go version)'")
   '';
 
-  # cmd/cli produces a binary named "cli"; rename it to "sarin".
   postInstall = ''
     mv $out/bin/cli $out/bin/sarin
   '';

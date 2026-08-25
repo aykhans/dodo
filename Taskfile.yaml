@@ -39,6 +39,11 @@ tasks:
     cmds:
       - "{{.GOLANGCI}} run"
 
+  nix-hash:
+    desc: Recompute nix/package.nix vendorHash after a dependency change.
+    cmds:
+      - nix run nixpkgs#nix-update -- --flake --version=skip --no-src default
+
   test:
     desc: Run Go tests.
     cmds:
