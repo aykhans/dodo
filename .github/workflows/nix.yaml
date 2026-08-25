@@ -21,16 +21,152 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: nix-${{ github.event_name }}-${{ github.event.pull_request.number || github.ref }}
+  # Keyed on the PR author, which is stable across the fix-up push, so the run
+  # started by that push cannot cancel the run that made it.
+  cancel-in-progress: ${{ github.event_name == 'pull_request' && github.event.pull_request.user.login != 'dependabot[bot]' }}
+
+env:
+  SELF_HOSTED_PR: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository }}
+  IS_DEPENDABOT: ${{ github.actor == 'dependabot[bot]' }}
+
 jobs:
   build:
     name: build
     runs-on: ubuntu-latest
+    permissions:
+      # The only write is git push, which authenticates with the PAT that
+      # checkout persists, not with GITHUB_TOKEN.
+      contents: read
+      pull-requests: write
     steps:
       - uses: actions/checkout@v7
         with:
-          ref: ${{ inputs.ref || github.ref }}
+          # head.sha, not the merge ref: the hash is computed for the tree that
+          # gets pushed, and the run that verifies it must build that same tree.
+          ref: ${{ inputs.ref || github.event.pull_request.head.sha || github.ref }}
+          token: ${{ (env.IS_DEPENDABOT == 'true' && secrets.DEPENDABOT) || secrets.GITHUB_TOKEN }}
+
       - uses: cachix/install-nix-action@v31
         with:
           github_access_token: ${{ secrets.GITHUB_TOKEN }}
+
       - name: nix build
+        id: build
+        continue-on-error: ${{ env.SELF_HOSTED_PR == 'true' }}
         run: nix build .#default --no-link --print-build-logs
+
+      - name: Recompute vendorHash
+        id: hash
+        if: steps.build.outcome == 'failure' && env.SELF_HOSTED_PR == 'true'
+        run: |
+          nix run nixpkgs#nix-update -- --flake --version=skip --no-src default
+
+          # An unchanged hash means the build broke for some other reason. Say
+          # nothing and let the job fail on the real error.
+          if git diff --quiet -- nix/package.nix; then
+            echo "stale=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          echo "stale=true" >> "$GITHUB_OUTPUT"
+          sed -n 's/^[[:space:]]*vendorHash = "\([^"]*\)".*/hash=\1/p' nix/package.nix >> "$GITHUB_OUTPUT"
+
+      - name: Push vendorHash fix
+        if: steps.hash.outputs.stale == 'true' && env.IS_DEPENDABOT == 'true'
+        env:
+          HEAD_REF: ${{ github.head_ref }}
+          PUSH_TOKEN: ${{ secrets.DEPENDABOT }}
+        run: |
+          if [ -z "$PUSH_TOKEN" ]; then
+            echo "::error::the DEPENDABOT push token is missing from the Dependabot secret store"
+            exit 1
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add nix/package.nix
+          git commit -m "fix(nix): update vendorHash [dependabot skip]"
+          git push origin "HEAD:refs/heads/$HEAD_REF"
+          echo "::notice::vendorHash updated and pushed; the run on the new commit decides this PR"
+
+      - name: Comment stale vendorHash
+        if: steps.hash.outputs.stale == 'true' && env.IS_DEPENDABOT != 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR: ${{ github.event.pull_request.number }}
+          HASH: ${{ steps.hash.outputs.hash }}
+        run: |
+          marker='<!-- vendorhash-bot -->'
+          body=$(cat <<EOF
+          $marker
+          ### \`nix/package.nix\` vendorHash is stale
+
+          This branch changes the Go dependencies, so the vendor derivation no longer matches the pinned hash and \`nix build\` fails.
+
+          \`\`\`nix
+          vendorHash = "$HASH";
+          \`\`\`
+
+          Run \`task nix-hash\` locally and commit the result, or paste the hash above.
+          EOF
+          )
+
+          # Keep one sticky comment instead of a new one on every push. Without
+          # the explicit check a failed lookup reads as "no comment yet" and
+          # posts a duplicate; piping into head would hide the exit status.
+          if ! matches=$(gh api --paginate "repos/$GITHUB_REPOSITORY/issues/$PR/comments?per_page=100" \
+                           --jq ".[] | select(.user.login == \"github-actions[bot]\" and ((.body // \"\") | contains(\"$marker\"))) | .id"); then
+            echo "::error::could not list the pull request comments"
+            exit 1
+          fi
+          id=$(printf '%s\n' "$matches" | head -n 1)
+          if [ -n "$id" ]; then
+            gh api -X PATCH "repos/$GITHUB_REPOSITORY/issues/comments/$id" -f body="$body" >/dev/null
+          else
+            gh pr comment "$PR" --body "$body"
+          fi
+
+      # Once the hash is fixed the build passes and the step above stops running,
+      # so without this the comment keeps claiming the branch is broken under a
+      # green check.
+      - name: Resolve stale vendorHash comment
+        # Gated on the hash rather than the build: a later push can fix the hash
+        # while the build still fails for an unrelated reason, and the comment
+        # must stop blaming the vendor derivation either way. Skipped when the
+        # recompute itself errored, since then we do not know.
+        if: ${{ !cancelled() && env.SELF_HOSTED_PR == 'true' && steps.hash.outputs.stale != 'true' && steps.hash.outcome != 'failure' }}
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR: ${{ github.event.pull_request.number }}
+          BUILD: ${{ steps.build.outcome }}
+        run: |
+          marker='<!-- vendorhash-bot -->'
+          if ! matches=$(gh api --paginate "repos/$GITHUB_REPOSITORY/issues/$PR/comments?per_page=100" \
+                           --jq ".[] | select(.user.login == \"github-actions[bot]\" and ((.body // \"\") | contains(\"$marker\"))) | .id"); then
+            echo "::error::could not list the pull request comments"
+            exit 1
+          fi
+          id=$(printf '%s\n' "$matches" | head -n 1)
+          [ -n "$id" ] || exit 0
+
+          if [ "$BUILD" = "success" ]; then
+            detail='`nix build` passes on this branch.'
+          else
+            detail='The build is failing for another reason; see the workflow log.'
+          fi
+          body=$(cat <<EOF
+          $marker
+          ### \`nix/package.nix\` vendorHash is up to date
+
+          $detail
+          EOF
+          )
+          gh api -X PATCH "repos/$GITHUB_REPOSITORY/issues/comments/$id" -f body="$body" >/dev/null
+
+      - name: Report build failure
+        if: ${{ !cancelled() && steps.build.outcome == 'failure' && !(env.IS_DEPENDABOT == 'true' && steps.hash.outputs.stale == 'true') }}
+        run: |
+          echo "::error file=nix/package.nix::nix build failed; see the log above"
+          exit 1
