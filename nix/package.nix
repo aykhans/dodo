@@ -7,11 +7,11 @@
 
 (buildGoModule.override { go = go_1_26; }) (finalAttrs: {
   pname = "sarin";
-  version = "1.4.2"; # bump per release
+  version = "1.4.3"; # bump per release
 
   src = lib.cleanSource ../.;
 
-  vendorHash = "sha256-Yn1d2NbPYhlXzoJl4QbmZ/K7/UdwheWLj2mLyegRPvM=";
+  vendorHash = "sha256-dSPX3PVDrSyvDVZfXkoaT5VBhIBY4E5hUwwC1XhAdQ4=";
 
   subPackages = [ "cmd/cli" ];
 

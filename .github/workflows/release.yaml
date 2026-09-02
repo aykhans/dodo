@@ -2,20 +2,7 @@ name: Build and Release
 
 on:
   release:
-    types: [created]
-  workflow_dispatch:
-    inputs:
-      tag:
-        description: "Release tag (e.g., v1.0.0)"
-        required: true
-      build_binaries:
-        description: "Build and upload binaries"
-        type: boolean
-        default: true
-      build_docker:
-        description: "Build and push Docker image"
-        type: boolean
-        default: true
+    types: [published]
 
 permissions:
   contents: write
@@ -28,26 +15,53 @@ jobs:
       contents: read
       pull-requests: write
     with:
-      ref: ${{ inputs.tag || github.ref }}
+      ref: ${{ github.ref }}
 
-  # nix/package.nix carries its own version string that has to be bumped by
-  # hand; catch a forgotten bump before the tag ships.
+  # Gate: the tag must come from main, agree with the pre-release flag, and match
+  # the hand-bumped version in nix/package.nix.
   version:
-    name: Verify package version
+    name: Verify release
     runs-on: ubuntu-latest
     permissions:
       contents: read
+    env:
+      TAG: ${{ github.ref_name }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v7
         with:
-          ref: ${{ inputs.tag || github.ref }}
+          ref: ${{ github.ref }}
+          # Full history so the tag can be located on main's first-parent line.
+          fetch-depth: 0
+
+      - name: Check the tag is on main
+        run: |
+          git fetch --no-tags origin "+refs/heads/main:refs/remotes/origin/main"
+          git rev-list --first-parent refs/remotes/origin/main > "$RUNNER_TEMP/first-parent.txt"
+          if ! grep -qxF "$GITHUB_SHA" "$RUNNER_TEMP/first-parent.txt"; then
+            echo "::error::$TAG ($GITHUB_SHA) is not on main; releases must be cut from main"
+            exit 1
+          fi
+
+      - name: Check the tag matches the pre-release flag
+        env:
+          PRERELEASE: ${{ github.event.release.prerelease }}
+        run: |
+          # The flag comes from the checkbox, not the tag name, so without this a
+          # tag like v1.5.0-rc1 published as stable would move :latest.
+          case "$TAG" in
+            *-*)
+              if [ "$PRERELEASE" != "true" ]; then
+                echo "::error::tag '$TAG' carries a pre-release suffix but the release is not marked as a pre-release"
+                exit 1
+              fi
+              ;;
+          esac
 
       - name: Check nix/package.nix matches the release tag
-        env:
-          TAG: ${{ inputs.tag || github.ref_name }}
         run: |
           expected="${TAG#v}"
+          expected="${expected%%-*}"
           actual="$(sed -n 's/^[[:space:]]*version = "\([^"]*\)".*/\1/p' nix/package.nix | head -1)"
           if [ -z "$actual" ]; then
             echo "::error file=nix/package.nix::could not read the version string"
@@ -68,7 +82,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v7
         with:
-          ref: ${{ inputs.tag || github.ref }}
+          ref: ${{ github.ref }}
 
       - name: Set build metadata
         run: |
@@ -77,14 +91,12 @@ jobs:
           echo "GO_VERSION=1.26.5" >> $GITHUB_ENV
 
       - name: Set up Go
-        if: github.event_name == 'release' || inputs.build_binaries
         uses: actions/setup-go@v7
         with:
           go-version: ${{ env.GO_VERSION }}
           cache: true
 
       - name: Build binaries
-        if: github.event_name == 'release' || inputs.build_binaries
         run: |
           LDFLAGS="-X 'go.aykhans.me/sarin/internal/version.Version=${{ env.VERSION }}' \
                    -X 'go.aykhans.me/sarin/internal/version.GitCommit=${{ env.GIT_COMMIT }}' \
@@ -102,29 +114,24 @@ jobs:
           CGO_ENABLED=0 GOOS=windows GOARCH=arm64 go build -ldflags "$LDFLAGS" -o ./sarin-windows-arm64.exe ./cmd/cli/main.go
 
       - name: Upload Release Assets
-        if: github.event_name == 'release' || inputs.build_binaries
         uses: softprops/action-gh-release@v3
         with:
-          tag_name: ${{ inputs.tag || github.ref_name }}
+          tag_name: ${{ github.ref_name }}
           files: ./sarin-*
 
       - name: Set up QEMU
-        if: github.event_name == 'release' || inputs.build_docker
         uses: docker/setup-qemu-action@v4
 
       - name: Set up Docker Buildx
-        if: github.event_name == 'release' || inputs.build_docker
         uses: docker/setup-buildx-action@v4
 
       - name: Login to Docker Hub
-        if: github.event_name == 'release' || inputs.build_docker
         uses: docker/login-action@v4
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Build and push Docker image
-        if: github.event_name == 'release' || inputs.build_docker
         uses: docker/build-push-action@v7
         with:
           context: .
@@ -134,6 +141,56 @@ jobs:
             VERSION=${{ env.VERSION }}
             GIT_COMMIT=${{ env.GIT_COMMIT }}
             GO_VERSION=${{ env.GO_VERSION }}
+          # A pre-release must not take over the tag people get by default.
           tags: |
             ${{ secrets.DOCKERHUB_USERNAME }}/sarin:${{ env.VERSION }}
-            ${{ secrets.DOCKERHUB_USERNAME }}/sarin:latest
+            ${{ !github.event.release.prerelease && format('{0}/sarin:latest', secrets.DOCKERHUB_USERNAME) || '' }}
+
+  # Moving pointer at the newest stable release, so flake users can follow
+  # releases instead of main. Fast-forward only.
+  release-branch:
+    name: Advance release branch
+    needs: build
+    if: ${{ !github.event.release.prerelease }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    # Serialize: concurrent releases would otherwise race the push.
+    concurrency:
+      group: release-branch
+      cancel-in-progress: false
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+        with:
+          # The checks below compare against $GITHUB_SHA; check out exactly that.
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+
+      - name: Point release at the tag
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          # Refresh: checkout fetched this, but as of a few seconds ago.
+          git fetch --no-tags origin "+refs/heads/release:refs/remotes/origin/release" || true
+
+          if git rev-parse --verify --quiet refs/remotes/origin/release >/dev/null; then
+            # At or behind the pointer: a re-run of this or an older release.
+            if git merge-base --is-ancestor "$GITHUB_SHA" refs/remotes/origin/release; then
+              if [ "$(git rev-parse refs/remotes/origin/release)" = "$GITHUB_SHA" ]; then
+                echo "::notice::release is already at $TAG"
+              else
+                echo "::warning::release is ahead of $TAG; leaving it alone"
+              fi
+              exit 0
+            fi
+            # The version job put this commit on main, so a pointer that is neither
+            # behind nor ahead is off main history and can never fast-forward again.
+            if ! git merge-base --is-ancestor refs/remotes/origin/release "$GITHUB_SHA"; then
+              echo "::error::release ($(git rev-parse --short refs/remotes/origin/release)) has diverged from main and can no longer fast-forward to $TAG; reset it by hand"
+              exit 1
+            fi
+          fi
+
+          git push origin "$GITHUB_SHA:refs/heads/release"
+          echo "::notice::release branch now points at $TAG"
