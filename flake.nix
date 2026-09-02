@@ -32,7 +32,7 @@
         };
       });
 
-      # nix run github:aykhans/sarin -- <args>
+      # nix run github:aykhans/sarin/release -- <args>
       apps = forAllSystems (pkgs: {
         default = {
           type = "app";

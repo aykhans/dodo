@@ -61,26 +61,28 @@ docker run --rm -it aykhans/sarin -f https://example.com/config.yaml
 Run directly without installing (requires flakes enabled):
 
 ```sh
-nix run github:aykhans/sarin -- -U http://example.com -r 100 -c 10
+nix run github:aykhans/sarin/release -- -U http://example.com -r 100 -c 10
 ```
 
 Install into your profile:
 
 ```sh
-nix profile install github:aykhans/sarin
+nix profile install github:aykhans/sarin/release
 ```
 
 Or add it to your own flake via the overlay:
 
 ```nix
 {
-  inputs.sarin.url = "github:aykhans/sarin";
+  inputs.sarin.url = "github:aykhans/sarin/release";
 
   # In your outputs, apply the overlay to nixpkgs:
   # nixpkgs.overlays = [ inputs.sarin.overlays.default ];
   # then reference pkgs.sarin
 }
 ```
+
+The `release` branch tracks the newest stable release cut from `main`, so `nix flake update` moves between releases rather than following every commit; pre-releases are excluded. Pin an exact release with `github:aykhans/sarin/v1.4.2`, or track development with `github:aykhans/sarin` (the `main` branch).
 
 </details>
 
