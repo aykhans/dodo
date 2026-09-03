@@ -1,4 +1,4 @@
-ARG GO_VERSION=1.26.5
+ARG GO_VERSION=1.26.7
 
 FROM docker.io/library/golang:${GO_VERSION}-alpine AS builder
 

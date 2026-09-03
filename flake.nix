@@ -36,7 +36,7 @@
       apps = forAllSystems (pkgs: {
         default = {
           type = "app";
-          program = "${self.packages.${pkgs.system}.default}/bin/sarin";
+          program = "${self.packages.${pkgs.stdenv.hostPlatform.system}.default}/bin/sarin";
           meta.description = "High-performance HTTP load testing tool";
         };
       });

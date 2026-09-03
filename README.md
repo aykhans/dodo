@@ -96,7 +96,7 @@ Download the latest binaries from the [releases](https://github.com/aykhans/sari
 <details>
 <summary><b>Building from Source</b></summary>
 
-Requires [Go 1.26+](https://golang.org/dl/).
+Requires the [Go version declared in `go.mod`](go.mod).
 
 ```sh
 git clone https://github.com/aykhans/sarin.git && cd sarin

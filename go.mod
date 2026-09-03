@@ -1,6 +1,6 @@
 module go.aykhans.me/sarin
 
-go 1.26.5
+go 1.26.7
 
 require (
 	charm.land/bubbles/v2 v2.2.1
