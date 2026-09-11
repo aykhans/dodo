@@ -1,11 +1,12 @@
-{ lib
-, buildGoModule
-, go_1_26
-, rev ? "unknown"
-, buildDate ? "unknown"
+{
+  lib,
+  buildGoModule,
+  go_1_27,
+  rev ? "unknown",
+  buildDate ? "unknown",
 }:
 
-(buildGoModule.override { go = go_1_26; }) (finalAttrs: {
+(buildGoModule.override { go = go_1_27; }) (finalAttrs: {
   pname = "sarin";
   version = "1.4.3"; # bump per release
 
