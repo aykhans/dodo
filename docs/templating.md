@@ -356,23 +356,25 @@ These functions are powered by [gofakeit](https://github.com/brianvoe/gofakeit) 
 
 ### Person
 
-| Function                | Description            | Example Output           |
-| ----------------------- | ---------------------- | ------------------------ |
-| `fakeit_Name`           | Full name              | `"Markus Moen"`          |
-| `fakeit_NamePrefix`     | Name prefix            | `"Mr."`                  |
-| `fakeit_NameSuffix`     | Name suffix            | `"Jr."`                  |
-| `fakeit_FirstName`      | First name             | `"Markus"`               |
-| `fakeit_MiddleName`     | Middle name            | `"Belinda"`              |
-| `fakeit_LastName`       | Last name              | `"Daniel"`               |
-| `fakeit_Gender`         | Gender                 | `"male"`                 |
-| `fakeit_Age`            | Age                    | `40`                     |
-| `fakeit_Ethnicity`      | Ethnicity              | `"German"`               |
-| `fakeit_SSN`            | Social Security Number | `"296446360"`            |
-| `fakeit_EIN`            | Employer ID Number     | `"12-3456789"`           |
-| `fakeit_Hobby`          | Hobby                  | `"Swimming"`             |
-| `fakeit_Email`          | Email address          | `"markusmoen@pagac.net"` |
-| `fakeit_Phone`          | Phone number           | `"6136459948"`           |
-| `fakeit_PhoneFormatted` | Formatted phone        | `"136-459-9489"`         |
+| Function                | Description            | Example Output                                                      |
+| ----------------------- | ---------------------- | ------------------------------------------------------------------- |
+| `fakeit_Name`           | Full name              | `"Markus Moen"`                                                     |
+| `fakeit_NamePrefix`     | Name prefix            | `"Mr."`                                                             |
+| `fakeit_NameSuffix`     | Name suffix            | `"Jr."`                                                             |
+| `fakeit_FirstName`      | First name             | `"Markus"`                                                          |
+| `fakeit_MiddleName`     | Middle name            | `"Belinda"`                                                         |
+| `fakeit_LastName`       | Last name              | `"Daniel"`                                                          |
+| `fakeit_Gender`         | Gender                 | `"male"`                                                            |
+| `fakeit_Age`            | Age                    | `40`                                                                |
+| `fakeit_Ethnicity`      | Ethnicity              | `"German"`                                                          |
+| `fakeit_SSN`            | Social Security Number | `"296446360"`                                                       |
+| `fakeit_EIN`            | Employer ID Number     | `"12-3456789"`                                                      |
+| `fakeit_Hobby`          | Hobby                  | `"Swimming"`                                                        |
+| `fakeit_SocialMedia`    | Social media profile   | `"https://twitter.com/ImpossibleTrousers"`                          |
+| `fakeit_Bio`            | Biography              | `"Born in New York, John grew up to become a Software Engineer..."` |
+| `fakeit_Email`          | Email address          | `"markusmoen@pagac.net"`                                            |
+| `fakeit_Phone`          | Phone number           | `"6136459948"`                                                      |
+| `fakeit_PhoneFormatted` | Formatted phone        | `"136-459-9489"`                                                    |
 
 ### Generate
 
@@ -407,6 +409,18 @@ These functions are powered by [gofakeit](https://github.com/brianvoe/gofakeit) 
 | `fakeit_Longitude`                                  | Random longitude             | `-147.068112`                                        |
 | `fakeit_LatitudeInRange(min float64, max float64)`  | Latitude in specified range  | `{{ fakeit_LatitudeInRange 0 90 }}` → `22.921026`    |
 | `fakeit_LongitudeInRange(min float64, max float64)` | Longitude in specified range | `{{ fakeit_LongitudeInRange 0 180 }}` → `122.471830` |
+
+### Airline
+
+| Function                      | Description       | Example Output                                       |
+| ----------------------------- | ----------------- | ---------------------------------------------------- |
+| `fakeit_AirlineAircraftType`  | Aircraft type     | `"narrowbody"`                                       |
+| `fakeit_AirlineAirplane`      | Airplane model    | `"Airbus A320"`                                      |
+| `fakeit_AirlineAirport`       | Airport name      | `"Hartsfield-Jackson Atlanta International Airport"` |
+| `fakeit_AirlineAirportIATA`   | Airport IATA code | `"ATL"`                                              |
+| `fakeit_AirlineFlightNumber`  | Flight number     | `"AA1234"`                                           |
+| `fakeit_AirlineRecordLocator` | Booking reference | `"ABCDEF"`                                           |
+| `fakeit_AirlineSeat`          | Seat assignment   | `"12A"`                                              |
 
 ### Game
 
@@ -451,10 +465,14 @@ These functions are powered by [gofakeit](https://github.com/brianvoe/gofakeit) 
 | `fakeit_NounCollectiveThing`       | Collective noun (thing)     | `"bunch"`        |
 | `fakeit_NounCountable`             | Countable noun              | `"book"`         |
 | `fakeit_NounUncountable`           | Uncountable noun            | `"water"`        |
+| `fakeit_NounProper`                | Proper noun                 | `"John"`         |
+| `fakeit_NounDeterminer`            | Noun determiner             | `"your"`         |
 | `fakeit_Verb`                      | Random verb                 | `"run"`          |
 | `fakeit_VerbAction`                | Action verb                 | `"jump"`         |
 | `fakeit_VerbLinking`               | Linking verb                | `"is"`           |
 | `fakeit_VerbHelping`               | Helping verb                | `"can"`          |
+| `fakeit_VerbTransitive`            | Transitive verb             | `"follow"`       |
+| `fakeit_VerbIntransitive`          | Intransitive verb           | `"laugh"`        |
 | `fakeit_Adverb`                    | Random adverb               | `"quickly"`      |
 | `fakeit_AdverbManner`              | Manner adverb               | `"carefully"`    |
 | `fakeit_AdverbDegree`              | Degree adverb               | `"very"`         |
@@ -483,6 +501,7 @@ These functions are powered by [gofakeit](https://github.com/brianvoe/gofakeit) 
 | `fakeit_PronounDemonstrative`      | Demonstrative pronoun       | `"that"`         |
 | `fakeit_PronounInterrogative`      | Interrogative pronoun       | `"who"`          |
 | `fakeit_PronounRelative`           | Relative pronoun            | `"which"`        |
+| `fakeit_PronounIndefinite`         | Indefinite pronoun          | `"few"`          |
 | `fakeit_Connective`                | Random connective           | `"however"`      |
 | `fakeit_ConnectiveTime`            | Time connective             | `"then"`         |
 | `fakeit_ConnectiveComparative`     | Comparative connective      | `"similarly"`    |
@@ -490,6 +509,7 @@ These functions are powered by [gofakeit](https://github.com/brianvoe/gofakeit) 
 | `fakeit_ConnectiveListing`         | Listing connective          | `"firstly"`      |
 | `fakeit_ConnectiveCasual`          | Casual connective           | `"because"`      |
 | `fakeit_ConnectiveExamplify`       | Examplify connective        | `"for example"`  |
+| `fakeit_Interjection`              | Interjection                | `"wow"`          |
 
 ### Text
 
@@ -503,6 +523,11 @@ These functions are powered by [gofakeit](https://github.com/brianvoe/gofakeit) 
 | `fakeit_Question`                                                                        | Random question                                 | `"What is your name?"`                                |
 | `fakeit_Quote`                                                                           | Random quote                                    | `"Life is what happens..."`                           |
 | `fakeit_Phrase`                                                                          | Random phrase                                   | `"a piece of cake"`                                   |
+| `fakeit_PhraseNoun`                                                                      | Noun phrase                                     | `"a tribe"`                                           |
+| `fakeit_PhraseVerb`                                                                      | Verb phrase                                     | `"fully integrate a system"`                          |
+| `fakeit_PhraseAdverb`                                                                    | Adverb phrase                                   | `"fully gladly"`                                      |
+| `fakeit_PhrasePreposition`                                                               | Preposition phrase                              | `"out the black thing"`                               |
+| `fakeit_Comment`                                                                         | Comment                                         | `"add some a little bit team"`                        |
 
 ### Foods
 
@@ -515,6 +540,7 @@ These functions are powered by [gofakeit](https://github.com/brianvoe/gofakeit) 
 | `fakeit_Dinner`    | Dinner food    | `"Wild addicting dip"`                   |
 | `fakeit_Snack`     | Snack          | `"Trail mix"`                            |
 | `fakeit_Dessert`   | Dessert        | `"French napoleons"`                     |
+| `fakeit_Drink`     | Drink          | `"Soda"`                                 |
 
 ### Misc
 
@@ -530,6 +556,7 @@ These functions are powered by [gofakeit](https://github.com/brianvoe/gofakeit) 
 | `fakeit_Color`      | Color name         | `"MediumOrchid"`                                          |
 | `fakeit_HexColor`   | Hex color          | `"#a99fb4"`                                               |
 | `fakeit_RGBColor`   | RGB color          | `[85, 224, 195]`                                          |
+| `fakeit_HSLColor`   | HSL color          | `[210, 85, 50]`                                           |
 | `fakeit_SafeColor`  | Safe color         | `"black"`                                                 |
 | `fakeit_NiceColors` | Nice color palette | `["#cfffdd", "#b4dec1", "#5c5863", "#a85163", "#ff1f4c"]` |
 
@@ -706,31 +733,35 @@ These functions are powered by [gofakeit](https://github.com/brianvoe/gofakeit) 
 | ----------------------------- | --------------------- | -------------- |
 | `fakeit_Language`             | Language              | `"English"`    |
 | `fakeit_LanguageAbbreviation` | Language abbreviation | `"en"`         |
+| `fakeit_LanguageBCP`          | BCP language tag      | `"en-US"`      |
 | `fakeit_ProgrammingLanguage`  | Programming language  | `"Go"`         |
 
 ### Number
 
-| Function                                        | Description                         | Example                                    |
-| ----------------------------------------------- | ----------------------------------- | ------------------------------------------ |
-| `fakeit_Number(min int, max int)`               | Random number in range              | `{{ fakeit_Number 1 100 }}` → `42`         |
-| `fakeit_Int`                                    | Random int                          | `{{ fakeit_Int }}`                         |
-| `fakeit_IntN(n int)`                            | Random int from 0 to n              | `{{ fakeit_IntN 100 }}`                    |
-| `fakeit_Int8`                                   | Random int8                         | `{{ fakeit_Int8 }}`                        |
-| `fakeit_Int16`                                  | Random int16                        | `{{ fakeit_Int16 }}`                       |
-| `fakeit_Int32`                                  | Random int32                        | `{{ fakeit_Int32 }}`                       |
-| `fakeit_Int64`                                  | Random int64                        | `{{ fakeit_Int64 }}`                       |
-| `fakeit_Uint`                                   | Random uint                         | `{{ fakeit_Uint }}`                        |
-| `fakeit_UintN(n uint)`                          | Random uint from 0 to n             | `{{ fakeit_UintN 100 }}`                   |
-| `fakeit_Uint8`                                  | Random uint8                        | `{{ fakeit_Uint8 }}`                       |
-| `fakeit_Uint16`                                 | Random uint16                       | `{{ fakeit_Uint16 }}`                      |
-| `fakeit_Uint32`                                 | Random uint32                       | `{{ fakeit_Uint32 }}`                      |
-| `fakeit_Uint64`                                 | Random uint64                       | `{{ fakeit_Uint64 }}`                      |
-| `fakeit_Float32`                                | Random float32                      | `{{ fakeit_Float32 }}`                     |
-| `fakeit_Float32Range(min float32, max float32)` | Random float32 in range             | `{{ fakeit_Float32Range 0 100 }}`          |
-| `fakeit_Float64`                                | Random float64                      | `{{ fakeit_Float64 }}`                     |
-| `fakeit_Float64Range(min float64, max float64)` | Random float64 in range             | `{{ fakeit_Float64Range 0 100 }}`          |
-| `fakeit_RandomInt(slice []int)`                 | Random int from slice               | `{{ fakeit_RandomInt (slice_Int 1 2 3) }}` |
-| `fakeit_HexUint(bits int)`                      | Random hex uint with specified bits | `{{ fakeit_HexUint 8 }}` → `"0xff"`        |
+| Function                                        | Description                         | Example                                      |
+| ----------------------------------------------- | ----------------------------------- | -------------------------------------------- |
+| `fakeit_Number(min int, max int)`               | Random number in range              | `{{ fakeit_Number 1 100 }}` → `42`           |
+| `fakeit_Int`                                    | Random int                          | `{{ fakeit_Int }}`                           |
+| `fakeit_IntN(n int)`                            | Random int from 0 to n              | `{{ fakeit_IntN 100 }}`                      |
+| `fakeit_Int8`                                   | Random int8                         | `{{ fakeit_Int8 }}`                          |
+| `fakeit_Int16`                                  | Random int16                        | `{{ fakeit_Int16 }}`                         |
+| `fakeit_Int32`                                  | Random int32                        | `{{ fakeit_Int32 }}`                         |
+| `fakeit_Int64`                                  | Random int64                        | `{{ fakeit_Int64 }}`                         |
+| `fakeit_IntRange(min int, max int)`             | Random int in range                 | `{{ fakeit_IntRange -10 10 }}`               |
+| `fakeit_Uint`                                   | Random uint                         | `{{ fakeit_Uint }}`                          |
+| `fakeit_UintN(n uint)`                          | Random uint from 0 to n             | `{{ fakeit_UintN 100 }}`                     |
+| `fakeit_Uint8`                                  | Random uint8                        | `{{ fakeit_Uint8 }}`                         |
+| `fakeit_Uint16`                                 | Random uint16                       | `{{ fakeit_Uint16 }}`                        |
+| `fakeit_Uint32`                                 | Random uint32                       | `{{ fakeit_Uint32 }}`                        |
+| `fakeit_Uint64`                                 | Random uint64                       | `{{ fakeit_Uint64 }}`                        |
+| `fakeit_UintRange(min uint, max uint)`          | Random uint in range                | `{{ fakeit_UintRange 10 100 }}`              |
+| `fakeit_Float32`                                | Random float32                      | `{{ fakeit_Float32 }}`                       |
+| `fakeit_Float32Range(min float32, max float32)` | Random float32 in range             | `{{ fakeit_Float32Range 0 100 }}`            |
+| `fakeit_Float64`                                | Random float64                      | `{{ fakeit_Float64 }}`                       |
+| `fakeit_Float64Range(min float64, max float64)` | Random float64 in range             | `{{ fakeit_Float64Range 0 100 }}`            |
+| `fakeit_RandomInt(slice []int)`                 | Random int from slice               | `{{ fakeit_RandomInt (slice_Int 1 2 3) }}`   |
+| `fakeit_RandomUint(slice []uint)`               | Random uint from slice              | `{{ fakeit_RandomUint (slice_Uint 1 2 3) }}` |
+| `fakeit_HexUint(bits int)`                      | Random hex uint with specified bits | `{{ fakeit_HexUint 8 }}` → `"0xff"`          |
 
 ### String
 
@@ -740,6 +771,7 @@ These functions are powered by [gofakeit](https://github.com/brianvoe/gofakeit) 
 | `fakeit_DigitN(n uint)`               | Generate `n` random digits      | `{{ fakeit_DigitN 5 }}` → `"71364"`                             |
 | `fakeit_Letter`                       | Single random letter            | `"g"`                                                           |
 | `fakeit_LetterN(n uint)`              | Generate `n` random letters     | `{{ fakeit_LetterN 10 }}` → `"gbRMaRxHki"`                      |
+| `fakeit_Vowel`                        | Single lowercase vowel          | `"a"`                                                           |
 | `fakeit_Lexify(pattern string)`       | Replace `?` with random letters | `{{ fakeit_Lexify "?????@??????.com" }}` → `"billy@mister.com"` |
 | `fakeit_Numerify(pattern string)`     | Replace `#` with random digits  | `{{ fakeit_Numerify "(###)###-####" }}` → `"(555)867-5309"`     |
 | `fakeit_RandomString(slice []string)` | Random string from slice        | `{{ fakeit_RandomString (slice_Str "a" "b" "c") }}`             |
@@ -795,12 +827,14 @@ These functions are powered by [gofakeit](https://github.com/brianvoe/gofakeit) 
 | Function                 | Description       | Example Output                     |
 | ------------------------ | ----------------- | ---------------------------------- |
 | `fakeit_Error`           | Random error      | `"connection refused"`             |
+| `fakeit_ErrorObject`     | Error object      | `"protocol"`                       |
 | `fakeit_ErrorDatabase`   | Database error    | `"database connection failed"`     |
 | `fakeit_ErrorGRPC`       | gRPC error        | `"rpc error: code = Unavailable"`  |
 | `fakeit_ErrorHTTP`       | HTTP error        | `"HTTP 500 Internal Server Error"` |
 | `fakeit_ErrorHTTPClient` | HTTP client error | `"HTTP 404 Not Found"`             |
 | `fakeit_ErrorHTTPServer` | HTTP server error | `"HTTP 503 Service Unavailable"`   |
 | `fakeit_ErrorRuntime`    | Runtime error     | `"panic: runtime error"`           |
+| `fakeit_ErrorValidation` | Validation error  | `"missing required field"`         |
 
 ### School
 

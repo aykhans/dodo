@@ -373,7 +373,7 @@ body: '{"ip": "{{ fakeit_IPv4Address }}", "timestamp": "{{ fakeit_Date }}", "act
 
 </details>
 
-> For the complete list of 340+ template functions, see the **[Templating Guide](templating.md)**.
+> For the complete list of 370+ template functions, see the **[Templating Guide](templating.md)**.
 
 ## Solving Captchas
 
