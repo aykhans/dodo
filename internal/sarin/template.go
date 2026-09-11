@@ -207,18 +207,20 @@ func NewDefaultTemplateFuncMap(randSource rand.Source, fileCache *FileCache) tem
 
 		// Fakeit / Person
 		// "fakeit_Person": fakeit.Person() *PersonInfo,
-		"fakeit_Name":       fakeit.Name,
-		"fakeit_NamePrefix": fakeit.NamePrefix,
-		"fakeit_NameSuffix": fakeit.NameSuffix,
-		"fakeit_FirstName":  fakeit.FirstName,
-		"fakeit_MiddleName": fakeit.MiddleName,
-		"fakeit_LastName":   fakeit.LastName,
-		"fakeit_Gender":     fakeit.Gender,
-		"fakeit_Age":        fakeit.Age,
-		"fakeit_Ethnicity":  fakeit.Ethnicity,
-		"fakeit_SSN":        fakeit.SSN,
-		"fakeit_EIN":        fakeit.EIN,
-		"fakeit_Hobby":      fakeit.Hobby,
+		"fakeit_Name":        fakeit.Name,
+		"fakeit_NamePrefix":  fakeit.NamePrefix,
+		"fakeit_NameSuffix":  fakeit.NameSuffix,
+		"fakeit_FirstName":   fakeit.FirstName,
+		"fakeit_MiddleName":  fakeit.MiddleName,
+		"fakeit_LastName":    fakeit.LastName,
+		"fakeit_Gender":      fakeit.Gender,
+		"fakeit_Age":         fakeit.Age,
+		"fakeit_Ethnicity":   fakeit.Ethnicity,
+		"fakeit_SSN":         fakeit.SSN,
+		"fakeit_EIN":         fakeit.EIN,
+		"fakeit_Hobby":       fakeit.Hobby,
+		"fakeit_SocialMedia": fakeit.SocialMedia,
+		"fakeit_Bio":         fakeit.Bio,
 		// "fakeit_Contact": fakeit.Contact() *ContactInfo,
 		"fakeit_Email":          fakeit.Email,
 		"fakeit_Phone":          fakeit.Phone,
@@ -231,6 +233,9 @@ func NewDefaultTemplateFuncMap(randSource rand.Source, fileCache *FileCache) tem
 		// "fakeit_Map": fakeit.Map() map[string]any,
 		// "fakeit_Generate": fakeit.Generate(value string) string,
 		"fakeit_Regex": fakeit.Regex,
+
+		// Fakeit / Database
+		// "fakeit_SQL": fakeit.SQL(so *SQLOptions) (string, error),
 
 		// Fakeit / Auth
 		"fakeit_Username": fakeit.Username,
@@ -269,6 +274,15 @@ func NewDefaultTemplateFuncMap(randSource rand.Source, fileCache *FileCache) tem
 			return value
 		},
 
+		// Fakeit / Airline
+		"fakeit_AirlineAircraftType":  fakeit.AirlineAircraftType,
+		"fakeit_AirlineAirplane":      fakeit.AirlineAirplane,
+		"fakeit_AirlineAirport":       fakeit.AirlineAirport,
+		"fakeit_AirlineAirportIATA":   fakeit.AirlineAirportIATA,
+		"fakeit_AirlineFlightNumber":  fakeit.AirlineFlightNumber,
+		"fakeit_AirlineRecordLocator": fakeit.AirlineRecordLocator,
+		"fakeit_AirlineSeat":          fakeit.AirlineSeat,
+
 		// Fakeit / Game
 		"fakeit_Gamertag": fakeit.Gamertag,
 		// "fakeit_Dice": fakeit.Dice(numDice uint, sides []uint) []uint,
@@ -302,12 +316,16 @@ func NewDefaultTemplateFuncMap(randSource rand.Source, fileCache *FileCache) tem
 		"fakeit_NounCollectiveThing":  fakeit.NounCollectiveThing,
 		"fakeit_NounCountable":        fakeit.NounCountable,
 		"fakeit_NounUncountable":      fakeit.NounUncountable,
+		"fakeit_NounProper":           fakeit.NounProper,
+		"fakeit_NounDeterminer":       fakeit.NounDeterminer,
 
 		// Verbs
-		"fakeit_Verb":        fakeit.Verb,
-		"fakeit_VerbAction":  fakeit.VerbAction,
-		"fakeit_VerbLinking": fakeit.VerbLinking,
-		"fakeit_VerbHelping": fakeit.VerbHelping,
+		"fakeit_Verb":             fakeit.Verb,
+		"fakeit_VerbAction":       fakeit.VerbAction,
+		"fakeit_VerbLinking":      fakeit.VerbLinking,
+		"fakeit_VerbHelping":      fakeit.VerbHelping,
+		"fakeit_VerbTransitive":   fakeit.VerbTransitive,
+		"fakeit_VerbIntransitive": fakeit.VerbIntransitive,
 
 		// Adverbs
 		"fakeit_Adverb":                    fakeit.Adverb,
@@ -344,6 +362,7 @@ func NewDefaultTemplateFuncMap(randSource rand.Source, fileCache *FileCache) tem
 		"fakeit_PronounDemonstrative": fakeit.PronounDemonstrative,
 		"fakeit_PronounInterrogative": fakeit.PronounInterrogative,
 		"fakeit_PronounRelative":      fakeit.PronounRelative,
+		"fakeit_PronounIndefinite":    fakeit.PronounIndefinite,
 
 		// Connectives
 		"fakeit_Connective":            fakeit.Connective,
@@ -355,7 +374,8 @@ func NewDefaultTemplateFuncMap(randSource rand.Source, fileCache *FileCache) tem
 		"fakeit_ConnectiveExamplify":   fakeit.ConnectiveExamplify,
 
 		// Words
-		"fakeit_Word": fakeit.Word,
+		"fakeit_Word":         fakeit.Word,
+		"fakeit_Interjection": fakeit.Interjection,
 
 		// Text
 		"fakeit_Sentence":            fakeit.Sentence,
@@ -366,6 +386,11 @@ func NewDefaultTemplateFuncMap(randSource rand.Source, fileCache *FileCache) tem
 		"fakeit_Question":            fakeit.Question,
 		"fakeit_Quote":               fakeit.Quote,
 		"fakeit_Phrase":              fakeit.Phrase,
+		"fakeit_PhraseNoun":          fakeit.PhraseNoun,
+		"fakeit_PhraseVerb":          fakeit.PhraseVerb,
+		"fakeit_PhraseAdverb":        fakeit.PhraseAdverb,
+		"fakeit_PhrasePreposition":   fakeit.PhrasePreposition,
+		"fakeit_Comment":             fakeit.Comment,
 
 		// Fakeit / Foods
 		"fakeit_Fruit":     fakeit.Fruit,
@@ -375,6 +400,7 @@ func NewDefaultTemplateFuncMap(randSource rand.Source, fileCache *FileCache) tem
 		"fakeit_Dinner":    fakeit.Dinner,
 		"fakeit_Snack":     fakeit.Snack,
 		"fakeit_Dessert":   fakeit.Dessert,
+		"fakeit_Drink":     fakeit.Drink,
 
 		// Fakeit / Misc
 		"fakeit_Bool": fakeit.Bool,
@@ -387,6 +413,7 @@ func NewDefaultTemplateFuncMap(randSource rand.Source, fileCache *FileCache) tem
 		"fakeit_Color":      fakeit.Color,
 		"fakeit_HexColor":   fakeit.HexColor,
 		"fakeit_RGBColor":   fakeit.RGBColor,
+		"fakeit_HSLColor":   fakeit.HSLColor,
 		"fakeit_SafeColor":  fakeit.SafeColor,
 		"fakeit_NiceColors": fakeit.NiceColors,
 
@@ -530,6 +557,7 @@ func NewDefaultTemplateFuncMap(randSource rand.Source, fileCache *FileCache) tem
 		// Fakeit / Language
 		"fakeit_Language":             fakeit.Language,
 		"fakeit_LanguageAbbreviation": fakeit.LanguageAbbreviation,
+		"fakeit_LanguageBCP":          fakeit.LanguageBCP,
 		"fakeit_ProgrammingLanguage":  fakeit.ProgrammingLanguage,
 
 		// Fakeit / Number
@@ -540,25 +568,29 @@ func NewDefaultTemplateFuncMap(randSource rand.Source, fileCache *FileCache) tem
 		"fakeit_Int16":        fakeit.Int16,
 		"fakeit_Int32":        fakeit.Int32,
 		"fakeit_Int64":        fakeit.Int64,
+		"fakeit_IntRange":     fakeit.IntRange,
 		"fakeit_Uint":         fakeit.Uint,
 		"fakeit_UintN":        fakeit.UintN,
 		"fakeit_Uint8":        fakeit.Uint8,
 		"fakeit_Uint16":       fakeit.Uint16,
 		"fakeit_Uint32":       fakeit.Uint32,
 		"fakeit_Uint64":       fakeit.Uint64,
+		"fakeit_UintRange":    fakeit.UintRange,
 		"fakeit_Float32":      fakeit.Float32,
 		"fakeit_Float32Range": fakeit.Float32Range,
 		"fakeit_Float64":      fakeit.Float64,
 		"fakeit_Float64Range": fakeit.Float64Range,
 		// "fakeit_ShuffleInts":  fakeit.ShuffleInts,
-		"fakeit_RandomInt": fakeit.RandomInt,
-		"fakeit_HexUint":   fakeit.HexUint,
+		"fakeit_RandomInt":  fakeit.RandomInt,
+		"fakeit_RandomUint": fakeit.RandomUint,
+		"fakeit_HexUint":    fakeit.HexUint,
 
 		// Fakeit / String
 		"fakeit_Digit":    fakeit.Digit,
 		"fakeit_DigitN":   fakeit.DigitN,
 		"fakeit_Letter":   fakeit.Letter,
 		"fakeit_LetterN":  fakeit.LetterN,
+		"fakeit_Vowel":    fakeit.Vowel,
 		"fakeit_Lexify":   fakeit.Lexify,
 		"fakeit_Numerify": fakeit.Numerify,
 		// "fakeit_ShuffleStrings": fakeit.ShuffleStrings,
@@ -602,12 +634,14 @@ func NewDefaultTemplateFuncMap(randSource rand.Source, fileCache *FileCache) tem
 
 		// Fakeit / Error
 		"fakeit_Error":           func() string { return fakeit.Error().Error() },
+		"fakeit_ErrorObject":     func() string { return fakeit.ErrorObject().Error() },
 		"fakeit_ErrorDatabase":   func() string { return fakeit.ErrorDatabase().Error() },
 		"fakeit_ErrorGRPC":       func() string { return fakeit.ErrorGRPC().Error() },
 		"fakeit_ErrorHTTP":       func() string { return fakeit.ErrorHTTP().Error() },
 		"fakeit_ErrorHTTPClient": func() string { return fakeit.ErrorHTTPClient().Error() },
 		"fakeit_ErrorHTTPServer": func() string { return fakeit.ErrorHTTPServer().Error() },
 		"fakeit_ErrorRuntime":    func() string { return fakeit.ErrorRuntime().Error() },
+		"fakeit_ErrorValidation": func() string { return fakeit.ErrorValidation().Error() },
 
 		// Fakeit / School
 		"fakeit_School": fakeit.School,

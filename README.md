@@ -27,7 +27,7 @@ Sarin is designed for efficient HTTP load testing with minimal resource consumpt
 | ✅ Supported                                               | ❌ Not Supported                |
 | ---------------------------------------------------------- | ------------------------------- |
 | High-performance with low memory footprint                 | Web UI or complex TUI           |
-| Dynamic requests via 340+ template functions               | Detailed response body analysis |
+| Dynamic requests via 370+ template functions               | Detailed response body analysis |
 | Request scripting with Lua and JavaScript                  | Distributed load testing        |
 | Multiple proxy protocols<br>(HTTP, HTTPS, SOCKS5, SOCKS5H) | HTTP/2, HTTP/3, WebSocket, gRPC |
 | Captcha solving<br>(2Captcha, Anti-Captcha, CapSolver)     | Plugins / extensions ecosystem  |
@@ -146,7 +146,7 @@ For detailed documentation on all configuration options (URL, method, timeout, c
 
 ## Templating
 
-Sarin supports Go templates in URL paths, methods, bodies, headers, params, cookies, and values. Use the 340+ built-in functions to generate dynamic data for each request.
+Sarin supports Go templates in URL paths, methods, bodies, headers, params, cookies, and values. Use the 370+ built-in functions to generate dynamic data for each request.
 
 **Example:**
 
