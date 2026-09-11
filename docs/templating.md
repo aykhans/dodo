@@ -249,7 +249,7 @@ The functions are organized by service: `twocaptcha_*`, `anticaptcha_*`, and `ca
 
 ### 2Captcha
 
-Functions for the [2Captcha](https://2captcha.com) service. Note: 2Captcha **does not currently support hCaptcha** through their API.
+Functions for the [2Captcha](https://2captcha.com) service. Sarin supports reCAPTCHA v2, reCAPTCHA v3, and Cloudflare Turnstile through this integration.
 
 | Function                                                                 | Description                                                               |
 | ------------------------------------------------------------------------ | ------------------------------------------------------------------------- |
@@ -259,7 +259,7 @@ Functions for the [2Captcha](https://2captcha.com) service. Note: 2Captcha **doe
 
 ### Anti-Captcha
 
-Functions for the [Anti-Captcha](https://anti-captcha.com) service. This is currently the only service that supports all four captcha types end-to-end.
+Functions for the [Anti-Captcha](https://anti-captcha.com) service. This is the only Sarin captcha integration that exposes an hCaptcha function.
 
 | Function                                                                  | Description                                                                                                           |
 | ------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
@@ -270,7 +270,7 @@ Functions for the [Anti-Captcha](https://anti-captcha.com) service. This is curr
 
 ### CapSolver
 
-Functions for the [CapSolver](https://capsolver.com) service. Note: CapSolver no longer supports hCaptcha.
+Functions for the [CapSolver](https://capsolver.com) service. Sarin supports reCAPTCHA v2, reCAPTCHA v3, and Cloudflare Turnstile through this integration.
 
 | Function                                                                | Description                                                               |
 | ----------------------------------------------------------------------- | ------------------------------------------------------------------------- |
@@ -302,7 +302,7 @@ body: |
 ```
 
 ```yaml
-# hCaptcha via Anti-Captcha (the only service that still supports it)
+# hCaptcha via Anti-Captcha
 method: POST
 url: https://example.com/protected
 body: |
@@ -325,10 +325,10 @@ These functions are powered by [gofakeit](https://github.com/brianvoe/gofakeit) 
 
 ### File
 
-| Function               | Description    | Example Output       |
-| ---------------------- | -------------- | -------------------- |
-| `fakeit_FileExtension` | File extension | `"nes"`              |
-| `fakeit_FileMimeType`  | MIME type      | `"application/json"` |
+| Function               | Description    | Example Output        |
+| ---------------------- | -------------- | --------------------- |
+| `fakeit_FileExtension` | File extension | `"nes"`               |
+| `fakeit_FileMimeType`  | MIME type      | `"application/x-wri"` |
 
 ### ID
 
@@ -347,7 +347,7 @@ These functions are powered by [gofakeit](https://github.com/brianvoe/gofakeit) 
 | `fakeit_ProductFeature`     | Product feature     | `"ultra-lightweight"`             |
 | `fakeit_ProductMaterial`    | Product material    | `"brass"`                         |
 | `fakeit_ProductUPC`         | UPC code            | `"012780949980"`                  |
-| `fakeit_ProductAudience`    | Target audience     | `["adults"]`                      |
+| `fakeit_ProductAudience`    | Target audience     | `[adults]`                        |
 | `fakeit_ProductDimension`   | Product dimension   | `"medium"`                        |
 | `fakeit_ProductUseCase`     | Use case            | `"home"`                          |
 | `fakeit_ProductBenefit`     | Product benefit     | `"comfort"`                       |
@@ -358,10 +358,10 @@ These functions are powered by [gofakeit](https://github.com/brianvoe/gofakeit) 
 
 | Function                | Description            | Example Output                                                      |
 | ----------------------- | ---------------------- | ------------------------------------------------------------------- |
-| `fakeit_Name`           | Full name              | `"Markus Moen"`                                                     |
+| `fakeit_Name`           | Full name              | `"Priscilla Thornton"`                                              |
 | `fakeit_NamePrefix`     | Name prefix            | `"Mr."`                                                             |
 | `fakeit_NameSuffix`     | Name suffix            | `"Jr."`                                                             |
-| `fakeit_FirstName`      | First name             | `"Markus"`                                                          |
+| `fakeit_FirstName`      | First name             | `"Priscilla"`                                                       |
 | `fakeit_MiddleName`     | Middle name            | `"Belinda"`                                                         |
 | `fakeit_LastName`       | Last name              | `"Daniel"`                                                          |
 | `fakeit_Gender`         | Gender                 | `"male"`                                                            |
@@ -372,7 +372,7 @@ These functions are powered by [gofakeit](https://github.com/brianvoe/gofakeit) 
 | `fakeit_Hobby`          | Hobby                  | `"Swimming"`                                                        |
 | `fakeit_SocialMedia`    | Social media profile   | `"https://twitter.com/ImpossibleTrousers"`                          |
 | `fakeit_Bio`            | Biography              | `"Born in New York, John grew up to become a Software Engineer..."` |
-| `fakeit_Email`          | Email address          | `"markusmoen@pagac.net"`                                            |
+| `fakeit_Email`          | Email address          | `"priscilla.thornton@duncan.biz"`                                   |
 | `fakeit_Phone`          | Phone number           | `"6136459948"`                                                      |
 | `fakeit_PhoneFormatted` | Formatted phone        | `"136-459-9489"`                                                    |
 
@@ -393,7 +393,7 @@ These functions are powered by [gofakeit](https://github.com/brianvoe/gofakeit) 
 
 | Function                                            | Description                  | Example Output                                       |
 | --------------------------------------------------- | ---------------------------- | ---------------------------------------------------- |
-| `fakeit_City`                                       | City name                    | `"Marcelside"`                                       |
+| `fakeit_City`                                       | City name                    | `"Reno"`                                             |
 | `fakeit_Country`                                    | Country name                 | `"United States of America"`                         |
 | `fakeit_CountryAbr`                                 | Country abbreviation         | `"US"`                                               |
 | `fakeit_State`                                      | State name                   | `"Illinois"`                                         |
@@ -402,7 +402,7 @@ These functions are powered by [gofakeit](https://github.com/brianvoe/gofakeit) 
 | `fakeit_StreetName`                                 | Street name                  | `"View"`                                             |
 | `fakeit_StreetNumber`                               | Street number                | `"13645"`                                            |
 | `fakeit_StreetPrefix`                               | Street prefix                | `"East"`                                             |
-| `fakeit_StreetSuffix`                               | Street suffix                | `"Ave"`                                              |
+| `fakeit_StreetSuffix`                               | Street suffix                | `"side"`                                             |
 | `fakeit_Unit`                                       | Unit                         | `"Apt 123"`                                          |
 | `fakeit_Zip`                                        | ZIP code                     | `"13645"`                                            |
 | `fakeit_Latitude`                                   | Random latitude              | `-73.534056`                                         |
@@ -424,9 +424,9 @@ These functions are powered by [gofakeit](https://github.com/brianvoe/gofakeit) 
 
 ### Game
 
-| Function          | Description | Example Output      |
-| ----------------- | ----------- | ------------------- |
-| `fakeit_Gamertag` | Gamer tag   | `"footinterpret63"` |
+| Function          | Description | Example Output    |
+| ----------------- | ----------- | ----------------- |
+| `fakeit_Gamertag` | Gamer tag   | `"TurkeyThinker"` |
 
 ### Beer
 
@@ -457,17 +457,17 @@ These functions are powered by [gofakeit](https://github.com/brianvoe/gofakeit) 
 | ---------------------------------- | --------------------------- | ---------------- |
 | `fakeit_Word`                      | Random word                 | `"example"`      |
 | `fakeit_Noun`                      | Random noun                 | `"computer"`     |
-| `fakeit_NounCommon`                | Common noun                 | `"table"`        |
+| `fakeit_NounCommon`                | Common noun                 | `"group"`        |
 | `fakeit_NounConcrete`              | Concrete noun               | `"chair"`        |
 | `fakeit_NounAbstract`              | Abstract noun               | `"freedom"`      |
 | `fakeit_NounCollectivePeople`      | Collective noun (people)    | `"team"`         |
-| `fakeit_NounCollectiveAnimal`      | Collective noun (animal)    | `"herd"`         |
+| `fakeit_NounCollectiveAnimal`      | Collective noun (animal)    | `"leap"`         |
 | `fakeit_NounCollectiveThing`       | Collective noun (thing)     | `"bunch"`        |
 | `fakeit_NounCountable`             | Countable noun              | `"book"`         |
 | `fakeit_NounUncountable`           | Uncountable noun            | `"water"`        |
 | `fakeit_NounProper`                | Proper noun                 | `"John"`         |
 | `fakeit_NounDeterminer`            | Noun determiner             | `"your"`         |
-| `fakeit_Verb`                      | Random verb                 | `"run"`          |
+| `fakeit_Verb`                      | Random verb                 | `"would"`        |
 | `fakeit_VerbAction`                | Action verb                 | `"jump"`         |
 | `fakeit_VerbLinking`               | Linking verb                | `"is"`           |
 | `fakeit_VerbHelping`               | Helping verb                | `"can"`          |
@@ -486,7 +486,7 @@ These functions are powered by [gofakeit](https://github.com/brianvoe/gofakeit) 
 | `fakeit_PrepositionDouble`         | Double preposition          | `"out of"`       |
 | `fakeit_PrepositionCompound`       | Compound preposition        | `"according to"` |
 | `fakeit_Adjective`                 | Random adjective            | `"beautiful"`    |
-| `fakeit_AdjectiveDescriptive`      | Descriptive adjective       | `"large"`        |
+| `fakeit_AdjectiveDescriptive`      | Descriptive adjective       | `"tired"`        |
 | `fakeit_AdjectiveQuantitative`     | Quantitative adjective      | `"many"`         |
 | `fakeit_AdjectiveProper`           | Proper adjective            | `"American"`     |
 | `fakeit_AdjectiveDemonstrative`    | Demonstrative adjective     | `"this"`         |
@@ -504,8 +504,8 @@ These functions are powered by [gofakeit](https://github.com/brianvoe/gofakeit) 
 | `fakeit_PronounIndefinite`         | Indefinite pronoun          | `"few"`          |
 | `fakeit_Connective`                | Random connective           | `"however"`      |
 | `fakeit_ConnectiveTime`            | Time connective             | `"then"`         |
-| `fakeit_ConnectiveComparative`     | Comparative connective      | `"similarly"`    |
-| `fakeit_ConnectiveComplaint`       | Complaint connective        | `"although"`     |
+| `fakeit_ConnectiveComparative`     | Comparative connective      | `"after all"`    |
+| `fakeit_ConnectiveComplaint`       | Complaint connective        | `"i.e."`         |
 | `fakeit_ConnectiveListing`         | Listing connective          | `"firstly"`      |
 | `fakeit_ConnectiveCasual`          | Casual connective           | `"because"`      |
 | `fakeit_ConnectiveExamplify`       | Examplify connective        | `"for example"`  |
@@ -513,21 +513,21 @@ These functions are powered by [gofakeit](https://github.com/brianvoe/gofakeit) 
 
 ### Text
 
-| Function                                                                                 | Description                                     | Example                                               |
-| ---------------------------------------------------------------------------------------- | ----------------------------------------------- | ----------------------------------------------------- |
-| `fakeit_Sentence(wordCount ...int)`                                                      | Random sentence (optional word count)           | `{{ fakeit_Sentence }}` or `{{ fakeit_Sentence 10 }}` |
-| `fakeit_Paragraph`                                                                       | Random paragraph                                | `{{ fakeit_Paragraph }}`                              |
-| `fakeit_LoremIpsumWord`                                                                  | Lorem ipsum word                                | `"lorem"`                                             |
-| `fakeit_LoremIpsumSentence(wordCount int)`                                               | Lorem ipsum sentence with specified word count  | `{{ fakeit_LoremIpsumSentence 5 }}`                   |
-| `fakeit_LoremIpsumParagraph(paragraphs int, sentences int, words int, separator string)` | Lorem ipsum paragraphs with specified structure | `{{ fakeit_LoremIpsumParagraph 1 3 5 "\n" }}`         |
-| `fakeit_Question`                                                                        | Random question                                 | `"What is your name?"`                                |
-| `fakeit_Quote`                                                                           | Random quote                                    | `"Life is what happens..."`                           |
-| `fakeit_Phrase`                                                                          | Random phrase                                   | `"a piece of cake"`                                   |
-| `fakeit_PhraseNoun`                                                                      | Noun phrase                                     | `"a tribe"`                                           |
-| `fakeit_PhraseVerb`                                                                      | Verb phrase                                     | `"fully integrate a system"`                          |
-| `fakeit_PhraseAdverb`                                                                    | Adverb phrase                                   | `"fully gladly"`                                      |
-| `fakeit_PhrasePreposition`                                                               | Preposition phrase                              | `"out the black thing"`                               |
-| `fakeit_Comment`                                                                         | Comment                                         | `"add some a little bit team"`                        |
+| Function                                                                                 | Description                                     | Example                                       |
+| ---------------------------------------------------------------------------------------- | ----------------------------------------------- | --------------------------------------------- |
+| `fakeit_Sentence`                                                                        | Random sentence                                 | `{{ fakeit_Sentence }}`                       |
+| `fakeit_Paragraph`                                                                       | Random paragraph                                | `{{ fakeit_Paragraph }}`                      |
+| `fakeit_LoremIpsumWord`                                                                  | Lorem ipsum word                                | `"eveniet"`                                   |
+| `fakeit_LoremIpsumSentence(wordCount int)`                                               | Lorem ipsum sentence with specified word count  | `{{ fakeit_LoremIpsumSentence 5 }}`           |
+| `fakeit_LoremIpsumParagraph(paragraphs int, sentences int, words int, separator string)` | Lorem ipsum paragraphs with specified structure | `{{ fakeit_LoremIpsumParagraph 1 3 5 "\n" }}` |
+| `fakeit_Question`                                                                        | Random question                                 | `"What is the marginal gain from fear?"`      |
+| `fakeit_Quote`                                                                           | Random quote                                    | `"Energy is contagious—so is fear"`           |
+| `fakeit_Phrase`                                                                          | Random phrase                                   | `"how many siblings do you have"`             |
+| `fakeit_PhraseNoun`                                                                      | Noun phrase                                     | `"a tribe"`                                   |
+| `fakeit_PhraseVerb`                                                                      | Verb phrase                                     | `"fully integrate a system"`                  |
+| `fakeit_PhraseAdverb`                                                                    | Adverb phrase                                   | `"fully gladly"`                              |
+| `fakeit_PhrasePreposition`                                                               | Preposition phrase                              | `"out the black thing"`                       |
+| `fakeit_Comment`                                                                         | Comment                                         | `"add some a little bit team"`                |
 
 ### Foods
 
@@ -551,21 +551,23 @@ These functions are powered by [gofakeit](https://github.com/brianvoe/gofakeit) 
 
 ### Color
 
-| Function            | Description        | Example Output                                            |
-| ------------------- | ------------------ | --------------------------------------------------------- |
-| `fakeit_Color`      | Color name         | `"MediumOrchid"`                                          |
-| `fakeit_HexColor`   | Hex color          | `"#a99fb4"`                                               |
-| `fakeit_RGBColor`   | RGB color          | `[85, 224, 195]`                                          |
-| `fakeit_HSLColor`   | HSL color          | `[210, 85, 50]`                                           |
-| `fakeit_SafeColor`  | Safe color         | `"black"`                                                 |
-| `fakeit_NiceColors` | Nice color palette | `["#cfffdd", "#b4dec1", "#5c5863", "#a85163", "#ff1f4c"]` |
+| Function            | Description        | Example Output                              |
+| ------------------- | ------------------ | ------------------------------------------- |
+| `fakeit_Color`      | Color name         | `"MediumOrchid"`                            |
+| `fakeit_HexColor`   | Hex color          | `"#a99fb4"`                                 |
+| `fakeit_RGBColor`   | RGB color          | `[85 224 195]`                              |
+| `fakeit_HSLColor`   | HSL color          | `[210 85 50]`                               |
+| `fakeit_SafeColor`  | Safe color         | `"black"`                                   |
+| `fakeit_NiceColors` | Nice color palette | `[#cfffdd #b4dec1 #5c5863 #a85163 #ff1f4c]` |
 
 ### Image
 
-| Function                                  | Description               | Example                          |
-| ----------------------------------------- | ------------------------- | -------------------------------- |
-| `fakeit_ImageJpeg(width int, height int)` | Generate JPEG image bytes | `{{ fakeit_ImageJpeg 100 100 }}` |
-| `fakeit_ImagePng(width int, height int)`  | Generate PNG image bytes  | `{{ fakeit_ImagePng 100 100 }}`  |
+| Function                                  | Description                | Example                          |
+| ----------------------------------------- | -------------------------- | -------------------------------- |
+| `fakeit_ImageJpeg(width int, height int)` | Generate a JPEG byte slice | `{{ fakeit_ImageJpeg 100 100 }}` |
+| `fakeit_ImagePng(width int, height int)`  | Generate a PNG byte slice  | `{{ fakeit_ImagePng 100 100 }}`  |
+
+> **Note:** Go templates render byte slices as decimal lists, not raw binary image data. Use `{{ json_Encode (fakeit_ImagePng 100 100) }}` to produce a Base64-encoded JSON string. These functions cannot write raw image bytes directly through body templating.
 
 ### Internet
 
@@ -594,16 +596,16 @@ These functions are powered by [gofakeit](https://github.com/brianvoe/gofakeit) 
 
 | Function           | Description     | Example Output     |
 | ------------------ | --------------- | ------------------ |
-| `fakeit_InputName` | HTML input name | `"email"`          |
+| `fakeit_InputName` | HTML input name | `"message"`        |
 | `fakeit_Svg`       | SVG image       | `"<svg>...</svg>"` |
 
 ### Date/Time
 
 | Function                                           | Description                       | Example                                                                              |
 | -------------------------------------------------- | --------------------------------- | ------------------------------------------------------------------------------------ |
-| `fakeit_Date`                                      | Random date                       | `2023-06-15 14:30:00`                                                                |
-| `fakeit_PastDate`                                  | Past date                         | `2022-03-10 09:15:00`                                                                |
-| `fakeit_FutureDate`                                | Future date                       | `2025-12-20 18:45:00`                                                                |
+| `fakeit_Date`                                      | Random date                       | `2013-11-07 04:31:13.726582492 +0000 UTC`                                            |
+| `fakeit_PastDate`                                  | Date 1–12 hours before now        | Current time − 1–12 hours                                                            |
+| `fakeit_FutureDate`                                | Date 1–12 hours after now         | Current time + 1–12 hours                                                            |
 | `fakeit_DateRange(start time.Time, end time.Time)` | Random date between start and end | `{{ fakeit_DateRange (strings_ToDate "2020-01-01") (strings_ToDate "2025-12-31") }}` |
 | `fakeit_NanoSecond`                                | Nanosecond                        | `123456789`                                                                          |
 | `fakeit_Second`                                    | Second (0-59)                     | `45`                                                                                 |
@@ -614,11 +616,11 @@ These functions are powered by [gofakeit](https://github.com/brianvoe/gofakeit) 
 | `fakeit_Day`                                       | Day (1-31)                        | `15`                                                                                 |
 | `fakeit_WeekDay`                                   | Weekday                           | `"Monday"`                                                                           |
 | `fakeit_Year`                                      | Year                              | `2024`                                                                               |
-| `fakeit_TimeZone`                                  | Timezone                          | `"America/New_York"`                                                                 |
+| `fakeit_TimeZone`                                  | Timezone name                     | `"West Pacific Standard Time"`                                                       |
 | `fakeit_TimeZoneAbv`                               | Timezone abbreviation             | `"EST"`                                                                              |
-| `fakeit_TimeZoneFull`                              | Full timezone                     | `"Eastern Standard Time"`                                                            |
+| `fakeit_TimeZoneFull`                              | Full timezone                     | `"(UTC+10:00) Guam, Port Moresby"`                                                   |
 | `fakeit_TimeZoneOffset`                            | Timezone offset                   | `-5`                                                                                 |
-| `fakeit_TimeZoneRegion`                            | Timezone region                   | `"America"`                                                                          |
+| `fakeit_TimeZoneRegion`                            | Timezone region                   | `"Indian/Chagos"`                                                                    |
 
 ### Payment
 
@@ -634,8 +636,8 @@ These functions are powered by [gofakeit](https://github.com/brianvoe/gofakeit) 
 | `fakeit_AchRouting`                      | ACH routing number                                    | `"513715684"`                                                  |
 | `fakeit_AchAccount`                      | ACH account number                                    | `"491527954328"`                                               |
 | `fakeit_BitcoinAddress`                  | Bitcoin address                                       | `"1BoatSLRHtKNngkdXEeobR76b53LETtpyT"`                         |
-| `fakeit_BitcoinPrivateKey`               | Bitcoin private key                                   | `"5HueCGU8rMjxEXxiPuD5BDuG6o5xjA7QkbPp"`                       |
-| `fakeit_BankName`                        | Bank name                                             | `"Wells Fargo"`                                                |
+| `fakeit_BitcoinPrivateKey`               | Bitcoin private key                                   | `"5JMZxkQX2PgaasaHc8wnWLNdMu7rxeU7xS64ev7RWNinacicPfm"`        |
+| `fakeit_BankName`                        | Bank name                                             | `"Toronto Dominion Bank"`                                      |
 | `fakeit_BankType`                        | Bank type                                             | `"Investment Bank"`                                            |
 
 ### Finance
@@ -647,17 +649,17 @@ These functions are powered by [gofakeit](https://github.com/brianvoe/gofakeit) 
 
 ### Company
 
-| Function               | Description    | Example Output                             |
-| ---------------------- | -------------- | ------------------------------------------ |
-| `fakeit_BS`            | Business speak | `"front-end"`                              |
-| `fakeit_Blurb`         | Company blurb  | `"word"`                                   |
-| `fakeit_BuzzWord`      | Buzzword       | `"disintermediate"`                        |
-| `fakeit_Company`       | Company name   | `"Moen, Pagac and Wuckert"`                |
-| `fakeit_CompanySuffix` | Company suffix | `"Inc"`                                    |
-| `fakeit_JobDescriptor` | Job descriptor | `"Central"`                                |
-| `fakeit_JobLevel`      | Job level      | `"Assurance"`                              |
-| `fakeit_JobTitle`      | Job title      | `"Director"`                               |
-| `fakeit_Slogan`        | Company slogan | `"Universal seamless Focus, interactive."` |
+| Function               | Description    | Example Output         |
+| ---------------------- | -------------- | ---------------------- |
+| `fakeit_BS`            | Business speak | `"front-end"`          |
+| `fakeit_Blurb`         | Company blurb  | `"Teamwork"`           |
+| `fakeit_BuzzWord`      | Buzzword       | `"disintermediate"`    |
+| `fakeit_Company`       | Company name   | `"TransparaGov"`       |
+| `fakeit_CompanySuffix` | Company suffix | `"Inc"`                |
+| `fakeit_JobDescriptor` | Job descriptor | `"Central"`            |
+| `fakeit_JobLevel`      | Job level      | `"Assurance"`          |
+| `fakeit_JobTitle`      | Job title      | `"Director"`           |
+| `fakeit_Slogan`        | Company slogan | `"Made of styrofoam."` |
 
 ### Hacker
 
@@ -722,9 +724,9 @@ These functions are powered by [gofakeit](https://github.com/brianvoe/gofakeit) 
 | `fakeit_EmojiTools`       | Tools emoji                                    | `"🔧"`                                                 |
 | `fakeit_EmojiWeather`     | Weather emoji                                  | `"☀️"`                                                 |
 | `fakeit_EmojiJob`         | Job emoji                                      | `"👨‍💻"`                                                 |
-| `fakeit_EmojiPerson`      | Person emoji                                   | `"👤"`                                                 |
-| `fakeit_EmojiGesture`     | Gesture emoji                                  | `"🙌"`                                                 |
-| `fakeit_EmojiCostume`     | Costume emoji                                  | `"🎃"`                                                 |
+| `fakeit_EmojiPerson`      | Person emoji                                   | `"🧓"`                                                 |
+| `fakeit_EmojiGesture`     | Gesture emoji                                  | `"🤦‍♀️"`                                                 |
+| `fakeit_EmojiCostume`     | Costume emoji                                  | `"🧞"`                                                 |
 | `fakeit_EmojiSentence`    | Emoji sentence with random emojis interspersed | `"Weekends reserve time for 🖼️ Disc 🏨 golf and day."` |
 
 ### Language
@@ -742,14 +744,14 @@ These functions are powered by [gofakeit](https://github.com/brianvoe/gofakeit) 
 | ----------------------------------------------- | ----------------------------------- | -------------------------------------------- |
 | `fakeit_Number(min int, max int)`               | Random number in range              | `{{ fakeit_Number 1 100 }}` → `42`           |
 | `fakeit_Int`                                    | Random int                          | `{{ fakeit_Int }}`                           |
-| `fakeit_IntN(n int)`                            | Random int from 0 to n              | `{{ fakeit_IntN 100 }}`                      |
+| `fakeit_IntN(n int)`                            | Random int in `[0, n)`              | `{{ fakeit_IntN 100 }}`                      |
 | `fakeit_Int8`                                   | Random int8                         | `{{ fakeit_Int8 }}`                          |
 | `fakeit_Int16`                                  | Random int16                        | `{{ fakeit_Int16 }}`                         |
 | `fakeit_Int32`                                  | Random int32                        | `{{ fakeit_Int32 }}`                         |
 | `fakeit_Int64`                                  | Random int64                        | `{{ fakeit_Int64 }}`                         |
 | `fakeit_IntRange(min int, max int)`             | Random int in range                 | `{{ fakeit_IntRange -10 10 }}`               |
 | `fakeit_Uint`                                   | Random uint                         | `{{ fakeit_Uint }}`                          |
-| `fakeit_UintN(n uint)`                          | Random uint from 0 to n             | `{{ fakeit_UintN 100 }}`                     |
+| `fakeit_UintN(n uint)`                          | Random uint in `[0, n)`             | `{{ fakeit_UintN 100 }}`                     |
 | `fakeit_Uint8`                                  | Random uint8                        | `{{ fakeit_Uint8 }}`                         |
 | `fakeit_Uint16`                                 | Random uint16                       | `{{ fakeit_Uint16 }}`                        |
 | `fakeit_Uint32`                                 | Random uint32                       | `{{ fakeit_Uint32 }}`                        |
@@ -786,26 +788,26 @@ These functions are powered by [gofakeit](https://github.com/brianvoe/gofakeit) 
 
 ### Minecraft
 
-| Function                          | Description       | Example Output   |
-| --------------------------------- | ----------------- | ---------------- |
-| `fakeit_MinecraftOre`             | Minecraft ore     | `"coal"`         |
-| `fakeit_MinecraftWood`            | Minecraft wood    | `"oak"`          |
-| `fakeit_MinecraftArmorTier`       | Armor tier        | `"iron"`         |
-| `fakeit_MinecraftArmorPart`       | Armor part        | `"helmet"`       |
-| `fakeit_MinecraftWeapon`          | Minecraft weapon  | `"bow"`          |
-| `fakeit_MinecraftTool`            | Minecraft tool    | `"shovel"`       |
-| `fakeit_MinecraftDye`             | Minecraft dye     | `"white"`        |
-| `fakeit_MinecraftFood`            | Minecraft food    | `"apple"`        |
-| `fakeit_MinecraftAnimal`          | Minecraft animal  | `"chicken"`      |
-| `fakeit_MinecraftVillagerJob`     | Villager job      | `"farmer"`       |
-| `fakeit_MinecraftVillagerStation` | Villager station  | `"furnace"`      |
-| `fakeit_MinecraftVillagerLevel`   | Villager level    | `"master"`       |
-| `fakeit_MinecraftMobPassive`      | Passive mob       | `"cow"`          |
-| `fakeit_MinecraftMobNeutral`      | Neutral mob       | `"bee"`          |
-| `fakeit_MinecraftMobHostile`      | Hostile mob       | `"spider"`       |
-| `fakeit_MinecraftMobBoss`         | Boss mob          | `"ender dragon"` |
-| `fakeit_MinecraftBiome`           | Minecraft biome   | `"forest"`       |
-| `fakeit_MinecraftWeather`         | Minecraft weather | `"rain"`         |
+| Function                          | Description       | Example Output      |
+| --------------------------------- | ----------------- | ------------------- |
+| `fakeit_MinecraftOre`             | Minecraft ore     | `"coal"`            |
+| `fakeit_MinecraftWood`            | Minecraft wood    | `"oak"`             |
+| `fakeit_MinecraftArmorTier`       | Armor tier        | `"iron"`            |
+| `fakeit_MinecraftArmorPart`       | Armor part        | `"helmet"`          |
+| `fakeit_MinecraftWeapon`          | Minecraft weapon  | `"bow"`             |
+| `fakeit_MinecraftTool`            | Minecraft tool    | `"shovel"`          |
+| `fakeit_MinecraftDye`             | Minecraft dye     | `"white"`           |
+| `fakeit_MinecraftFood`            | Minecraft food    | `"apple"`           |
+| `fakeit_MinecraftAnimal`          | Minecraft animal  | `"chicken"`         |
+| `fakeit_MinecraftVillagerJob`     | Villager job      | `"farmer"`          |
+| `fakeit_MinecraftVillagerStation` | Villager station  | `"stonecutter"`     |
+| `fakeit_MinecraftVillagerLevel`   | Villager level    | `"master"`          |
+| `fakeit_MinecraftMobPassive`      | Passive mob       | `"cow"`             |
+| `fakeit_MinecraftMobNeutral`      | Neutral mob       | `"bee"`             |
+| `fakeit_MinecraftMobHostile`      | Hostile mob       | `"wither skeleton"` |
+| `fakeit_MinecraftMobBoss`         | Boss mob          | `"ender dragon"`    |
+| `fakeit_MinecraftBiome`           | Minecraft biome   | `"forest"`          |
+| `fakeit_MinecraftWeather`         | Minecraft weather | `"rain"`            |
 
 ### Book
 
@@ -824,28 +826,28 @@ These functions are powered by [gofakeit](https://github.com/brianvoe/gofakeit) 
 
 ### Error
 
-| Function                 | Description       | Example Output                     |
-| ------------------------ | ----------------- | ---------------------------------- |
-| `fakeit_Error`           | Random error      | `"connection refused"`             |
-| `fakeit_ErrorObject`     | Error object      | `"protocol"`                       |
-| `fakeit_ErrorDatabase`   | Database error    | `"database connection failed"`     |
-| `fakeit_ErrorGRPC`       | gRPC error        | `"rpc error: code = Unavailable"`  |
-| `fakeit_ErrorHTTP`       | HTTP error        | `"HTTP 500 Internal Server Error"` |
-| `fakeit_ErrorHTTPClient` | HTTP client error | `"HTTP 404 Not Found"`             |
-| `fakeit_ErrorHTTPServer` | HTTP server error | `"HTTP 503 Service Unavailable"`   |
-| `fakeit_ErrorRuntime`    | Runtime error     | `"panic: runtime error"`           |
-| `fakeit_ErrorValidation` | Validation error  | `"missing required field"`         |
+| Function                 | Description       | Example Output                                  |
+| ------------------------ | ----------------- | ----------------------------------------------- |
+| `fakeit_Error`           | Random error      | `"variable assigned before declaration"`        |
+| `fakeit_ErrorObject`     | Error object      | `"protocol"`                                    |
+| `fakeit_ErrorDatabase`   | Database error    | `"destination pointer is nil"`                  |
+| `fakeit_ErrorGRPC`       | gRPC error        | `"connection refused"`                          |
+| `fakeit_ErrorHTTP`       | HTTP error        | `"wrote more than the declared Content-Length"` |
+| `fakeit_ErrorHTTPClient` | HTTP client error | `"expectation failed"`                          |
+| `fakeit_ErrorHTTPServer` | HTTP server error | `"not extended"`                                |
+| `fakeit_ErrorRuntime`    | Runtime error     | `"expected 2 arguments, got 3"`                 |
+| `fakeit_ErrorValidation` | Validation error  | `"missing required field"`                      |
 
 ### School
 
-| Function        | Description | Example Output         |
-| --------------- | ----------- | ---------------------- |
-| `fakeit_School` | School name | `"Harvard University"` |
+| Function        | Description | Example Output               |
+| --------------- | ----------- | ---------------------------- |
+| `fakeit_School` | School name | `"Hillside Private Academy"` |
 
 ### Song
 
-| Function            | Description | Example Output        |
-| ------------------- | ----------- | --------------------- |
-| `fakeit_SongName`   | Song name   | `"Bohemian Rhapsody"` |
-| `fakeit_SongArtist` | Song artist | `"Queen"`             |
-| `fakeit_SongGenre`  | Song genre  | `"Rock"`              |
+| Function            | Description | Example Output           |
+| ------------------- | ----------- | ------------------------ |
+| `fakeit_SongName`   | Song name   | `"What Was I Made For?"` |
+| `fakeit_SongArtist` | Song artist | `"Queen"`                |
+| `fakeit_SongGenre`  | Song genre  | `"Rock"`                 |
