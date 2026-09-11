@@ -1,17 +1,18 @@
-{ lib
-, buildGoModule
-, go_1_26
-, rev ? "unknown"
-, buildDate ? "unknown"
+{
+  lib,
+  buildGoModule,
+  go_1_27,
+  rev ? "unknown",
+  buildDate ? "unknown",
 }:
 
-(buildGoModule.override { go = go_1_26; }) (finalAttrs: {
+(buildGoModule.override { go = go_1_27; }) (finalAttrs: {
   pname = "sarin";
-  version = "1.4.3"; # bump per release
+  version = "1.4.4"; # bump per release
 
   src = lib.cleanSource ../.;
 
-  vendorHash = "sha256-dExeeZVnitxvEgs15+QtCb2gdoVV992QnuUS5yY6c4Q=";
+  vendorHash = "sha256-KUxzFDxYbKvKASMze+f7jxfpCQbs01ezeG6a1VboHxw=";
 
   subPackages = [ "cmd/cli" ];
 
